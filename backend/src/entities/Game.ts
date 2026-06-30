@@ -1,8 +1,8 @@
-import { PlayerState } from "../types/PlayerState";
-import { PartyState } from "../types/PartyState";
-import { MapState } from "../types/MapState";
-import { Manifest } from "../types/Manifest";
-import { Map } from "../types/Map";
+import { PlayerState } from "../types/PlayerState.js";
+import { PartyState } from "../types/PartyState.js";
+import { MapState } from "../types/MapState.js";
+import { Manifest } from "../types/Manifest.js";
+import { Map } from "../types/Map.js";
 
 export default class Game {
   gameId: string;

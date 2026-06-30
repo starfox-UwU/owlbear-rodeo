@@ -1,4 +1,4 @@
-import { MapState } from "../types/MapState";
+import { MapState } from "../types/MapState.js";
 
 type MapStateWithExplored = MapState & { explored?: unknown };
 

@@ -1,6 +1,6 @@
 import { Application, RequestHandler } from "express";
 import http, { Server } from "http";
-import Controller from "../controllers/Controller";
+import Controller from "../controllers/Controller.js";
 
 export default class AppServer extends Server {
   private app: Application;

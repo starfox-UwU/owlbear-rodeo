@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import Controller, { Methods } from "./Controller";
+import Controller, { Methods } from "./Controller.js";
 
 export default class HealthcheckController extends Controller {
   path = "/";

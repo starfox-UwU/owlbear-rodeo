@@ -1,7 +1,7 @@
 import { Server, Socket } from "socket.io";
-import { applyChanges, Update } from "../helpers/diff";
-import { normalizeMapState } from "../helpers/mapState";
-import GameRepository from "./GameRepository";
+import { applyChanges, Update } from "../helpers/diff.js";
+import { normalizeMapState } from "../helpers/mapState.js";
+import GameRepository from "./GameRepository.js";
 
 export default class GameState {
   io: Server;

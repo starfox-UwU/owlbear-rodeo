@@ -1,9 +1,9 @@
-import { PlayerState } from "../types/PlayerState";
-import { PartyState } from "../types/PartyState";
-import { MapState } from "../types/MapState";
-import { Manifest } from "../types/Manifest";
-import { Map } from "../types/Map";
-import Game from "./Game";
+import { PlayerState } from "../types/PlayerState.js";
+import { PartyState } from "../types/PartyState.js";
+import { MapState } from "../types/MapState.js";
+import { Manifest } from "../types/Manifest.js";
+import { Map } from "../types/Map.js";
+import Game from "./Game.js";
 
 export default class GameRepository {
   games: Record<string, Game>;

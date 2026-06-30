@@ -1,4 +1,4 @@
-import { Outline } from "./Outline";
+import { Outline } from "./Outline.js";
 
 export type TokenCategory = "character" | "vehicle" | "prop" | "attachment";
 

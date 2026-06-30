@@ -5,16 +5,16 @@ import { Server } from "socket.io";
 // @ts-ignore
 import msgParser from "socket.io-msgpack-parser";
 import dotenv from "dotenv";
-import AppServer from "./entities/AppServer";
-import Controller from "./controllers/Controller";
-import GameServer from "./entities/GameServer";
-import Global from "./entities/Global";
-import HealthcheckController from "./controllers/HealthcheckController";
-import IceServer from "./entities/IceServer";
-import IceServerController from "./controllers/IceServerController";
-import AssetStorage from "./entities/AssetStorage";
-import AssetController from "./controllers/AssetController";
-import StunServer from "./services/StunServer";
+import AppServer from "./entities/AppServer.js";
+import Controller from "./controllers/Controller.js";
+import GameServer from "./entities/GameServer.js";
+import Global from "./entities/Global.js";
+import HealthcheckController from "./controllers/HealthcheckController.js";
+import IceServer from "./entities/IceServer.js";
+import IceServerController from "./controllers/IceServerController.js";
+import AssetStorage from "./entities/AssetStorage.js";
+import AssetController from "./controllers/AssetController.js";
+import StunServer from "./services/StunServer.js";
 import path from "path";
 import { fileURLToPath } from "url";
 

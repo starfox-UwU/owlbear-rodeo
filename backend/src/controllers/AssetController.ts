@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import AssetStorage, {
   StoredAssetPayload,
-} from "../entities/AssetStorage";
-import Controller, { Methods } from "./Controller";
+} from "../entities/AssetStorage.js";
+import Controller, { Methods } from "./Controller.js";
 
 export default class AssetController extends Controller {
   public path = "/assets";

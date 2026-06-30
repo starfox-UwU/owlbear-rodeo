@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import IceServer from "../entities/IceServer";
-import Controller, { Methods } from "./Controller";
+import IceServer from "../entities/IceServer.js";
+import Controller, { Methods } from "./Controller.js";
 
 export default class IceServerController extends Controller {
   iceServer: IceServer;

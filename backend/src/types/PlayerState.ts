@@ -1,5 +1,5 @@
-import { Timer } from "./Timer";
-import { Dice } from "./Dice";
+import { Timer } from "./Timer.js";
+import { Dice } from "./Dice.js";
 
 export type PlayerState = {
   nickname: string;

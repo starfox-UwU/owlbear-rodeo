@@ -1,8 +1,8 @@
-import { DrawingState } from "./Drawing";
-import { FogState } from "./Fog";
-import { Notes } from "./Note";
-import { TokenNotes } from "./TokenNote";
-import { TokenStates } from "./TokenState";
+import { DrawingState } from "./Drawing.js";
+import { FogState } from "./Fog.js";
+import { Notes } from "./Note.js";
+import { TokenNotes } from "./TokenNote.js";
+import { TokenStates } from "./TokenState.js";
 
 export type EditFlag = "drawing" | "tokens" | "notes" | "fog";
 

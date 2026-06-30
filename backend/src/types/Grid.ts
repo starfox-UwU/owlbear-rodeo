@@ -1,4 +1,4 @@
-import { Vector2 } from "./Vector2";
+import { Vector2 } from "./Vector2.js";
 
 export type GridInset = {
   /** Top left position of the inset */

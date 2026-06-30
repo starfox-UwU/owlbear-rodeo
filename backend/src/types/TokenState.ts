@@ -1,6 +1,6 @@
-import { Color } from "./Color";
-import { Outline } from "./Outline";
-import { TokenCategory } from "./Token";
+import { Color } from "./Color.js";
+import { Outline } from "./Outline.js";
+import { TokenCategory } from "./Token.js";
 
 export type BaseTokenState = {
   id: string;

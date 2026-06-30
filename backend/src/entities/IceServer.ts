@@ -1,4 +1,4 @@
-import Global from "./Global";
+import Global from "./Global.js";
 
 export default class IceServer {
   async getIceServers(): Promise<any> {

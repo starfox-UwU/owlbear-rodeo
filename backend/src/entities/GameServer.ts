@@ -1,18 +1,18 @@
 /* eslint-disable no-underscore-dangle */
 import { Server as HttpServer } from "http";
 import { Socket, Server as IOServer } from "socket.io";
-import Auth from "./Auth";
-import GameRepository from "./GameRepository";
-import GameState from "./GameState";
-import AssetStorage from "./AssetStorage";
-import { Update } from "../helpers/diff";
-import { Map } from "../types/Map";
-import { MapState } from "../types/MapState";
-import { normalizeMapState } from "../helpers/mapState";
-import { TokenState } from "../types/TokenState";
-import { PlayerState } from "../types/PlayerState";
-import { Manifest } from "../types/Manifest";
-import { Pointer } from "../types/Pointer";
+import Auth from "./Auth.js";
+import GameRepository from "./GameRepository.js";
+import GameState from "./GameState.js";
+import AssetStorage from "./AssetStorage.js";
+import { Update } from "../helpers/diff.js";
+import { Map } from "../types/Map.js";
+import { MapState } from "../types/MapState.js";
+import { normalizeMapState } from "../helpers/mapState.js";
+import { TokenState } from "../types/TokenState.js";
+import { PlayerState } from "../types/PlayerState.js";
+import { Manifest } from "../types/Manifest.js";
+import { Pointer } from "../types/Pointer.js";
 
 const STREAM_PROTOCOL_VERSION = 1;
 const STREAM_MAX_SIZE = 1e7;

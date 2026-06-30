@@ -1,4 +1,4 @@
-import { Color } from "./Color";
+import { Color } from "./Color.js";
 
 export type NoteBackgroundMode = "none" | "scrim" | "frame";
 export type NoteFontFamily = "rounded" | "serif" | "handwritten" | "runic";

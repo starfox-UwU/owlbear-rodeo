@@ -1,4 +1,4 @@
-import { Grid } from "./Grid";
+import { Grid } from "./Grid.js";
 
 export type BaseMap = {
   id: string;
