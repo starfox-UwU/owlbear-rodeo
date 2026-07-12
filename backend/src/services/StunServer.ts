@@ -6,6 +6,27 @@ type StunServerOptions = {
   host?: string;
 };
 
+type RemoteEndpoint = {
+  address: string;
+  port: number;
+};
+
+const isValidRemoteEndpoint = (rinfo: unknown): rinfo is RemoteEndpoint => {
+  if (typeof rinfo !== "object" || rinfo === null) {
+    return false;
+  }
+
+  const endpoint = rinfo as { address?: unknown; port?: unknown };
+  return (
+    typeof endpoint.address === "string" &&
+    endpoint.address.length > 0 &&
+    typeof endpoint.port === "number" &&
+    Number.isInteger(endpoint.port) &&
+    endpoint.port > 0 &&
+    endpoint.port <= 65535
+  );
+};
+
 export default class StunServer {
   private server?: any;
 
@@ -21,7 +42,12 @@ export default class StunServer {
     const { STUN_BINDING_RESPONSE, STUN_EVENT_BINDING_REQUEST } = stun.constants;
     const userAgent = `owlbear-rodeo-stun`;
 
-    server.on(STUN_EVENT_BINDING_REQUEST, (request: any, rinfo: any) => {
+    server.on(STUN_EVENT_BINDING_REQUEST, (request: any, rinfo: unknown) => {
+      if (!isValidRemoteEndpoint(rinfo)) {
+        console.warn("STUN_INVALID_REMOTE_ENDPOINT", rinfo);
+        return;
+      }
+
       const message = stun.createMessage(STUN_BINDING_RESPONSE);
       message.addXorAddress(rinfo.address, rinfo.port);
       message.addSoftware(userAgent);
