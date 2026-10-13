@@ -222,7 +222,8 @@ yarn check:broker
 如需商业授权，请联系官方：contact@owlbear.rodeo
 
 ## Contributing
-该仓库为历史版本，已关闭 PR。
+~~该仓库为历史版本，已关闭 PR。~~
+我接手了
 
 ## Credits
 项目由 Nicola 与 Mitch 创建。
