@@ -318,7 +318,7 @@ function SelectionMenu({
   // Keep a local copy of the clipboard if the device doesn't support the clipboard api i.e. iOS
   const localClipboardDataRef = useRef<string>("");
   async function handleCopy() {
-    let version = process.env.REACT_APP_VERSION;
+    let version = __APP_VERSION__;
     if (!version || !selection || !mapState) {
       return;
     }
@@ -352,7 +352,7 @@ function SelectionMenu({
   }
 
   async function handlePaste() {
-    let version = process.env.REACT_APP_VERSION;
+    let version = __APP_VERSION__;
 
     if (!version || !mapState) {
       return;

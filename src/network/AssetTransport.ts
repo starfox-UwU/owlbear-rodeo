@@ -426,7 +426,9 @@ export default class AssetTransport {
         data: chunk.data,
       };
       const encoded = encode(payload);
-      peer.channel?.send(encoded);
+      // @msgpack/msgpack types its output as `Uint8Array<ArrayBufferLike>`,
+      // but it is always ArrayBuffer-backed, which is what `send()` requires.
+      peer.channel?.send(encoded as Uint8Array<ArrayBuffer>);
     }
   }
 
@@ -573,7 +575,7 @@ export default class AssetTransport {
   }
 
   private async fetchIceServers(): Promise<RTCIceServer[]> {
-    const brokerUrl = process.env.REACT_APP_BROKER_URL;
+    const brokerUrl = import.meta.env.VITE_BROKER_URL;
     if (!brokerUrl) {
       this.options.log?.("P2P_ICE_FETCH_SKIP", { reason: "missing_broker_url" });
       return [];

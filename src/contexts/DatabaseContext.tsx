@@ -6,8 +6,8 @@ import ErrorBanner from "../components/banner/ErrorBanner";
 
 import { getDatabase } from "../database";
 
-//@ts-ignore
-import DatabaseWorker from "worker-loader!../workers/DatabaseWorker"; // eslint-disable-line import/no-webpack-loader-syntax
+// Vite bundles the worker via the `?worker` suffix and gives us a constructor
+import DatabaseWorker from "../workers/DatabaseWorker?worker";
 import { DatabaseWorkerService } from "../workers/DatabaseWorker";
 
 export type DatabaseStatus = "loading" | "disabled" | "upgrading" | "loaded";

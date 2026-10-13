@@ -48,7 +48,8 @@ export const versions: Record<number, VersionCallback> = {
       const maps = await Dexie.waitFor(tx.table("maps").toArray());
       let mapBuffers: Record<string, ArrayBuffer> = {};
       for (let map of maps) {
-        mapBuffers[map.id] = await Dexie.waitFor(blobToBuffer(map.file));
+        const mapBuffer = await Dexie.waitFor(blobToBuffer(map.file));
+        mapBuffers[map.id] = mapBuffer.buffer;
       }
       return tx
         .table("maps")

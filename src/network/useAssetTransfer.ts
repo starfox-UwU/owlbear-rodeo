@@ -27,7 +27,7 @@ function dedupeAssetsPath(url: string) {
 }
 
 export function getAssetApiBase() {
-  return normalizeAssetBase(process.env.REACT_APP_BROKER_URL);
+  return normalizeAssetBase(import.meta.env.VITE_BROKER_URL);
 }
 
 export default function useAssetTransfer(gameId: string) {

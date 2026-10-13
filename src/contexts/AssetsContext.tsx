@@ -127,7 +127,9 @@ export const AssetURLsUpdaterContext =
     React.Dispatch<React.SetStateAction<AssetURLs>> | undefined
   >(undefined);
 
-function normalizeAssetFile(file: any): Uint8Array | ArrayBuffer | null {
+function normalizeAssetFile(
+  file: any
+): Uint8Array<ArrayBuffer> | ArrayBuffer | null {
   if (!file) {
     return null;
   }
@@ -135,7 +137,8 @@ function normalizeAssetFile(file: any): Uint8Array | ArrayBuffer | null {
     if (file.byteLength === 0) {
       return null;
     }
-    return file;
+    // Values read back from IndexedDB are always ArrayBuffer-backed.
+    return file as Uint8Array<ArrayBuffer> | ArrayBuffer;
   }
   if (Array.isArray(file)) {
     const buffer = new Uint8Array(file);

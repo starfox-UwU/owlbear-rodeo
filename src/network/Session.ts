@@ -130,14 +130,14 @@ class Session extends EventEmitter {
   async connect() {
     try {
       if (
-        !process.env.REACT_APP_BROKER_URL ||
-        process.env.REACT_APP_MAINTENANCE === "true"
+        !import.meta.env.VITE_BROKER_URL ||
+        import.meta.env.VITE_MAINTENANCE === "true"
       ) {
         this.emit("status", "offline");
         return;
       }
 
-      this.socket = io(process.env.REACT_APP_BROKER_URL!, {
+      this.socket = io(import.meta.env.VITE_BROKER_URL!, {
         withCredentials: true,
         parser: msgParser,
         transports: ["websocket"],
@@ -176,7 +176,7 @@ class Session extends EventEmitter {
       "join_game",
       gameId,
       password,
-      process.env.REACT_APP_VERSION
+      __APP_VERSION__
     );
     this.emit("status", "joining");
   }

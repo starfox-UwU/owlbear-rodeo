@@ -38,7 +38,7 @@ function Game() {
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>();
 
   const [maintenance, setMaintenance] = useState(
-    process.env.REACT_APP_MAINTENANCE === "true"
+    import.meta.env.VITE_MAINTENANCE === "true"
   );
 
   useEffect(() => {
