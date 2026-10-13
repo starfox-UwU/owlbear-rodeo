@@ -31,9 +31,8 @@
     }
   ],
   "env": {
-    "REACT_APP_BROKER_URL": "https://your-backend-url.onrender.com",
-    "REACT_APP_MAINTENANCE": "false",
-    "REACT_APP_VERSION": "1.10.2",
-    "NODE_VERSION": "16.16.0"
+    "VITE_BROKER_URL": "https://your-backend-url.onrender.com",
+    "VITE_MAINTENANCE": "false",
+    "NODE_VERSION": "24"
   }
 }

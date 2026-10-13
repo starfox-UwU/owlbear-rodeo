@@ -8,7 +8,10 @@ services:
     environment:
       PORT: 9000
       ALLOW_ORIGIN: ".*"
-      ASSET_PUBLIC_URL: "http://localhost:9000"
+      # 浏览器通过这个地址拉取后端资源；从别的设备访问时也要改成宿主机局域网 IP
+      ASSET_PUBLIC_URL: "${ASSET_PUBLIC_URL:-http://localhost:9000}"
+      # 自建 STUN 的对外地址，跨设备 P2P 传图需要，留空则只用 backend/ice.json
+      STUN_PUBLIC_HOST: "${STUN_PUBLIC_HOST:-}"
   frontend:
     build:
       context: ./
@@ -17,8 +20,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      REACT_APP_BROKER_URL: "http://localhost:9000"
-      REACT_APP_VERSION: "1.10.2"
-      REACT_APP_MAINTENANCE: "false"
+      # Vite 只把 VITE_ 前缀的变量注入客户端。
+      # ⚠️ 这个地址是给「浏览器」用的，localhost 只在浏览器和后端跑在同一台机器时才成立。
+      #    从手机/另一台电脑打开页面时，必须改成宿主机的局域网 IP，
+      #    例如在项目根目录建一个 .env 写 VITE_BROKER_URL=http://192.168.1.32:9000
+      VITE_BROKER_URL: "${VITE_BROKER_URL:-http://localhost:9000}"
+      VITE_MAINTENANCE: "false"
       CHOKIDAR_USEPOLLING: "true"
     tty: true
