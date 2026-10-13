@@ -6,18 +6,22 @@ declare module "*.glb" {
   const source: string;
   export default source;
 }
-declare module "*.png" {
-  const source: string;
-  export default source;
-}
-declare module "*.mp4" {
-  const source: string;
-  export default source;
-}
 declare module "*.bin" {
+  const source: string;
+  export default source;
+}
+declare module "*.dds" {
   const source: string;
   export default source;
 }
 declare module "react-router-hash-link";
 declare module "intersection-observer";
-declare module "ammo.js";
+
+/**
+ * ammo.js 通过 `?url` 以普通脚本形式加载（原因见 src/helpers/ammo.ts）。
+ * 显式声明是为了避免 allowJs 让 TS 去解析那个 1.7MB 的 asm.js 文件。
+ */
+declare module "ammo.js/builds/ammo.js?url" {
+  const url: string;
+  export default url;
+}

@@ -4,12 +4,26 @@
 /node_modules
 /.pnp
 .pnp.js
+.pnp.cjs
+
+# yarn 4 (berry)
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.yarn-integrity
 
 # testing
 /coverage
 
 # production
 /build
+/dist
+
+# runtime asset cache (see backend ASSET_CACHE_DIR)
+/cache
 
 # misc
 .DS_Store
@@ -24,6 +38,9 @@ yarn-error.log*
 
 # typescript
 tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# editors
 .ace-tool/
 /.claude
 AGENTS.md
