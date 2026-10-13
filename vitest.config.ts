@@ -10,6 +10,9 @@ const packageJson = JSON.parse(
 
 export default defineConfig({
   plugins: [react()],
+  // TensorFlow 权重文件由模型模块直接 import，需要让 Vite 当作静态资源处理，
+  // 否则测试套件在解析 .bin 时会报 "invalid JS syntax"。
+  assetsInclude: ["**/*.bin"],
   define: {
     __APP_VERSION__: JSON.stringify(packageJson.version),
   },
