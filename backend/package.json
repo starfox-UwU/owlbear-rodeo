@@ -1,40 +1,54 @@
 {
   "name": "owlbear-broker",
   "version": "2.0.0",
-  "description": "",
-  "main": "./src/index.js",
+  "description": "Owlbear Rodeo Legacy broker (Express + Socket.IO + STUN)",
+  "private": true,
   "type": "module",
+  "main": "./build/index.js",
+  "packageManager": "yarn@4.18.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc --project ./",
-    "start:dev": "node --es-module-specifier-resolution=node -r dotenv/config ./build/src/index.js",
-    "start": "node --es-module-specifier-resolution=node ./build/src/index.js",
-    "lint": "eslint src/**/*.ts"
+    "start": "node ./build/index.js",
+    "start:dev": "node --watch ./build/index.js",
+    "typecheck": "tsc --noEmit",
+    "check:imports": "node scripts/check-esm-relative-imports.mjs",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "echo \"No tests yet\" && exit 0"
   },
   "dependencies": {
-    "bcrypt": "^5.0.0",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "deep-diff": "^1.0.2",
-    "express": "^4.17.3",
-    "helmet": "^5.0.2",
+    "dotenv": "^18.0.7",
+    "express": "^4.21.2",
+    "helmet": "^8.3.0",
     "lodash.get": "^4.4.2",
-    "socket.io": "^4.5.4",
+    "socket.io": "^4.8.4",
     "socket.io-msgpack-parser": "^3.0.2",
     "stun": "^2.1.0"
   },
+  "dependenciesMeta": {
+    "bcrypt": {
+      "built": true
+    }
+  },
   "devDependencies": {
-    "@types/bcrypt": "^3.0.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/component-emitter": "^1.2.11",
-    "@types/cors": "^2.8.12",
-    "@types/deep-diff": "^1.0.1",
-    "@types/express": "^4.17.13",
-    "@types/lodash.get": "^4.4.6",
-    "@types/node": "^15.6.1",
-    "@typescript-eslint/eslint-plugin": "^5.18.0",
-    "dotenv": "^16.0.0",
-    "eslint": "^8.12.0",
+    "@types/cors": "^2.8.19",
+    "@types/deep-diff": "^1.0.5",
+    "@types/express": "^4.17.21",
+    "@types/lodash.get": "^4.4.9",
+    "@types/node": "^24.19.2",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.26.0",
-    "typescript": "^4.9.3"
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-import": "^2.32.0",
+    "typescript": "^5.9.3"
   }
 }

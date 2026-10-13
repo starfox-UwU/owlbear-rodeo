@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const rootDir = path.resolve("build/src");
+const rootDir = path.resolve("build");
 const allowedExtensions = [".js", ".mjs", ".cjs", ".json"];
 const importPattern =
   /\b(?:import|export)\b[\s\S]*?\bfrom\s*["'](\.{1,2}\/[^"']+)["']/g;

@@ -21,8 +21,10 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
-dotenv.config({ path: path.resolve(__dirname, "../../.env.local"), override: true });
+// Resolves to `<backend>/.env` from both `src/index.ts` and `build/index.js`,
+// matching what the README documents.
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../.env.local"), override: true });
 
 const app: Application = express();
 const port: string | number = Global.CONNECTION_PORT;
