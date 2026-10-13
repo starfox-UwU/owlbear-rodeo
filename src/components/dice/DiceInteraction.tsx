@@ -2,9 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { Scene } from "@babylonjs/core/scene";
 import { Vector3, Color4, Matrix } from "@babylonjs/core/Maths/math";
-import { AmmoJSPlugin } from "@babylonjs/core/Physics/Plugins/ammoJSPlugin";
 import { TargetCamera } from "@babylonjs/core/Cameras/targetCamera";
-import Ammo from "ammo.js";
 
 import "@babylonjs/core/Physics/physicsEngineComponent";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
@@ -69,19 +67,23 @@ function DiceInteraction({
       });
       const scene = new Scene(engine);
       scene.clearColor = new Color4(0, 0, 0, 0);
-      // Enable physics
-      Ammo().then(() => {
-        scene.enablePhysics(new Vector3(0, -98, 0), new AmmoJSPlugin(false));
-      });
 
       let camera = new TargetCamera("camera", new Vector3(0, 33.5, 0), scene);
       camera.fov = 0.65;
       camera.setTarget(Vector3.Zero());
 
-      onSceneMount && onSceneMount({ scene, engine, canvas });
-
       engineRef.current = engine;
       sceneRef.current = scene;
+
+      // ⚠️ 这个「场景就绪」信号必须保持**同步**。
+      // 骰子托盘里有只在挂载时执行一次的初始化（加载骰子模型），它依赖此刻
+      // sceneRef 已经就绪；一旦把它推到异步，那段只跑一次的 effect 就会落进
+      // 「UI 已挂载但 scene 还是 undefined」的窗口里被静默跳过，点击骰子时报
+      // "Dice not loaded, call load before creating an instance"。
+      // 物理引擎的启用是异步的（ammo.js 按需加载），改由托盘在创建
+      // PhysicsImpostor 之前 await enableAmmoPhysics(scene)，
+      // 见 DiceTrayOverlay 的 initializeScene。
+      onSceneMount && onSceneMount({ scene, engine, canvas });
 
       engine.runRenderLoop(() => {
         const scene = sceneRef.current;

@@ -17,6 +17,8 @@ import DiceResults from "./DiceResults";
 
 import DiceTray from "../../dice/diceTray/DiceTray";
 
+import { enableAmmoPhysics } from "../../helpers/ammo";
+
 import { useDiceLoading } from "../../contexts/DiceLoadingContext";
 
 import { getDiceRoll } from "../../helpers/dice";
@@ -135,6 +137,10 @@ function DiceTrayOverlay({
       scene
     );
     scene.environmentIntensity = 1.0;
+
+    // 物理引擎必须在创建任何 PhysicsImpostor（DiceTray 的墙）之前就绪。
+    // ammo.js 是运行时异步加载的，所以这里要等它。
+    await enableAmmoPhysics(scene);
 
     let diceTray = new DiceTray("single", scene, shadowGenerator);
     await diceTray.load();
