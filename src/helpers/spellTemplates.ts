@@ -1,8 +1,16 @@
-import polygonClipping, { Geom, Ring } from "polygon-clipping";
+import { Geom, Ring } from "polygon-clipping";
 
 import Vector2, { BoundingBox } from "./Vector2";
 import Size from "./Size";
 import { getCellCorners, getCellLocation, getNearestCellCoordinates } from "./grid";
+import {
+  coverageRatio,
+  geomsIntersect,
+  pointInGeom,
+  safeIntersection,
+  safeUnion,
+  toPolygons,
+} from "./clipping";
 
 import { SpellTemplate, SpellTemplateRule } from "../types/SpellTemplate";
 import { Grid } from "../types/Grid";
@@ -124,7 +132,7 @@ function buildStrokeGeom(points: Vector2[], width: number): Geom {
   if (geoms.length === 1) {
     return geoms[0];
   }
-  return polygonClipping.union(geoms[0], ...geoms.slice(1));
+  return safeUnion(geoms);
 }
 
 export function getTemplateGeom(template: SpellTemplate, mapSize: MapSize): Geom {
@@ -188,54 +196,6 @@ export function getTemplateBoundingBox(
   }
   return Vector2.getBoundingBox(points);
 }
-function pointInRing(point: Vector2, ring: Ring): boolean {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const xi = ring[i][0];
-    const yi = ring[i][1];
-    const xj = ring[j][0];
-    const yj = ring[j][1];
-    const intersect =
-      (yi > point.y) !== (yj > point.y) &&
-      point.x < ((xj - xi) * (point.y - yi)) / (yj - yi + 0.000001) + xi;
-    if (intersect) {
-      inside = !inside;
-    }
-  }
-  return inside;
-}
-
-function normalizeGeom(geom: Geom): Ring[][] {
-  if (geom.length === 0) {
-    return [];
-  }
-  const first = geom[0] as any;
-  if (typeof first?.[0]?.[0] === "number") {
-    return [geom as Ring[]];
-  }
-  return geom as Ring[][];
-}
-
-function pointInGeom(point: Vector2, geom: Geom): boolean {
-  const polygons = normalizeGeom(geom);
-  for (let polygon of polygons) {
-    const outer = polygon[0];
-    if (!outer || !pointInRing(point, outer)) {
-      continue;
-    }
-    let insideHole = false;
-    for (let i = 1; i < polygon.length; i++) {
-      if (pointInRing(point, polygon[i])) {
-        insideHole = true;
-        break;
-      }
-    }
-    if (!insideHole) {
-      return true;
-    }
-  }
-  return false;
-}
 
 export function isPointInTemplate(
   template: SpellTemplate,
@@ -258,7 +218,7 @@ function polygonArea(points: Ring): number {
 }
 
 function geomArea(geom: Geom): number {
-  const polygons = normalizeGeom(geom);
+  const polygons = toPolygons(geom);
   let area = 0;
   for (let polygon of polygons) {
     if (polygon.length === 0) {
@@ -340,7 +300,8 @@ export function getAffectedCells(
         gridOffset,
         gridCellOffset
       );
-      const cellGeom: Geom = [[toRing(polygon)]];
+      const cellRing = toRing(polygon);
+      const cellGeom: Geom = [[cellRing]];
 
       if (resolvedRule === "center") {
         if (pointInGeom(center, geom)) {
@@ -349,7 +310,21 @@ export function getAffectedCells(
         continue;
       }
 
-      const intersection = polygonClipping.intersection(geom, cellGeom);
+      const intersection = safeIntersection(geom, cellGeom);
+      if (intersection === null) {
+        // `polygon-clipping` 在浮点退化（六边形网格的斜边尤为常见）时无法完成
+        // 裁剪，这里退回到纯几何判定，避免整个渲染过程崩溃。
+        if (resolvedRule === "touch") {
+          if (geomsIntersect(geom, cellRing)) {
+            affected.push({ col, row, polygon, center });
+          }
+        } else if (resolvedRule === "area_50") {
+          if (coverageRatio(geom, cellRing) >= 0.5) {
+            affected.push({ col, row, polygon, center });
+          }
+        }
+        continue;
+      }
       const area = geomArea(intersection);
       if (resolvedRule === "touch") {
         if (area > 0) {
