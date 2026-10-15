@@ -15,3 +15,4 @@ export type {
 } from "./core";
 
 export { I18nProvider, useI18n, useTranslation } from "./I18nContext";
+export type { I18nContextValue } from "./I18nContext";

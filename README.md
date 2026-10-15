@@ -180,6 +180,11 @@ function Example() {
   语言由调用方传入或从 settings 读取，**不要在非组件里调用 hook**。
 - 约定：界面里不要再出现写死的展示文案。纯函数（例如表达式解析器）应返回
   **稳定错误码**，由组件层翻译，避免把某一种语言写进业务逻辑。
+- ⚠️ **react-konva 是另一棵 React 渲染树**：`<Stage>` 里的组件**不会**继承主应用的
+  context，会报 `useXxx must be used within a XxxProvider`。凡是 Konva 子树要用到的
+  context，都必须在 [`KonvaBridge.tsx`](./src/helpers/KonvaBridge.tsx) 里再转发一次
+  （`I18nContext` 也在其中）。`src/helpers/konvaContextBridge.test.ts` 会扫描所有
+  Konva 渲染的组件并逐个校验，漏转发会直接测试失败。
 
 ### 术语对照
 

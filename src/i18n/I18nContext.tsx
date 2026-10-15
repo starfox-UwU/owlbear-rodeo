@@ -16,7 +16,14 @@ import type {
 import useSetting from "../hooks/useSetting";
 import { languageTag, resolveLanguage } from "./core";
 
-type I18nContextValue = {
+/**
+ * 语言状态与翻译函数。
+ *
+ * 除了 `useI18n()`，还需要把这个值显式转发给**独立的 React 渲染树**——
+ * 典型的是 react-konva：Konva 的 Stage 用自己的 reconciler 渲染子节点，
+ * 不会继承主应用树的 context（见 src/helpers/KonvaBridge.tsx）。
+ */
+export type I18nContextValue = {
   /** 实际生效的语言 */
   language: Language;
   /** 用户的语言偏好（可能是 system） */
