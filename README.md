@@ -261,6 +261,15 @@ yarn check:broker
 `ammo.js` 依赖 GitHub 上的固定提交。相关白名单写在根目录 `.yarnrc.yml`，
 若你 fork 到别处，需要把新的仓库地址加进去。
 
+### 控制台报 `ReferenceError: process is not defined`
+
+从 CRA 迁到 Vite 后，Node 的 `process` 全局不再自动注入，`react-markdown@4` 依赖链
+（`vfile` / `path-browserify`）在渲染 Markdown 时会用到它。仓库已在
+`src/polyfills/process.ts` 提供最小垫片并置于 `src/index.tsx` 首行 import。
+
+如果你仍看到这个报错，说明浏览器跑的是**旧的构建产物**：删掉 `build/` 重新
+`yarn build`（开发模式重启 `yarn dev`），再硬刷新页面即可。
+
 ## 引用
 
 [byronknoll/visibility-polygon-js: This library can be used to construct a visibility polygon for a set of line segments.](https://github.com/byronknoll/visibility-polygon-js) **高效的多边形光照算法**

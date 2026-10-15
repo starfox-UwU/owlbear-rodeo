@@ -1,3 +1,6 @@
+// `process` 垫片必须排在所有依赖之前：react-markdown / path-browserify /
+// TensorFlow.js 里的 `process.*` 调用没有做 `typeof` 保护。
+import "./polyfills/process";
 import "./polyfills/xhrResponseText";
 import ReactDOM from "react-dom";
 import App from "./App";

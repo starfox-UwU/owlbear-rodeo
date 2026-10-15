@@ -138,6 +138,21 @@ alias: [
 `src/helpers/blobToBuffer.ts` 原本有一个 `Buffer.from(...)` 的 FileReader 回退分支，
 依赖 CRA 注入的 `Buffer` 全局（Vite 不提供），已简化为纯 `Blob.prototype.arrayBuffer()` 实现。
 
+除了模块别名，还有一类「全局变量」polyfill：CRA 会注入 Node 的 `process` 全局，Vite 不会，
+而依赖里有没做 `typeof process` 保护的直接调用 —— 渲染 Markdown 时会抛
+`ReferenceError: process is not defined`（`vfile/core.js:47` → `process.cwd()`，
+`path-browserify` 的 `resolve()` 同理，TensorFlow.js 的 Node 平台实现还会读 `process.hrtime()`）。
+修法是在 `src/polyfills/process.ts` 里提供最小垫片，并保证它在 `src/index.tsx` 的**第一条**
+import 位置生效：
+
+```ts
+// src/index.tsx
+import "./polyfills/process";
+```
+
+垫片只在全局确实没有 `process` 时写入（Node / Vitest 不受影响），`versions` 特意留空，
+以免各依赖的 `IS_NODE` 探测被误判成 Node 环境。
+
 ### 3.8 测试：Jest → Vitest
 
 - 新增 `vitest.config.ts`（`environment: "jsdom"`、`globals: true`、
