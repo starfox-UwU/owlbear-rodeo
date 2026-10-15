@@ -3,6 +3,8 @@ import { IconButton } from "theme-ui";
 import CutOnIcon from "../../../icons/FogCutOnIcon";
 import CutOffIcon from "../../../icons/FogCutOffIcon";
 
+import { useI18n } from "../../../i18n";
+
 type FogCutToggleProps = {
   useFogCut: boolean;
   onFogCutChange: (useFogCut: boolean) => void;
@@ -14,12 +16,14 @@ function FogCutToggle({
   onFogCutChange,
   disabled,
 }: FogCutToggleProps) {
+  const { t } = useI18n();
+  const label = useFogCut
+    ? t("tools.fogCut.disable")
+    : t("tools.fogCut.enable");
   return (
     <IconButton
-      aria-label={
-        useFogCut ? "Disable Fog Cutting (C)" : "Enable Fog Cutting (C)"
-      }
-      title={useFogCut ? "Disable Fog Cutting (C)" : "Enable Fog Cutting (C)"}
+      aria-label={label}
+      title={label}
       onClick={() => onFogCutChange(!useFogCut)}
       disabled={disabled}
     >

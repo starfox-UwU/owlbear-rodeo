@@ -2,7 +2,11 @@ import { Box, Input, InputProps } from "theme-ui";
 
 import SearchIcon from "../icons/SearchIcon";
 
+import { useI18n } from "../i18n";
+
 function Search(props: InputProps) {
+  const { t } = useI18n();
+
   return (
     <Box sx={{ position: "relative", flexGrow: 1 }}>
       <Input
@@ -15,7 +19,7 @@ function Search(props: InputProps) {
           },
           paddingRight: "36px",
         }}
-        placeholder="Search"
+        placeholder={t("common.search")}
         {...props}
       />
       <Box

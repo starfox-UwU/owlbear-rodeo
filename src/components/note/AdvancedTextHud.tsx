@@ -13,6 +13,8 @@ import colors from "../../helpers/colors";
 import { resolveColor } from "../../helpers/notes";
 import { Note, NoteStyle } from "../../types/Note";
 
+import { useI18n } from "../../i18n";
+
 type AdvancedTextHudProps = {
   isOpen: boolean;
   note?: Note;
@@ -40,13 +42,6 @@ const palette: Array<keyof typeof colors> = [
   "darkGray",
 ];
 
-const fontOptions = [
-  { value: "rounded", label: "Rounded" },
-  { value: "serif", label: "Serif" },
-  { value: "handwritten", label: "Handwritten" },
-  { value: "runic", label: "Runic" },
-];
-
 const sizeOptions = [
   { fontScale: "xs", fontSize: 0.5, label: "0.5x" },
   { fontScale: "sm", fontSize: 0.75, label: "0.75x" },
@@ -70,6 +65,15 @@ function AdvancedTextHud({
   onToggleVisibility,
   onToggleAttach,
 }: AdvancedTextHudProps) {
+  const { t } = useI18n();
+
+  const fontOptions = [
+    { value: "rounded", label: t("notes.fontRounded") },
+    { value: "serif", label: t("notes.fontSerif") },
+    { value: "handwritten", label: t("settings.fontHandwritten") },
+    { value: "runic", label: t("settings.fontRunic") },
+  ];
+
   const [hexValue, setHexValue] = useState("#ffffff");
   const [formatState, setFormatState] = useState({
     bold: false,
@@ -136,13 +140,13 @@ function AdvancedTextHud({
   const visibilityLabel = useMemo(() => {
     const visibility = note?.visibility || "all";
     if (visibility === "gm") {
-      return "GM";
+      return t("notes.visibility.gm");
     }
     if (visibility === "owner") {
-      return "Owner";
+      return t("notes.visibility.owner");
     }
-    return "All";
-  }, [note?.visibility]);
+    return t("notes.visibility.all");
+  }, [note?.visibility, t]);
 
   if (!isOpen || !note) {
     return null;
@@ -204,7 +208,7 @@ function AdvancedTextHud({
   const swatchColor = resolveColor(draftStyle.textColor, "#ffffff");
   const currentFontLabel =
     fontOptions.find((option) => option.value === draftStyle.fontFamily)
-      ?.label || "Font";
+      ?.label || t("notes.fontFallback");
   const currentSizeLabel = (() => {
     if (typeof draftStyle.fontSize === "number") {
       let closest = sizeOptions[2];
@@ -254,8 +258,8 @@ function AdvancedTextHud({
           <Box sx={{ position: "relative" }}>
             <IconButton
               onClick={() => setColorMenuOpen((prev) => !prev)}
-              title="Text color"
-              aria-label="Text color"
+              title={t("notes.textColor")}
+              aria-label={t("notes.textColor")}
               sx={buttonSx()}
               disabled={!canEdit}
             >
@@ -310,7 +314,7 @@ function AdvancedTextHud({
                         onStyleChange({ textColor: colorKey });
                         setColorMenuOpen(false);
                       }}
-                      aria-label={`Text color ${colorKey}`}
+                      aria-label={t("notes.textColorLabel", { color: colorKey })}
                     />
                   ))}
                 </Box>
@@ -325,8 +329,8 @@ function AdvancedTextHud({
           </Box>
           <IconButton
             onClick={handleBackgroundToggle}
-            title="Toggle background"
-            aria-label="Toggle background"
+            title={t("notes.toggleBackground")}
+            aria-label={t("notes.toggleBackground")}
             sx={buttonSx(draftStyle.backgroundMode !== "none")}
             disabled={!canEdit}
           >
@@ -473,8 +477,8 @@ function AdvancedTextHud({
         <Flex sx={{ alignItems: "center", gap: 1 }}>
           <IconButton
             onClick={() => onCommand("bold")}
-            title="Bold"
-            aria-label="Bold"
+            title={t("notes.bold")}
+            aria-label={t("notes.bold")}
             sx={buttonSx(formatState.bold)}
             disabled={!canEdit}
           >
@@ -482,8 +486,8 @@ function AdvancedTextHud({
           </IconButton>
           <IconButton
             onClick={() => onCommand("italic")}
-            title="Italic"
-            aria-label="Italic"
+            title={t("notes.italic")}
+            aria-label={t("notes.italic")}
             sx={buttonSx(formatState.italic)}
             disabled={!canEdit}
           >
@@ -494,8 +498,8 @@ function AdvancedTextHud({
         <Flex sx={{ alignItems: "center", gap: 1 }}>
           <IconButton
             onClick={() => onCommand("insertUnorderedList")}
-            title="Bullet list"
-            aria-label="Bullet list"
+            title={t("notes.bulletList")}
+            aria-label={t("notes.bulletList")}
             sx={buttonSx(formatState.ul)}
             disabled={!canEdit}
           >
@@ -503,8 +507,8 @@ function AdvancedTextHud({
           </IconButton>
           <IconButton
             onClick={() => onCommand("insertOrderedList")}
-            title="Numbered list"
-            aria-label="Numbered list"
+            title={t("notes.numberedList")}
+            aria-label={t("notes.numberedList")}
             sx={buttonSx(formatState.ol)}
             disabled={!canEdit}
           >
@@ -512,8 +516,8 @@ function AdvancedTextHud({
           </IconButton>
           <IconButton
             onClick={() => onCommand("formatBlock", "H1")}
-            title="Header 1"
-            aria-label="Header 1"
+            title={t("notes.header1")}
+            aria-label={t("notes.header1")}
             sx={buttonSx()}
             disabled={!canEdit}
           >
@@ -521,8 +525,8 @@ function AdvancedTextHud({
           </IconButton>
           <IconButton
             onClick={() => onCommand("formatBlock", "H2")}
-            title="Header 2"
-            aria-label="Header 2"
+            title={t("notes.header2")}
+            aria-label={t("notes.header2")}
             sx={buttonSx()}
             disabled={!canEdit}
           >
@@ -535,37 +539,41 @@ function AdvancedTextHud({
             <>
               <IconButton
                 onClick={onToggleAttach}
-                title={attachMode ? "Click token to attach" : "Attach to token"}
-                aria-label="Attach to token"
+                title={
+                  attachMode
+                    ? t("notes.clickTokenToAttach")
+                    : t("notes.attachToToken")
+                }
+                aria-label={t("notes.attachToToken")}
                 sx={buttonSx(attachMode || !!note.attachedToTokenId)}
               >
-                <Text sx={{ fontSize: 1 }}>Link</Text>
+                <Text sx={{ fontSize: 1 }}>{t("notes.linkShort")}</Text>
               </IconButton>
               <IconButton
                 onClick={onToggleVisibility}
-                title="Toggle visibility"
-                aria-label="Toggle visibility"
+                title={t("notes.toggleVisibility")}
+                aria-label={t("notes.toggleVisibility")}
                 sx={buttonSx()}
               >
                 <Text sx={{ fontSize: 1 }}>{visibilityLabel}</Text>
               </IconButton>
               <IconButton
                 onClick={onToggleTextVisible}
-                title="Toggle text visibility"
-                aria-label="Toggle text visibility"
+                title={t("notes.toggleTextVisibility")}
+                aria-label={t("notes.toggleTextVisibility")}
                 sx={buttonSx(note.textVisible === false)}
               >
-                <Text sx={{ fontSize: 1 }}>Txt</Text>
+                <Text sx={{ fontSize: 1 }}>{t("notes.textShort")}</Text>
               </IconButton>
             </>
           )}
           <IconButton
             onClick={onRequestClose}
-            title="Done"
-            aria-label="Done"
+            title={t("common.done")}
+            aria-label={t("common.done")}
             sx={buttonSx()}
           >
-            <Text sx={{ fontSize: 1 }}>OK</Text>
+            <Text sx={{ fontSize: 1 }}>{t("common.ok")}</Text>
           </IconButton>
         </Flex>
       </Flex>

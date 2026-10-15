@@ -4,6 +4,8 @@ import { IconButton } from "theme-ui";
 import ChangeNicknameModal from "../../modals/ChangeNicknameModal";
 import ChangeNicknameIcon from "../../icons/ChangeNicknameIcon";
 
+import { useI18n } from "../../i18n";
+
 type ChangeNicknameButtonProps = {
   nickname: string;
   onChange: (nickname: string) => void;
@@ -13,6 +15,7 @@ function ChangeNicknameButton({
   nickname,
   onChange,
 }: ChangeNicknameButtonProps) {
+  const { t } = useI18n();
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false);
   function openModal() {
     setIsChangeModalOpen(true);
@@ -40,8 +43,8 @@ function ChangeNicknameButton({
     <>
       <IconButton
         m={1}
-        aria-label="Change Nickname"
-        title="Change Nickname"
+        aria-label={t("dialogs.changeNickname.title")}
+        title={t("dialogs.changeNickname.title")}
         onClick={openModal}
       >
         <ChangeNicknameIcon />

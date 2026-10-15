@@ -7,6 +7,8 @@ import RerollDiceIcon from "../../icons/RerollDiceIcon";
 import { getDiceRollTotal } from "../../helpers/dice";
 import { DiceRoll } from "../../types/Dice";
 
+import { useI18n } from "../../i18n";
+
 const maxDiceRollsShown = 6;
 
 type DiceResultsProps = {
@@ -20,6 +22,7 @@ function DiceResults({
   onDiceClear,
   onDiceReroll,
 }: DiceResultsProps) {
+  const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (diceRolls.length === 0) {
@@ -58,8 +61,8 @@ function DiceResults({
     >
       <IconButton
         ml="7%"
-        title="Clear Dice"
-        aria-label="Clear Dice"
+        title={t("dice.clearDice")}
+        aria-label={t("dice.clearDice")}
         onClick={onDiceClear}
         sx={{ pointerEvents: "all" }}
       >
@@ -81,8 +84,8 @@ function DiceResults({
         </Text>
         {rolls.length > maxDiceRollsShown ? (
           <Button
-            aria-label={"Show Dice Details"}
-            title={"Show Dice Details"}
+            aria-label={t("dice.showDetails")}
+            title={t("dice.showDetails")}
             onClick={() => setIsExpanded(!isExpanded)}
             variant="secondary"
             sx={{ display: "flex", height: "24px", pointerEvents: "all" }}
@@ -100,8 +103,8 @@ function DiceResults({
       </Flex>
       <IconButton
         mr="7%"
-        title="Reroll Dice"
-        aria-label="Reroll Dice"
+        title={t("dice.rerollDice")}
+        aria-label={t("dice.rerollDice")}
         onClick={onDiceReroll}
         sx={{ pointerEvents: "all" }}
       >

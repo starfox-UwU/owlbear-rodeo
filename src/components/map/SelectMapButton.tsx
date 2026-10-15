@@ -13,6 +13,8 @@ import {
 import { Map } from "../../types/Map";
 import { MapState } from "../../types/MapState";
 
+import { useI18n } from "../../i18n";
+
 type SelectMapButtonProps = {
   onMapChange: MapChangeEventHandler;
   onMapReset: MapResetEventHandler;
@@ -28,6 +30,8 @@ function SelectMapButton({
   currentMapState,
   disabled,
 }: SelectMapButtonProps) {
+  const { t } = useI18n();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { updateMapState } = useMapData();
@@ -46,8 +50,8 @@ function SelectMapButton({
   return (
     <>
       <IconButton
-        aria-label="Select Map"
-        title="Select Map"
+        aria-label={t("maps.selectMap")}
+        title={t("maps.selectMap")}
         onClick={openModal}
         disabled={disabled}
       >

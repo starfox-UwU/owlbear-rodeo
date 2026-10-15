@@ -5,6 +5,8 @@ import ExpandMoreDiceIcon from "../../icons/ExpandMoreDiceIcon";
 
 import { DiceLoadingProvider } from "../../contexts/DiceLoadingContext";
 
+import { useI18n } from "../../i18n";
+
 import useSetting from "../../hooks/useSetting";
 
 import LoadingOverlay from "../LoadingOverlay";
@@ -30,6 +32,7 @@ function DiceTrayButton({
   diceRolls,
   onDiceRollsChange,
 }: DiceTrayButtonProps) {
+  const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(false);
   const [fullScreen] = useSetting("map.fullScreen");
 
@@ -48,8 +51,10 @@ function DiceTrayButton({
       ml={1}
     >
       <IconButton
-        aria-label={isExpanded ? "Hide Dice Tray" : "Show Dice Tray"}
-        title={isExpanded ? "Hide Dice Tray" : "Show Dice Tray"}
+        aria-label={
+          isExpanded ? t("party.diceTray.hide") : t("party.diceTray.show")
+        }
+        title={isExpanded ? t("party.diceTray.hide") : t("party.diceTray.show")}
         onClick={() => setIsExpanded(!isExpanded)}
         sx={{
           display: "block",

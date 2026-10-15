@@ -44,6 +44,8 @@ import {
   RequestCloseEventHandler,
 } from "../types/Events";
 
+import { useI18n } from "../i18n";
+
 type SelectTokensModalProps = {
   isOpen: boolean;
   onRequestClose: RequestCloseEventHandler;
@@ -55,6 +57,7 @@ function SelectTokensModal({
   onRequestClose,
   onMapTokensStateCreate,
 }: SelectTokensModalProps) {
+  const { t } = useI18n();
   const { addToast } = useToasts();
 
   const { databaseStatus } = useDatabase();
@@ -101,7 +104,7 @@ function SelectTokensModal({
     let tokenFiles = [];
     for (let file of files) {
       if (file.size > 5e7) {
-        addToast(`Unable to import token ${file.name} as it is over 50MB`);
+        addToast(t("tokens.importTooLarge", { name: file.name }));
       } else {
         tokenFiles.push(file);
       }
@@ -169,7 +172,7 @@ function SelectTokensModal({
       await addAssets(assets);
     } catch (error) {
       console.error("TOKEN_IMPORT_FAILED", error);
-      addToast("导入标记失败，请稍后重试");
+      addToast(t("tokens.importFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -258,7 +261,7 @@ function SelectTokensModal({
     >
       <ImageDrop
         onDrop={({ files }) => handleImagesUpload(files)}
-        dropText="Drop token to import"
+        dropText={t("tokens.dropToImport")}
       >
         <input
           onChange={(event) =>
@@ -289,11 +292,11 @@ function SelectTokensModal({
               }}
             >
               <Label pt={2} pb={1}>
-                Edit or import a token
+                {t("tokens.editOrImport")}
               </Label>
               <TileActionBar
                 onAdd={openImageDialog}
-                addTitle="Import Token(s)"
+                addTitle={t("tokens.importTokens")}
               />
               <Box sx={{ position: "relative" }}>
                 <TileDragProvider
@@ -337,7 +340,7 @@ function SelectTokensModal({
                 onClick={onRequestClose}
                 mt={2}
               >
-                Done
+                {t("common.done")}
               </Button>
             </Flex>
           </GroupProvider>
@@ -358,9 +361,9 @@ function SelectTokensModal({
         isOpen={isLargeImageWarningModalOpen}
         onRequestClose={handleLargeImageWarningCancel}
         onConfirm={handleLargeImageWarningConfirm}
-        confirmText="Continue"
-        label="Warning"
-        description="An imported image is larger than 20MB, this may cause slowness. Continue?"
+        confirmText={t("tokens.largeImageWarning.confirm")}
+        label={t("tokens.largeImageWarning.label")}
+        description={t("tokens.largeImageWarning.description")}
       />
     </Modal>
   );

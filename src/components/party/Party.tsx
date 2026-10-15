@@ -10,6 +10,8 @@ import StartTimerButton from "./StartTimerButton";
 import Timer from "./Timer";
 import DiceTrayButton from "./DiceTrayButton";
 
+import { useI18n } from "../../i18n";
+
 import useSetting from "../../hooks/useSetting";
 
 import { useParty } from "../../contexts/PartyContext";
@@ -22,6 +24,7 @@ type PartyProps = {
 };
 
 function Party({ gameId }: PartyProps) {
+  const { t } = useI18n();
   const setPlayerState = usePlayerUpdater();
   const playerState = usePlayerState();
   const partyState = useParty();
@@ -115,7 +118,7 @@ function Party({ gameId }: PartyProps) {
           }}
         >
           <Text mb={1} variant="heading" as="h1">
-            Party
+            {t("party.title")}
           </Text>
         </Box>
         <SimpleBar
@@ -128,7 +131,7 @@ function Party({ gameId }: PartyProps) {
           }}
         >
           <Nickname
-            nickname={`${playerState.nickname} (you)`}
+            nickname={t("party.you", { nickname: playerState.nickname })}
             diceRolls={shareDice ? playerState.dice.rolls : undefined}
           />
           {Object.entries(partyState).map(([id, { nickname, dice }]) => (

@@ -5,25 +5,27 @@ import LoadingOverlay from "./LoadingOverlay";
 
 import { shuffle } from "../helpers/shared";
 
-const facts = [
-  "Owls can rotate their necks 270 degrees",
-  "Not all owls hoot",
-  "Owl flight is almost completely silent",
-  "Owls are used to represent the Goddess Athena in Greek mythology",
-  "Owls have the best night vision of any animal",
-  "Bears can run up to 40 mi (~64 km) per hour ",
-  "A hibernating bear’s heart beats at 8 bpm",
-  "Bears can see in colour",
-  "Koala bears are not bears",
-  "A polar bear can swim up to 100 mi (~161 km) without resting",
-  "A group of bears is called a sleuth or sloth",
-  "Not all bears hibernate",
-];
+import { useI18n } from "../i18n";
 
 function UpgradingLoadingOverlay() {
+  const { t } = useI18n();
   const [subText, setSubText] = useState<string>();
 
   useEffect(() => {
+    const facts = [
+      t("common.upgrading.fact1"),
+      t("common.upgrading.fact2"),
+      t("common.upgrading.fact3"),
+      t("common.upgrading.fact4"),
+      t("common.upgrading.fact5"),
+      t("common.upgrading.fact6"),
+      t("common.upgrading.fact7"),
+      t("common.upgrading.fact8"),
+      t("common.upgrading.fact9"),
+      t("common.upgrading.fact10"),
+      t("common.upgrading.fact11"),
+      t("common.upgrading.fact12"),
+    ];
     let index = 0;
     let randomFacts = shuffle(facts);
 
@@ -47,12 +49,12 @@ function UpgradingLoadingOverlay() {
         clearInterval(interval);
       }
     };
-  }, []);
+  }, [t]);
 
   return (
     <LoadingOverlay>
       <Text as="p" variant="body2" m={1}>
-        Database upgrading, please wait...
+        {t("common.upgrading.title")}
       </Text>
       {subText && (
         <>
@@ -62,7 +64,7 @@ function UpgradingLoadingOverlay() {
             variant="caption"
             m={1}
           >
-            We're still working on the upgrade. In the meantime, did you know?
+            {t("common.upgrading.teaser")}
           </Text>
           <Text
             sx={{ maxWidth: "200px", textAlign: "center" }}

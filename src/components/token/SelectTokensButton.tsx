@@ -5,6 +5,7 @@ import SelectTokensIcon from "../../icons/SelectTokensIcon";
 
 import SelectTokensModal from "../../modals/SelectTokensModal";
 import { TokensStateCreateHandler } from "../../types/Events";
+import { useI18n } from "../../i18n";
 
 type SelectTokensButtonProps = {
   onMapTokensStateCreate: TokensStateCreateHandler;
@@ -13,6 +14,7 @@ type SelectTokensButtonProps = {
 function SelectTokensButton({
   onMapTokensStateCreate,
 }: SelectTokensButtonProps) {
+  const { t } = useI18n();
   const [isModalOpen, setIsModalOpen] = useState(false);
   function openModal() {
     setIsModalOpen(true);
@@ -24,8 +26,8 @@ function SelectTokensButton({
   return (
     <>
       <IconButton
-        aria-label="Edit Tokens"
-        title="Edit Tokens"
+        aria-label={t("tokens.editTokens")}
+        title={t("tokens.editTokens")}
         onClick={openModal}
       >
         <SelectTokensIcon />

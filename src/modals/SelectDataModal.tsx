@@ -8,6 +8,8 @@ import Divider from "../components/Divider";
 
 import { getDatabase } from "../database";
 
+import { useI18n } from "../i18n";
+
 import { Map } from "../types/Map";
 import { Group, GroupContainer } from "../types/Group";
 import { MapState } from "../types/MapState";
@@ -32,13 +34,17 @@ type SelectDataProps = {
   isOpen: boolean;
   onRequestClose: RequestCloseEventHandler;
   onConfirm: ConfirmDataEventHandler;
-  confirmText: string;
-  label: string;
-  databaseName: string;
-  filter: (table: string, data: Map | MapState | Token, id: string) => boolean;
+  confirmText?: string;
+  label?: string;
+  databaseName?: string;
+  filter?: (table: string, data: Map | MapState | Token, id: string) => boolean;
 };
 
 type DataRecord = Record<string, SelectData>;
+
+// 默认值必须在模块作用域保持稳定，否则会每次渲染都触发下面的 useEffect
+const defaultFilter = () => true;
+const defaultDatabaseName = "OwlbearRodeoDB";
 
 function SelectDataModal({
   isOpen,
@@ -49,6 +55,14 @@ function SelectDataModal({
   databaseName,
   filter,
 }: SelectDataProps) {
+  const { t } = useI18n();
+
+  // defaultProps 里拿不到 hook，默认值改在组件内用 ?? 兜底
+  const modalLabel = label ?? t("dialogs.selectData.title");
+  const modalConfirmText = confirmText ?? t("common.yes");
+  const modalDatabaseName = databaseName ?? defaultDatabaseName;
+  const modalFilter = filter ?? defaultFilter;
+
   const [maps, setMaps] = useState<DataRecord>({});
   const [mapGroups, setMapGroups] = useState<Group[]>([]);
   const [tokensByMap, setTokensByMap] = useState<Record<string, Set<string>>>(
@@ -63,15 +77,15 @@ function SelectDataModal({
 
   useEffect(() => {
     async function loadData() {
-      if (isOpen && databaseName) {
+      if (isOpen && modalDatabaseName) {
         setIsLoading(true);
-        const db = getDatabase({ addons: [] }, databaseName);
+        const db = getDatabase({ addons: [] }, modalDatabaseName);
         let loadedMaps: DataRecord = {};
         let loadedTokensByMap: Record<string, Set<string>> = {};
         let loadedTokens: DataRecord = {};
         await db
           .table("maps")
-          .filter((map: Map) => filter("maps", map, map.id))
+          .filter((map: Map) => modalFilter("maps", map, map.id))
           .each((map: Map) => {
             loadedMaps[map.id] = {
               name: map.name,
@@ -82,7 +96,7 @@ function SelectDataModal({
           });
         await db
           .table("states")
-          .filter((state: MapState) => filter("states", state, state.mapId))
+          .filter((state: MapState) => modalFilter("states", state, state.mapId))
           .each((state: MapState) => {
             loadedTokensByMap[state.mapId] = new Set(
               Object.values(state.tokens).map(
@@ -93,7 +107,7 @@ function SelectDataModal({
 
         await db
           .table("tokens")
-          .filter((token: Token) => filter("tokens", token, token.id))
+          .filter((token: Token) => modalFilter("tokens", token, token.id))
           .each((token: Token) => {
             loadedTokens[token.id] = {
               name: token.name,
@@ -122,7 +136,7 @@ function SelectDataModal({
       }
     }
     loadData();
-  }, [isOpen, databaseName, filter]);
+  }, [isOpen, modalDatabaseName, modalFilter]);
 
   // An object mapping a tokenId to how many checked maps it is currently used in
   const [tokenUsedCount, setTokenUsedCount] = useState<Record<string, number>>(
@@ -340,8 +354,13 @@ function SelectDataModal({
             </Label>
             {token.id in tokenUsedCount && token.type !== "default" && (
               <Text as="p" variant="caption" ml={4}>
-                Token used in {tokenUsedCount[token.id]} selected map
-                {tokenUsedCount[token.id] > 1 && "s"}
+                {tokenUsedCount[token.id] > 1
+                  ? t("transfer.selectData.tokenUsedInMapsPlural", {
+                      count: tokenUsedCount[token.id],
+                    })
+                  : t("transfer.selectData.tokenUsedInMaps", {
+                      count: tokenUsedCount[token.id],
+                    })}
               </Text>
             )}
           </Box>
@@ -383,10 +402,10 @@ function SelectDataModal({
           flexGrow: 1,
         }}
       >
-        <Label py={2}>{label}</Label>
+        <Label py={2}>{modalLabel}</Label>
         {!hasMaps && !hasTokens && (
           <Text as="p" mb={2} variant="caption">
-            No custom maps or tokens found.
+            {t("transfer.selectData.empty")}
           </Text>
         )}
         <SimpleBar style={{ maxHeight: "300px" }}>
@@ -409,7 +428,7 @@ function SelectDataModal({
                         handleMapsChanged(e, Object.values(maps))
                       }
                     />
-                    Maps
+                    {t("transfer.selectData.maps")}
                   </Label>
                 </Flex>
                 {mapGroups.map(renderMapGroup)}
@@ -425,7 +444,7 @@ function SelectDataModal({
                       handleTokensChanged(e, Object.values(tokens))
                     }
                   />
-                  Tokens
+                  {t("transfer.selectData.tokens")}
                 </Label>
                 {tokenGroups.map(renderTokenGroup)}
               </>
@@ -434,7 +453,7 @@ function SelectDataModal({
         </SimpleBar>
         <Flex py={2}>
           <Button sx={{ flexGrow: 1 }} m={1} ml={0} onClick={onRequestClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             disabled={
@@ -446,7 +465,7 @@ function SelectDataModal({
             mr={0}
             onClick={handleConfirm}
           >
-            {confirmText}
+            {modalConfirmText}
           </Button>
         </Flex>
         {isLoading && <LoadingOverlay bg="overlay" />}
@@ -454,12 +473,5 @@ function SelectDataModal({
     </Modal>
   );
 }
-
-SelectDataModal.defaultProps = {
-  label: "Select data",
-  confirmText: "Yes",
-  filter: () => true,
-  databaseName: "OwlbearRodeoDB",
-};
 
 export default SelectDataModal;

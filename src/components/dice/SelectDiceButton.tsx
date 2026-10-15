@@ -6,6 +6,8 @@ import SelectDiceModal from "../../modals/SelectDiceModal";
 
 import { DefaultDice } from "../../types/Dice";
 
+import { useI18n } from "../../i18n";
+
 type SelectDiceButtonProps = {
   onDiceChange: (dice: DefaultDice) => void;
   currentDice: DefaultDice;
@@ -17,6 +19,7 @@ function SelectDiceButton({
   currentDice,
   disabled,
 }: SelectDiceButtonProps) {
+  const { t } = useI18n();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   function openModal() {
@@ -34,8 +37,8 @@ function SelectDiceButton({
   return (
     <>
       <IconButton
-        aria-label="Select Dice Style"
-        title="Select Dice Style"
+        aria-label={t("dice.selectStyle")}
+        title={t("dice.selectStyle")}
         onClick={openModal}
         disabled={disabled}
       >

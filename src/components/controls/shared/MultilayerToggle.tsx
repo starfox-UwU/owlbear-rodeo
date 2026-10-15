@@ -3,6 +3,8 @@ import { IconButton } from "theme-ui";
 import MultilayerOnIcon from "../../../icons/FogMultilayerOnIcon";
 import MultilayerOffIcon from "../../../icons/FogMultilayerOffIcon";
 
+import { useI18n } from "../../../i18n";
+
 type MultilayerToggleProps = {
   multilayer: boolean;
   onMultilayerChange: (multilayer: boolean) => void;
@@ -14,12 +16,14 @@ function MultilayerToggle({
   onMultilayerChange,
   disabled,
 }: MultilayerToggleProps) {
+  const { t } = useI18n();
+  const label = multilayer
+    ? t("tools.multilayer.disable")
+    : t("tools.multilayer.enable");
   return (
     <IconButton
-      aria-label={
-        multilayer ? "Disable Multilayer (L)" : "Enable Multilayer (L)"
-      }
-      title={multilayer ? "Disable Multilayer (L)" : "Enable Multilayer (L)"}
+      aria-label={label}
+      title={label}
       onClick={() => onMultilayerChange(!multilayer)}
       disabled={disabled}
     >

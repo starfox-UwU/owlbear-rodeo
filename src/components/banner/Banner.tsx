@@ -3,6 +3,8 @@ import { useThemeUI, Close } from "theme-ui";
 import { RequestCloseEventHandler } from "../../types/Events";
 import CSS from "csstype";
 
+import { useI18n } from "../../i18n";
+
 type BannerProps = {
   isOpen: boolean;
   onRequestClose: RequestCloseEventHandler;
@@ -19,6 +21,7 @@ function Banner({
   backgroundColor,
 }: BannerProps) {
   const { theme } = useThemeUI();
+  const { t } = useI18n();
 
   return (
     <Modal
@@ -48,6 +51,8 @@ function Banner({
       {allowClose && (
         <Close
           m={0}
+          title={t("common.close")}
+          aria-label={t("common.close")}
           sx={{ position: "absolute", top: "4px", right: 0 }}
           onClick={onRequestClose}
         />

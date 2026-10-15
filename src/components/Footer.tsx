@@ -1,8 +1,13 @@
 import { Flex } from "theme-ui";
 
 import Link from "./Link";
+import LanguageToggle from "./LanguageToggle";
+
+import { useI18n } from "../i18n";
 
 function Footer() {
+  const { t } = useI18n();
+
   return (
     <Flex
       bg="muted"
@@ -15,20 +20,21 @@ function Footer() {
       }}
     >
       <Link m={2} to="/about" variant="footer">
-        About
+        {t("footer.about")}
       </Link>
       <Link m={2} to="/" variant="footer">
-        Home
+        {t("footer.home")}
       </Link>
       <Link m={2} to="/faq" variant="footer">
-        FAQ
+        {t("footer.faq")}
       </Link>
       <Link m={2} to="/release-notes" variant="footer">
-        Release Notes
+        {t("footer.releaseNotes")}
       </Link>
       <Link m={2} to="/how-to" variant="footer">
-        How To
+        {t("footer.howTo")}
       </Link>
+      <LanguageToggle variant="footer" />
     </Flex>
   );
 }

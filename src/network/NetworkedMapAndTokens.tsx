@@ -15,6 +15,8 @@ import useTokenAttributesSync, {
   TokenAttributeUpdateInput,
 } from "../hooks/useTokenAttributes";
 
+import { useTranslation } from "../i18n";
+
 import Session, { PeerDataEvent, PeerDataProgressEvent } from "./Session";
 import useAssetTransfer from "./useAssetTransfer";
 
@@ -75,6 +77,7 @@ function NetworkedMapAndTokens({
   gameId: string;
 }) {
   const { addToast } = useToasts();
+  const t = useTranslation();
   const userId = useUserId();
   const partyState = useParty();
   const { assetLoadStart, assetProgressUpdate, isLoading } = useMapLoading();
@@ -188,7 +191,7 @@ function NetworkedMapAndTokens({
           // Add no owner toast if we don't have asset in our cache
           if (!cachedAsset) {
             // TODO: Stop toast from appearing multiple times
-            addToast("Unable to find owner for asset");
+            addToast(t("misc.assetTransfer.ownerNotFound"));
           }
           requestingAssetsRef.current.delete(asset.id);
           continue;
@@ -212,7 +215,7 @@ function NetworkedMapAndTokens({
           );
           if (!sentViaP2P) {
             if (!assetApiBase) {
-              addToast("图片服务未配置，无法回退下载");
+              addToast(t("misc.assetTransfer.imageServiceMissing"));
               requestingAssetsRef.current.delete(asset.id);
               assetProgressUpdate({ id: asset.id, total: 1, count: 1 });
               continue;
@@ -238,7 +241,7 @@ function NetworkedMapAndTokens({
               return;
             }
             if (!assetApiBase) {
-              addToast("图片服务未配置，无法回退下载");
+              addToast(t("misc.assetTransfer.imageServiceMissing"));
               requestingAssetsRef.current.delete(asset.id);
               assetProgressUpdate({ id: asset.id, total: 1, count: 1 });
               return;
@@ -268,6 +271,7 @@ function NetworkedMapAndTokens({
     session,
     userId,
     addToast,
+    t,
     getAsset,
     assetLoadStart,
     assetProgressUpdate,
@@ -816,7 +820,7 @@ function NetworkedMapAndTokens({
             );
           } else {
             console.error("ASSET_DOWNLOAD_FAILED", error);
-            addToast("图片下载失败，请稍后重试");
+            addToast(t("misc.assetTransfer.downloadFailed"));
           }
         } finally {
           requestingAssetsRef.current.delete(assetId);
@@ -847,7 +851,7 @@ function NetworkedMapAndTokens({
         delete assetDownloadFailuresRef.current[assetId];
         requestingAssetsRef.current.delete(assetId);
         assetProgressUpdate({ id: assetId, total: 1, count: 1 });
-        addToast("资源传输失败，所有者未找到文件");
+        addToast(t("misc.assetTransfer.transferFailed"));
         const pendingTimeout = pendingAssetTimeoutsRef.current[assetId];
         if (pendingTimeout) {
           clearTimeout(pendingTimeout);

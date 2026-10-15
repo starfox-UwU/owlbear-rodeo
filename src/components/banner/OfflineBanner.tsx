@@ -3,7 +3,11 @@ import { Flex } from "theme-ui";
 import Banner from "./Banner";
 import OfflineIcon from "../../icons/OfflineIcon";
 
+import { useI18n } from "../../i18n";
+
 function OfflineBanner({ isOpen }: { isOpen: boolean }) {
+  const { t } = useI18n();
+
   return (
     <Banner
       isOpen={isOpen}
@@ -20,8 +24,8 @@ function OfflineBanner({ isOpen }: { isOpen: boolean }) {
           justifyContent: "center",
         }}
         bg="overlay"
-        title="Unable to connect to game, refresh to reconnect."
-        aria-label="Unable to connect to game, refresh to reconnect."
+        title={t("common.offlineTooltip")}
+        aria-label={t("common.offlineTooltip")}
       >
         <OfflineIcon />
       </Flex>

@@ -3,7 +3,11 @@ import { Flex } from "theme-ui";
 import Banner from "./Banner";
 import ReconnectingIcon from "../../icons/ReconnectingIcon";
 
+import { useI18n } from "../../i18n";
+
 function ReconnectBanner({ isOpen }: { isOpen: boolean }) {
+  const { t } = useI18n();
+
   return (
     <Banner
       isOpen={isOpen}
@@ -20,8 +24,8 @@ function ReconnectBanner({ isOpen }: { isOpen: boolean }) {
           justifyContent: "center",
         }}
         bg="overlay"
-        title="Disconnected. Attempting to reconnect..."
-        aria-label="Disconnected. Attempting to reconnect..."
+        title={t("common.reconnectTooltip")}
+        aria-label={t("common.reconnectTooltip")}
       >
         <ReconnectingIcon />
       </Flex>

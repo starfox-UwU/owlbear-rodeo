@@ -4,6 +4,8 @@ import { Box, SxProp, Input, Label } from "theme-ui";
 import colors, { colorOptions, Color } from "../../../helpers/colors";
 import MapMenu from "../../map/MapMenu";
 
+import { useI18n } from "../../../i18n";
+
 type ColorCircleProps = {
   color: string;
   selected: boolean;
@@ -11,6 +13,7 @@ type ColorCircleProps = {
 } & SxProp;
 
 function ColorCircle({ color, selected, onClick, sx }: ColorCircleProps) {
+  const { t } = useI18n();
   return (
     <Box
       key={color}
@@ -22,7 +25,7 @@ function ColorCircle({ color, selected, onClick, sx }: ColorCircleProps) {
         ...sx,
       }}
       onClick={onClick}
-      aria-label={`Brush Color ${color}`}
+      aria-label={t("tools.color.brushColor", { color })}
     >
       {selected && (
         <Box
@@ -53,6 +56,7 @@ function ColorControl({
   exclude,
   allowCustom,
 }: ColorControlProps) {
+  const { t } = useI18n();
   const [showColorMenu, setShowColorMenu] = useState(false);
   const [colorMenuOptions, setColorMenuOptions] = useState({});
 
@@ -111,7 +115,7 @@ function ColorControl({
       </Box>
       {allowCustom && (
         <Box px={2} pb={2}>
-          <Label htmlFor="drawing-custom-color">Custom</Label>
+          <Label htmlFor="drawing-custom-color">{t("tools.color.custom")}</Label>
           <Input
             id="drawing-custom-color"
             type="color"

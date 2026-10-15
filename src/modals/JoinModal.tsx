@@ -4,6 +4,8 @@ import { useHistory } from "react-router-dom";
 
 import Modal from "../components/Modal";
 
+import { useI18n } from "../i18n";
+
 import { RequestCloseEventHandler } from "../types/Events";
 
 type JoinModalProps = {
@@ -13,6 +15,7 @@ type JoinModalProps = {
 
 function JoinModal({ isOpen, onRequestClose }: JoinModalProps) {
   let history = useHistory();
+  const { t } = useI18n();
   const [gameId, setGameId] = useState("");
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -45,7 +48,7 @@ function JoinModal({ isOpen, onRequestClose }: JoinModalProps) {
         m={2}
       >
         <Box as="form" onSubmit={handleSubmit}>
-          <Label htmlFor="id">Let me see your identification</Label>
+          <Label htmlFor="id">{t("game.join.idLabel")}</Label>
           <Input
             mt={1}
             mb={3}
@@ -57,7 +60,7 @@ function JoinModal({ isOpen, onRequestClose }: JoinModalProps) {
           />
           <Flex>
             <Button sx={{ flexGrow: 1 }} disabled={!gameId}>
-              Join
+              {t("dialogs.join.submit")}
             </Button>
           </Flex>
         </Box>

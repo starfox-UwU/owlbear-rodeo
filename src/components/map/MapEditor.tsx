@@ -26,12 +26,16 @@ import { Map } from "../../types/Map";
 import { GridInset } from "../../types/Grid";
 import { MapSettingsChangeEventHandler } from "../../types/Events";
 
+import { useI18n } from "../../i18n";
+
 type MapEditorProps = {
   map: Map;
   onSettingsChange: MapSettingsChangeEventHandler;
 };
 
 function MapEditor({ map, onSettingsChange }: MapEditorProps) {
+  const { t } = useI18n();
+
   const [mapImage] = useMapImage(map);
 
   const [stageWidth, setStageWidth] = useState(1);
@@ -168,8 +172,8 @@ function MapEditor({ map, onSettingsChange }: MapEditorProps) {
           </ReactResizeDetector>
           {gridChanged && gridValid && (
             <IconButton
-              title="Reset Grid"
-              aria-label="Reset Grid"
+              title={t("maps.resetGrid")}
+              aria-label={t("maps.resetGrid")}
               onClick={handleMapReset}
               bg="overlay"
               sx={{
@@ -185,10 +189,14 @@ function MapEditor({ map, onSettingsChange }: MapEditorProps) {
           )}
           <IconButton
             title={
-              showGridControls ? "Hide Grid Controls" : "Show Grid Controls"
+              showGridControls
+                ? t("maps.hideGridControls")
+                : t("maps.showGridControls")
             }
             aria-label={
-              showGridControls ? "Hide Grid Controls" : "Show Grid Controls"
+              showGridControls
+                ? t("maps.hideGridControls")
+                : t("maps.showGridControls")
             }
             onClick={() => setShowGridControls(!showGridControls)}
             bg="overlay"

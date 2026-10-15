@@ -13,6 +13,8 @@ import { TokenState } from "../../types/TokenState";
 import { TokenNoteStyle } from "../../types/TokenNote";
 import type { TokenNoteLockReleaseReason } from "../../network/TokenNoteLockProtocol";
 
+import { useI18n } from "../../i18n";
+
 type TokenNoteSheetProps = {
   isOpen: boolean;
   tokenState?: TokenState;
@@ -56,16 +58,17 @@ function TokenNoteSheet({
   onContentChange,
   onStyleChange,
 }: TokenNoteSheetProps) {
+  const { t } = useI18n();
   const [colorMode] = useColorMode();
   const sheetRef = useRef<HTMLDivElement>(null);
   const isLocked = !!lockOwnerId;
   const releaseMessage =
     lockReleaseReason === "timeout"
-      ? "对方超时，便签已解锁"
+      ? t("tokens.sheet.unlockedTimeout")
       : lockReleaseReason === "disconnect"
-      ? "对方断开，便签已解锁"
+      ? t("tokens.sheet.unlockedDisconnect")
       : lockReleaseReason === "owner"
-      ? "对方已结束编辑"
+      ? t("tokens.sheet.unlockedOwner")
       : "";
   useEffect(() => {
     if (!isOpen) {
@@ -105,7 +108,7 @@ function TokenNoteSheet({
         ? "Bree Serif, serif"
         : "inherit";
   const fontSizeValue = fontSize === "sm" ? "12px" : fontSize === "lg" ? "16px" : "14px";
-  const headerTitle = tokenState?.label || token?.name || "Token";
+  const headerTitle = tokenState?.label || token?.name || t("tokens.fallbackName");
 
   const palette = [
     { id: "red", color: "rgba(220, 70, 70, 0.2)" },
@@ -172,21 +175,33 @@ function TokenNoteSheet({
           <Flex sx={{ alignItems: "center", gap: 1 }}>
             {canEdit && !isEditing && !isLocked && (
               <IconButton
-                aria-label="Edit"
-                title="Edit"
+                aria-label={t("common.edit")}
+                title={t("common.edit")}
                 onClick={onRequestEdit}
               >
                 <EditTileIcon />
               </IconButton>
             )}
             <IconButton
-              aria-label={isExpanded ? "Exit Fullscreen" : "Fullscreen"}
-              title={isExpanded ? "Exit Fullscreen" : "Fullscreen"}
+              aria-label={
+                isExpanded
+                  ? t("tokens.sheet.exitFullscreen")
+                  : t("tokens.sheet.fullscreen")
+              }
+              title={
+                isExpanded
+                  ? t("tokens.sheet.exitFullscreen")
+                  : t("tokens.sheet.fullscreen")
+              }
               onClick={onToggleExpanded}
             >
               {isExpanded ? <FullScreenExitIcon /> : <FullScreenIcon />}
             </IconButton>
-            <IconButton aria-label="Close" title="Close" onClick={onRequestClose}>
+            <IconButton
+              aria-label={t("common.close")}
+              title={t("common.close")}
+              onClick={onRequestClose}
+            >
               <Text as="span">X</Text>
             </IconButton>
           </Flex>
@@ -203,7 +218,7 @@ function TokenNoteSheet({
         />
         {isLocked && (
           <Text variant="caption" sx={{ px: [2, 3], pb: 2 }}>
-            对方正在输入…
+            {t("tokens.sheet.remoteTyping")}
           </Text>
         )}
         {!isLocked && releaseMessage && (
@@ -218,19 +233,19 @@ function TokenNoteSheet({
                 variant="secondary"
                 onClick={() => onStyleChange({ fontFamily: "default" })}
               >
-                System
+                {t("settings.fontSystem")}
               </Button>
               <Button
                 variant="secondary"
                 onClick={() => onStyleChange({ fontFamily: "handwritten" })}
               >
-                Handwritten
+                {t("settings.fontHandwritten")}
               </Button>
               <Button
                 variant="secondary"
                 onClick={() => onStyleChange({ fontFamily: "rune" })}
               >
-                Runic
+                {t("settings.fontRunic")}
               </Button>
             </Flex>
             <Flex sx={{ gap: 1 }}>

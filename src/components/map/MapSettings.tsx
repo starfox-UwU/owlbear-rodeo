@@ -17,34 +17,13 @@ import {
 } from "../../types/Events";
 import { Grid, GridMeasurementType, GridType } from "../../types/Grid";
 
+import { useI18n } from "../../i18n";
+
 type QualityTypeSetting = { value: MapQuality; label: string };
-const qualitySettings: QualityTypeSetting[] = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "ultra", label: "Ultra High" },
-  { value: "original", label: "Original" },
-];
 
 type GridTypeSetting = { value: GridType; label: string };
-const gridTypeSettings: GridTypeSetting[] = [
-  { value: "square", label: "Square" },
-  { value: "hexVertical", label: "Hex Vertical" },
-  { value: "hexHorizontal", label: "Hex Horizontal" },
-];
 
 type GridMeasurementTypeSetting = { value: GridMeasurementType; label: string };
-const gridSquareMeasurementTypeSettings: GridMeasurementTypeSetting[] = [
-  { value: "chebyshev", label: "Chessboard (D&D 5e)" },
-  { value: "alternating", label: "Alternating Diagonal (D&D 3.5e)" },
-  { value: "euclidean", label: "Euclidean" },
-  { value: "manhattan", label: "Manhattan" },
-];
-
-const gridHexMeasurementTypeSettings: GridMeasurementTypeSetting[] = [
-  { value: "manhattan", label: "Manhattan" },
-  { value: "euclidean", label: "Euclidean" },
-];
 
 type MapSettingsProps = {
   map: Map;
@@ -59,6 +38,34 @@ function MapSettings({
   onSettingsChange,
   onStateSettingsChange,
 }: MapSettingsProps) {
+  const { t } = useI18n();
+
+  const qualitySettings: QualityTypeSetting[] = [
+    { value: "low", label: t("maps.quality.low") },
+    { value: "medium", label: t("maps.quality.medium") },
+    { value: "high", label: t("maps.quality.high") },
+    { value: "ultra", label: t("maps.quality.ultra") },
+    { value: "original", label: t("maps.quality.original") },
+  ];
+
+  const gridTypeSettings: GridTypeSetting[] = [
+    { value: "square", label: t("maps.gridType.square") },
+    { value: "hexVertical", label: t("maps.gridType.hexVertical") },
+    { value: "hexHorizontal", label: t("maps.gridType.hexHorizontal") },
+  ];
+
+  const gridSquareMeasurementTypeSettings: GridMeasurementTypeSetting[] = [
+    { value: "chebyshev", label: t("maps.gridMeasurement.chebyshev") },
+    { value: "alternating", label: t("maps.gridMeasurement.alternating") },
+    { value: "euclidean", label: t("maps.gridMeasurement.euclidean") },
+    { value: "manhattan", label: t("maps.gridMeasurement.manhattan") },
+  ];
+
+  const gridHexMeasurementTypeSettings: GridMeasurementTypeSetting[] = [
+    { value: "manhattan", label: t("maps.gridMeasurement.manhattan") },
+    { value: "euclidean", label: t("maps.gridMeasurement.euclidean") },
+  ];
+
   function handleFlagChange(
     event: React.ChangeEvent<HTMLInputElement>,
     flag: EditFlag
@@ -175,7 +182,7 @@ function MapSettings({
     <Flex sx={{ flexDirection: "column" }}>
       <Flex>
         <Box mt={2} mr={1} sx={{ flexGrow: 1 }}>
-          <Label htmlFor="gridX">Columns</Label>
+          <Label htmlFor="gridX">{t("maps.columns")}</Label>
           <Input
             type="number"
             name="gridX"
@@ -187,7 +194,7 @@ function MapSettings({
           />
         </Box>
         <Box mt={2} ml={1} sx={{ flexGrow: 1 }}>
-          <Label htmlFor="gridY">Rows</Label>
+          <Label htmlFor="gridY">{t("maps.rows")}</Label>
           <Input
             type="number"
             name="gridY"
@@ -200,7 +207,7 @@ function MapSettings({
         </Box>
       </Flex>
       <Box mt={2} sx={{ flexGrow: 1 }}>
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name">{t("common.name")}</Label>
         <Input
           name="name"
           value={(map && map.name) || ""}
@@ -216,7 +223,7 @@ function MapSettings({
       >
         <Flex sx={{ alignItems: "flex-end" }}>
           <Box sx={{ width: "50%" }}>
-            <Label>Grid Type</Label>
+            <Label>{t("maps.gridType.label")}</Label>
             <Select
               isDisabled={mapEmpty}
               options={gridTypeSettings}
@@ -238,7 +245,7 @@ function MapSettings({
                   onSettingsChange({ showGrid: e.target.checked })
                 }
               />
-              Draw Grid
+              {t("maps.drawGrid")}
             </Label>
             <Label>
               <Checkbox
@@ -248,13 +255,13 @@ function MapSettings({
                   onSettingsChange({ snapToGrid: e.target.checked })
                 }
               />
-              Snap to Grid
+              {t("maps.snapToGrid")}
             </Label>
           </Flex>
         </Flex>
         <Flex sx={{ alignItems: "flex-end" }}>
           <Box my={2} sx={{ width: "50%" }}>
-            <Label>Grid Measurement</Label>
+            <Label>{t("maps.gridMeasurement.label")}</Label>
             <Select
               isDisabled={mapEmpty}
               options={
@@ -274,7 +281,7 @@ function MapSettings({
             />
           </Box>
           <Box m={2} mr={0} sx={{ flexGrow: 1 }}>
-            <Label htmlFor="gridMeasurementScale">Grid Scale</Label>
+            <Label htmlFor="gridMeasurementScale">{t("maps.gridScale")}</Label>
             <Input
               name="gridMeasurementScale"
               value={`${map && map.grid.measurement.scale}`}
@@ -290,7 +297,7 @@ function MapSettings({
       {!mapEmpty && map.type !== "default" && (
         <Flex my={2} sx={{ alignItems: "center" }}>
           <Box mb={1} sx={{ width: "50%" }}>
-            <Label>Quality</Label>
+            <Label>{t("maps.quality.label")}</Label>
             <Select
               options={qualitySettings}
               value={
@@ -310,13 +317,15 @@ function MapSettings({
             />
           </Box>
           <Label sx={{ width: "50%" }} ml={2}>
-            Size: {mapSize > 0 && `${mapSize}MB`}
+            {mapSize > 0
+              ? t("maps.sizeWithUnit", { size: mapSize })
+              : t("maps.sizeLabel")}
           </Label>
         </Flex>
       )}
       <Divider fill />
       <Box my={2} sx={{ flexGrow: 1 }}>
-        <Label>Allow Others to Edit</Label>
+        <Label>{t("maps.allowOthersEdit")}</Label>
         <Flex my={1}>
           <Label>
             <Checkbox
@@ -324,7 +333,7 @@ function MapSettings({
               disabled={mapStateEmpty}
               onChange={(e) => handleFlagChange(e, "fog")}
             />
-            Fog
+            {t("maps.editFog")}
           </Label>
           <Label>
             <Checkbox
@@ -332,7 +341,7 @@ function MapSettings({
               disabled={mapStateEmpty}
               onChange={(e) => handleFlagChange(e, "drawing")}
             />
-            Drawings
+            {t("maps.editDrawings")}
           </Label>
           <Label>
             <Checkbox
@@ -340,7 +349,7 @@ function MapSettings({
               disabled={mapStateEmpty}
               onChange={(e) => handleFlagChange(e, "tokens")}
             />
-            Tokens
+            {t("maps.editTokens")}
           </Label>
           <Label>
             <Checkbox
@@ -348,7 +357,7 @@ function MapSettings({
               disabled={mapStateEmpty}
               onChange={(e) => handleFlagChange(e, "notes")}
             />
-            Notes
+            {t("maps.editNotes")}
           </Label>
         </Flex>
       </Box>

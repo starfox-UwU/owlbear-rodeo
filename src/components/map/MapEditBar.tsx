@@ -19,6 +19,8 @@ import {
   MapResetEventHandler,
 } from "../../types/Events";
 
+import { useI18n } from "../../i18n";
+
 type MapEditBarProps = {
   currentMap: Map | null;
   disabled: boolean;
@@ -34,6 +36,8 @@ function MapEditBar({
   onMapReset,
   onLoad,
 }: MapEditBarProps) {
+  const { t } = useI18n();
+
   const [hasMapState, setHasMapState] = useState(false);
 
   const { maps, mapStates, removeMaps, resetMap } = useMapData();
@@ -134,22 +138,22 @@ function MapEditBar({
       bg="overlay"
     >
       <Close
-        title="Clear Selection"
-        aria-label="Clear Selection"
+        title={t("maps.clearSelection")}
+        aria-label={t("maps.clearSelection")}
         onClick={() => onClearSelection()}
       />
       <Flex>
         <IconButton
-          aria-label="Reset Selected Map(s)"
-          title="Reset Selected Map(s)"
+          aria-label={t("maps.resetSelected")}
+          title={t("maps.resetSelected")}
           onClick={() => setIsMapsResetModalOpen(true)}
           disabled={!hasMapState}
         >
           <ResetMapIcon />
         </IconButton>
         <IconButton
-          aria-label="Remove Selected Map(s)"
-          title="Remove Selected Map(s)"
+          aria-label={t("maps.removeSelected")}
+          title={t("maps.removeSelected")}
           onClick={() => setIsMapsRemoveModalOpen(true)}
         >
           <RemoveMapIcon />
@@ -159,17 +163,17 @@ function MapEditBar({
         isOpen={isMapsResetModalOpen}
         onRequestClose={() => setIsMapsResetModalOpen(false)}
         onConfirm={handleMapsReset}
-        confirmText="Reset"
-        label="Reset Selected Map(s)"
-        description="This will remove all fog, drawings and tokens from the selected maps."
+        confirmText={t("common.reset")}
+        label={t("maps.resetSelected")}
+        description={t("maps.resetSelectedDescription")}
       />
       <ConfirmModal
         isOpen={isMapsRemoveModalOpen}
         onRequestClose={() => setIsMapsRemoveModalOpen(false)}
         onConfirm={handleMapsRemove}
-        confirmText="Remove"
-        label="Remove Selected Map(s)"
-        description="This operation cannot be undone."
+        confirmText={t("common.remove")}
+        label={t("maps.removeSelected")}
+        description={t("maps.removeSelectedDescription")}
       />
     </Flex>
   );

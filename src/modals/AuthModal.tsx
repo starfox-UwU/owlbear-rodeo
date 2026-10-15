@@ -5,12 +5,15 @@ import { useAuth } from "../contexts/AuthContext";
 
 import Modal from "../components/Modal";
 
+import { useI18n } from "../i18n";
+
 type AuthModalProps = {
   isOpen: boolean;
   onSubmit: (newPassword: string) => void;
 };
 
 function AuthModal({ isOpen, onSubmit }: AuthModalProps) {
+  const { t } = useI18n();
   const { password, setPassword } = useAuth();
   const [tmpPassword, setTempPassword] = useState<string>(password);
 
@@ -33,7 +36,7 @@ function AuthModal({ isOpen, onSubmit }: AuthModalProps) {
     <Modal isOpen={isOpen} allowClose={false} onAfterOpen={focusInput}>
       <Box as="form" onSubmit={handleSubmit}>
         <Label py={2} htmlFor="password">
-          Enter password
+          {t("game.auth.passwordLabel")}
         </Label>
         <Input
           id="password"
@@ -43,7 +46,7 @@ function AuthModal({ isOpen, onSubmit }: AuthModalProps) {
           autoComplete="off"
         />
         <Flex py={2}>
-          <Button sx={{ flexGrow: 1 }}>Join</Button>
+          <Button sx={{ flexGrow: 1 }}>{t("dialogs.auth.submit")}</Button>
         </Flex>
       </Box>
     </Modal>

@@ -48,6 +48,8 @@ import { useUserId } from "../../contexts/UserIdContext";
 import { isEmpty } from "../../helpers/shared";
 import { MapActions } from "../../hooks/useMapActions";
 
+import { useI18n } from "../../i18n";
+
 type MapControlsProps = {
   onMapChange: MapChangeEventHandler;
   onMapReset: MapResetEventHandler;
@@ -87,6 +89,8 @@ function MapContols({
   onUndo,
   onRedo,
 }: MapControlsProps) {
+  const { t } = useI18n();
+
   const [isExpanded, setIsExpanded] = useState(true);
   const [fullScreen, setFullScreen] = useSetting("map.fullScreen");
 
@@ -177,58 +181,58 @@ function MapContols({
     move: {
       id: "move",
       icon: <MoveToolIcon />,
-      title: "Move Tool (W)",
+      title: t("maps.tools.move"),
     },
     select: {
       id: "select",
       icon: <SelectToolIcon />,
-      title: "Select Tool (S)",
+      title: t("maps.tools.select"),
       SettingsComponent: SelectToolSettings,
     },
     effect: {
       id: "effect",
       icon: <SelectToolIcon />,
-      title: "Effect Tool",
+      title: t("maps.tools.effect"),
       SettingsComponent: SelectToolSettings,
     },
     fog: {
       id: "fog",
       icon: <FogToolIcon />,
-      title: "Fog Tool (F)",
+      title: t("maps.tools.fog"),
       SettingsComponent: FogToolSettings,
     },
     drawing: {
       id: "drawing",
       icon: <BrushToolIcon />,
-      title: "Drawing Tool (D)",
+      title: t("maps.tools.drawing"),
       SettingsComponent: DrawingToolSettings,
     },
     spellTemplates: {
       id: "spellTemplates",
       icon: <SpellTemplateToolIcon />,
-      title: "Spell Templates (A)",
+      title: t("maps.tools.spellTemplates"),
       SettingsComponent: SpellTemplateToolSettings,
     },
     measure: {
       id: "measure",
       icon: <MeasureToolIcon />,
-      title: "Measure Tool (M)",
+      title: t("maps.tools.measure"),
     },
     pointer: {
       id: "pointer",
       icon: <PointerToolIcon />,
-      title: "Pointer Tool (Q)",
+      title: t("maps.tools.pointer"),
       SettingsComponent: PointerToolSettings,
     },
     text: {
       id: "text",
       icon: <TextToolIcon />,
-      title: "Text Tool (X)",
+      title: t("maps.tools.text"),
     },
     note: {
       id: "note",
       icon: <NoteToolIcon />,
-      title: "Note Tool (N)",
+      title: t("maps.tools.note"),
     },
   };
   const tools: MapToolId[] = [
@@ -263,8 +267,8 @@ function MapContols({
             id: "import",
             component: (
               <IconButton
-                aria-label="通过 URL 导入"
-                title="通过 URL 导入"
+                aria-label={t("maps.importFromUrl")}
+                title={t("maps.importFromUrl")}
                 onClick={imageImport.openImportFromUrl}
               >
                 <PasteIcon />
@@ -291,8 +295,8 @@ function MapContols({
       id: "tokenNotes",
       component: (
         <IconButton
-          aria-label="Token Note Mode"
-          title="Token Note Mode"
+          aria-label={t("maps.tokenNoteMode")}
+          title={t("maps.tokenNoteMode")}
           onClick={() =>
             onToolSettingChange({
               tokenNote: {
@@ -345,8 +349,8 @@ function MapContols({
     controls = (
       <>
         <IconButton
-          aria-label={isExpanded ? "Hide Map Controls" : "Show Map Controls"}
-          title={isExpanded ? "Hide Map Controls" : "Show Map Controls"}
+          aria-label={isExpanded ? t("maps.hideControls") : t("maps.showControls")}
+          title={isExpanded ? t("maps.hideControls") : t("maps.showControls")}
           onClick={() => setIsExpanded(!isExpanded)}
           sx={{
             transform: `rotate(${isExpanded ? "0" : "180deg"})`,
@@ -528,8 +532,12 @@ function MapContols({
       >
         <IconButton
           onClick={() => setFullScreen(!fullScreen)}
-          aria-label={fullScreen ? "Exit Full Screen" : "Enter Full Screen"}
-          title={fullScreen ? "Exit Full Screen" : "Enter Full Screen"}
+          aria-label={
+            fullScreen ? t("maps.exitFullScreen") : t("maps.enterFullScreen")
+          }
+          title={
+            fullScreen ? t("maps.exitFullScreen") : t("maps.enterFullScreen")
+          }
         >
           {fullScreen ? <FullScreenExitIcon /> : <FullScreenIcon />}
         </IconButton>

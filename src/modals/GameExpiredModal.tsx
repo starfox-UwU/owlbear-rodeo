@@ -2,6 +2,8 @@ import { Box, Label, Flex, Button, Text } from "theme-ui";
 
 import Modal from "../components/Modal";
 
+import { useI18n } from "../i18n";
+
 import { RequestCloseEventHandler } from "../types/Events";
 
 type GameExpiredModalProps = {
@@ -10,6 +12,8 @@ type GameExpiredModalProps = {
 };
 
 function GameExpiredModal({ isOpen, onRequestClose }: GameExpiredModalProps) {
+  const { t } = useI18n();
+
   return (
     <Modal
       isOpen={isOpen}
@@ -17,13 +21,13 @@ function GameExpiredModal({ isOpen, onRequestClose }: GameExpiredModalProps) {
       style={{ content: { maxWidth: "450px" } }}
     >
       <Box>
-        <Label py={2}>Game Timed Out</Label>
+        <Label py={2}>{t("game.gameExpired.title")}</Label>
         <Text as="p" mb={2} variant="caption">
-          Reselect your map to pick up where you left off.
+          {t("game.gameExpired.description")}
         </Text>
         <Flex py={2}>
           <Button sx={{ flexGrow: 1 }} m={1} ml={0} onClick={onRequestClose}>
-            Ok
+            {t("common.ok")}
           </Button>
         </Flex>
       </Box>

@@ -2,7 +2,11 @@ import { Box, Label, Text } from "theme-ui";
 
 import Modal from "../components/Modal";
 
+import { useI18n } from "../i18n";
+
 function ForceUpdateModal({ isOpen }: { isOpen: boolean }) {
+  const { t } = useI18n();
+
   return (
     <Modal
       isOpen={isOpen}
@@ -10,9 +14,9 @@ function ForceUpdateModal({ isOpen }: { isOpen: boolean }) {
       style={{ content: { maxWidth: "450px" } }}
     >
       <Box>
-        <Label py={2}>New Update Available</Label>
+        <Label py={2}>{t("game.forceUpdate.title")}</Label>
         <Text as="p" mb={2} variant="caption">
-          Please refresh your browser to update to the latest version.
+          {t("game.forceUpdate.description")}
         </Text>
       </Box>
     </Modal>

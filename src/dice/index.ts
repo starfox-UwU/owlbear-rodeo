@@ -20,6 +20,7 @@ import GemstonePreview from "./gemstone/preview.png";
 import Dice from "./Dice";
 
 import { DefaultDice } from "../types/Dice";
+import type { TranslationKey } from "../i18n/core";
 
 type DiceClasses = Record<string, typeof Dice>;
 
@@ -53,3 +54,21 @@ export const dice: DefaultDice[] = Object.keys(diceClasses).map((key) => ({
   class: diceClasses[key],
   preview: dicePreviews[key],
 }));
+
+/**
+ * 骰子样式名的本地化键。
+ *
+ * `dice[].name` 仍是 `Case.capital(key)` 的英文原名（非 UI 场景/兜底用）；
+ * 界面展示时请用这里的键调用 `t()`，例如 `t(diceNameKeys[dice.key])`。
+ * 之所以不改 `DefaultDice` 类型，是因为该类型由 `src/types/Dice.ts` 定义。
+ */
+export const diceNameKeys: Record<string, TranslationKey> = {
+  galaxy: "dice.styles.galaxy",
+  nebula: "dice.styles.nebula",
+  sunrise: "dice.styles.sunrise",
+  sunset: "dice.styles.sunset",
+  iron: "dice.styles.iron",
+  walnut: "dice.styles.walnut",
+  glass: "dice.styles.glass",
+  gemstone: "dice.styles.gemstone",
+};

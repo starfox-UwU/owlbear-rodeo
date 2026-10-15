@@ -4,6 +4,8 @@ import { useGroup } from "../../contexts/GroupContext";
 
 import { findGroup } from "../../helpers/group";
 
+import { useI18n } from "../../i18n";
+
 type SelectMapSelectButtonProps = {
   onMapSelect: (mapId: string) => void;
   disabled: boolean;
@@ -13,6 +15,8 @@ function SelectMapSelectButton({
   onMapSelect,
   disabled,
 }: SelectMapSelectButtonProps) {
+  const { t } = useI18n();
+
   const { activeGroups, selectedGroupIds } = useGroup();
 
   function handleSelectClick() {
@@ -31,7 +35,7 @@ function SelectMapSelectButton({
       onClick={handleSelectClick}
       mt={2}
     >
-      Select
+      {t("tools.select")}
     </Button>
   );
 }

@@ -9,6 +9,8 @@ import { TokenNoteStyle } from "../../types/TokenNote";
 import EditTileIcon from "../../icons/EditTileIcon";
 import TokenNoteEditor from "./TokenNoteEditor";
 
+import { useI18n } from "../../i18n";
+
 type TokenNotePopoverProps = {
   isOpen: boolean;
   tokenState?: TokenState;
@@ -44,6 +46,7 @@ function TokenNotePopover({
   onEditorBlur,
   onContentChange,
 }: TokenNotePopoverProps) {
+  const { t } = useI18n();
   const [colorMode] = useColorMode();
   const interactionEmitter = useInteractionEmitter();
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -152,7 +155,7 @@ function TokenNotePopover({
       : style.fontFamily === "rune"
         ? "Bree Serif, serif"
         : "inherit";
-  const headerTitle = tokenState?.label || token?.name || "Token";
+  const headerTitle = tokenState?.label || token?.name || t("tokens.fallbackName");
 
   return (
     <Box
@@ -181,8 +184,8 @@ function TokenNotePopover({
         <Flex sx={{ alignItems: "center", gap: 1 }}>
           {canEdit && !isEditing && !lockOwnerId && (
             <IconButton
-              aria-label="Edit"
-              title="Edit"
+              aria-label={t("common.edit")}
+              title={t("common.edit")}
               onClick={onRequestEdit}
               sx={{ p: 1 }}
             >
@@ -194,16 +197,20 @@ function TokenNotePopover({
             onClick={onRequestExpand}
             sx={{ fontSize: "12px", px: 2, py: 0 }}
           >
-            展开
+            {t("tokens.sheet.expand")}
           </Button>
-          <IconButton aria-label="Close" title="Close" onClick={onRequestClose}>
+          <IconButton
+            aria-label={t("common.close")}
+            title={t("common.close")}
+            onClick={onRequestClose}
+          >
             <Text as="span">X</Text>
           </IconButton>
         </Flex>
       </Flex>
       {lockOwnerId && (
         <Text variant="caption" sx={{ px: 2, pb: 1 }}>
-          对方正在输入…
+          {t("tokens.sheet.remoteTyping")}
         </Text>
       )}
       <Box

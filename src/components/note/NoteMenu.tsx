@@ -26,6 +26,8 @@ import {
 import { Note } from "../../types/Note";
 import { Map } from "../../types/Map";
 
+import { useI18n } from "../../i18n";
+
 type NoteMenuProps = {
   isOpen: boolean;
   onRequestClose: RequestCloseEventHandler;
@@ -45,6 +47,8 @@ function NoteMenu({
   onNoteChange,
   map,
 }: NoteMenuProps) {
+  const { t } = useI18n();
+
   const userId = useUserId();
 
   const wasOpen = usePrevious(isOpen);
@@ -173,7 +177,7 @@ function NoteMenu({
                   cursor: "pointer",
                 }}
                 onClick={() => handleColorChange(color)}
-                aria-label={`Note label Color ${color}`}
+                aria-label={t("notes.colorLabel", { color })}
               >
                 {note && note.color === color && (
                   <Box
@@ -195,22 +199,22 @@ function NoteMenu({
           <Flex sx={{ alignItems: "center", justifyContent: "space-around" }}>
             <IconButton
               onClick={handleVisibleChange}
-              title={note && note.visible ? "Hide Note" : "Show Note"}
-              aria-label={note && note.visible ? "Hide Note" : "Show Note"}
+              title={note && note.visible ? t("notes.hideNote") : t("notes.showNote")}
+              aria-label={note && note.visible ? t("notes.hideNote") : t("notes.showNote")}
             >
               {note && note.visible ? <ShowIcon /> : <HideIcon />}
             </IconButton>
             <IconButton
               onClick={handleLockChange}
-              title={note && note.locked ? "Unlock Note" : "Lock Note"}
-              aria-label={note && note.locked ? "Unlock Note" : "Lock Note"}
+              title={note && note.locked ? t("notes.unlockNote") : t("notes.lockNote")}
+              aria-label={note && note.locked ? t("notes.unlockNote") : t("notes.lockNote")}
             >
               {note && note.locked ? <LockIcon /> : <UnlockIcon />}
             </IconButton>
             <IconButton
               onClick={handleModeChange}
-              title={note && note.textOnly ? "Note Mode" : "Text Mode"}
-              aria-label={note && note.textOnly ? "Note Mode" : "Text Mode"}
+              title={note && note.textOnly ? t("notes.noteMode") : t("notes.textMode")}
+              aria-label={note && note.textOnly ? t("notes.noteMode") : t("notes.textMode")}
             >
               {note && note.textOnly ? <TextIcon /> : <NoteIcon />}
             </IconButton>

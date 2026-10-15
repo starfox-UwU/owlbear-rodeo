@@ -9,12 +9,15 @@ import RadioIconButton from "../RadioIconButton";
 
 import { useGroup } from "../../contexts/GroupContext";
 
+import { useI18n } from "../../i18n";
+
 type TileActionBarProps = {
   onAdd: () => void;
   addTitle: string;
 };
 
 function TileActionBar({ onAdd, addTitle }: TileActionBarProps) {
+  const { t } = useI18n();
   const {
     selectMode,
     onSelectModeChange,
@@ -51,14 +54,14 @@ function TileActionBar({ onAdd, addTitle }: TileActionBarProps) {
         }}
       >
         <RadioIconButton
-          title="Select Single"
+          title={t("tokens.tile.selectSingle")}
           onClick={() => onSelectModeChange("single")}
           isSelected={selectMode === "single"}
         >
           <SelectSingleIcon />
         </RadioIconButton>
         <RadioIconButton
-          title="Select Multiple"
+          title={t("tokens.tile.selectMultiple")}
           onClick={() => onSelectModeChange("multiple")}
           isSelected={selectMode === "multiple" || selectMode === "range"}
         >

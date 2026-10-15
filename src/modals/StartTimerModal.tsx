@@ -3,6 +3,8 @@ import { Box, Label, Input, Button, Flex, Text } from "theme-ui";
 
 import Modal from "../components/Modal";
 
+import { useI18n } from "../i18n";
+
 import { getHMSDuration, getDurationHMS } from "../helpers/timer";
 
 import useSetting from "../hooks/useSetting";
@@ -29,6 +31,7 @@ function StartTimerModal({
   onTimerStop,
   timer,
 }: StartTimerProps) {
+  const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   function focusInput() {
     inputRef.current && inputRef.current.focus();
@@ -85,7 +88,7 @@ function StartTimerModal({
         m={2}
       >
         <Box as="form" onSubmit={handleSubmit}>
-          <Label py={2}>Start a countdown timer</Label>
+          <Label py={2}>{t("game.startTimer.label")}</Label>
           <Flex mb={2} sx={{ flexGrow: 1, alignItems: "baseline" }}>
             <Text as="label" variant="body2" sx={{ fontSize: "16px" }} p={1}>
               H:
@@ -130,7 +133,7 @@ function StartTimerModal({
               sx={{ flexGrow: 1 }}
               disabled={hour === 0 && minute === 0 && second === 0}
             >
-              {timer ? "Stop Timer" : "Start Timer"}
+              {timer ? t("game.startTimer.stop") : t("game.startTimer.start")}
             </Button>
           </Flex>
         </Box>

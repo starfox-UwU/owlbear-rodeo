@@ -21,6 +21,8 @@ import SettingsIcon from "../../icons/SettingsIcon";
 
 import colors, { colorOptions, Color } from "../../helpers/colors";
 
+import { useI18n } from "../../i18n";
+
 import {
   SpellTemplateRule,
   SpellTemplateToolSettings as SpellTemplateToolSettingsType,
@@ -38,20 +40,13 @@ type SpellTemplateToolSettingsProps = {
 
 type RuleOption = { value: SpellTemplateRule; label: string };
 
-const ruleOptions: RuleOption[] = [
-  { value: "center", label: "Center Point" },
-  { value: "area_50", label: "Area >= 50%" },
-  { value: "touch", label: "Touch" },
-  { value: "ruleset_dnd5e", label: "D&D 5e" },
-  { value: "ruleset_pf", label: "Pathfinder" },
-];
-
 type ColorCircleProps = {
   color: string;
   selected: boolean;
   onClick?: MouseEventHandler<HTMLDivElement>;
 } & SxProp;
 function ColorCircle({ color, selected, onClick, sx }: ColorCircleProps) {
+  const { t } = useI18n();
   return (
     <Box
       sx={{
@@ -63,7 +58,7 @@ function ColorCircle({ color, selected, onClick, sx }: ColorCircleProps) {
         ...sx,
       }}
       onClick={onClick}
-      aria-label={`Template Color ${color}`}
+      aria-label={t("tools.color.templateColor", { color })}
     >
       {selected && (
         <Box
@@ -90,6 +85,7 @@ function SpellTemplateColorControl({
   color,
   onColorChange,
 }: ColorControlProps) {
+  const { t } = useI18n();
   const [showColorMenu, setShowColorMenu] = useState(false);
   const [colorMenuOptions, setColorMenuOptions] = useState({});
 
@@ -146,7 +142,9 @@ function SpellTemplateColorControl({
         ))}
       </Box>
       <Box px={2} pb={2}>
-        <Label htmlFor="spell-template-color">Custom</Label>
+        <Label htmlFor="spell-template-color">
+          {t("tools.color.custom")}
+        </Label>
         <Input
           id="spell-template-color"
           type="color"
@@ -177,6 +175,7 @@ function SpellTemplateToolSettings({
   hasTemplates,
   onRemoveAllTemplates,
 }: SpellTemplateToolSettingsProps) {
+  const { t } = useI18n();
   const isSmallScreen = useMedia({ query: "(max-width: 799px)" });
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [settingsMenuOptions, setSettingsMenuOptions] = useState({});
@@ -199,10 +198,18 @@ function SpellTemplateToolSettings({
     },
   };
 
+  const ruleOptions: RuleOption[] = [
+    { value: "center", label: t("tools.spellTemplateTool.ruleCenter") },
+    { value: "area_50", label: t("tools.spellTemplateTool.ruleArea50") },
+    { value: "touch", label: t("tools.spellTemplateTool.ruleTouch") },
+    { value: "ruleset_dnd5e", label: t("tools.spellTemplateTool.ruleDnd5e") },
+    { value: "ruleset_pf", label: t("tools.spellTemplateTool.rulePathfinder") },
+  ];
+
   const tools = [
     {
       id: "drag",
-      title: "Move",
+      title: t("tools.spellTemplateTool.move"),
       isSelected: settings.type === "drag",
       icon: (
         <Box sx={toolIconSx}>
@@ -212,7 +219,7 @@ function SpellTemplateToolSettings({
     },
     {
       id: "circle",
-      title: "Circle",
+      title: t("tools.spellTemplateTool.circle"),
       isSelected: settings.type === "circle",
       icon: (
         <Box sx={toolIconSx}>
@@ -222,7 +229,7 @@ function SpellTemplateToolSettings({
     },
     {
       id: "rectangle",
-      title: "Rectangle",
+      title: t("tools.spellTemplateTool.rectangle"),
       isSelected: settings.type === "rectangle",
       icon: (
         <Box sx={toolIconSx}>
@@ -232,7 +239,7 @@ function SpellTemplateToolSettings({
     },
     {
       id: "cone",
-      title: "Cone",
+      title: t("tools.spellTemplateTool.cone"),
       isSelected: settings.type === "cone",
       icon: (
         <Box sx={toolIconSx}>
@@ -242,7 +249,7 @@ function SpellTemplateToolSettings({
     },
     {
       id: "line",
-      title: "Line",
+      title: t("tools.spellTemplateTool.line"),
       isSelected: settings.type === "line",
       icon: (
         <Box sx={toolIconSx}>
@@ -252,7 +259,7 @@ function SpellTemplateToolSettings({
     },
     {
       id: "ring",
-      title: "Ring",
+      title: t("tools.spellTemplateTool.ring"),
       isSelected: settings.type === "ring",
       icon: (
         <Box sx={toolIconSx}>
@@ -262,7 +269,7 @@ function SpellTemplateToolSettings({
     },
     {
       id: "path",
-      title: "Wall",
+      title: t("tools.wall"),
       isSelected: settings.type === "path",
       icon: (
         <Box sx={toolIconSx}>
@@ -324,7 +331,7 @@ function SpellTemplateToolSettings({
         p={2}
       >
         <Box>
-          <Label>Rule</Label>
+          <Label>{t("tools.spellTemplateTool.rule")}</Label>
           <Select
             value={selectedRule || null}
             options={ruleOptions}
@@ -336,7 +343,9 @@ function SpellTemplateToolSettings({
         <Divider />
         <Flex sx={{ gap: 2, flexWrap: "wrap" }}>
           <Box sx={{ minWidth: "140px", flex: "1 1 140px" }}>
-            <Label htmlFor="spell-template-line-width">Width (cells)</Label>
+            <Label htmlFor="spell-template-line-width">
+              {t("tools.spellTemplateTool.widthCells")}
+            </Label>
             <Input
               id="spell-template-line-width"
               type="number"
@@ -351,7 +360,9 @@ function SpellTemplateToolSettings({
             />
           </Box>
           <Box sx={{ minWidth: "140px", flex: "1 1 140px" }}>
-            <Label htmlFor="spell-template-cone-angle">Angle (deg)</Label>
+            <Label htmlFor="spell-template-cone-angle">
+              {t("tools.spellTemplateTool.angleDeg")}
+            </Label>
             <Input
               id="spell-template-cone-angle"
               type="number"
@@ -367,7 +378,9 @@ function SpellTemplateToolSettings({
             />
           </Box>
           <Box sx={{ minWidth: "140px", flex: "1 1 140px" }}>
-            <Label htmlFor="spell-template-ring-inner">Inner Ratio</Label>
+            <Label htmlFor="spell-template-ring-inner">
+              {t("tools.spellTemplateTool.innerRatio")}
+            </Label>
             <Input
               id="spell-template-ring-inner"
               type="number"
@@ -389,7 +402,9 @@ function SpellTemplateToolSettings({
         <Divider />
         <Flex sx={{ gap: 2, flexWrap: "wrap" }}>
           <Box sx={{ minWidth: "140px", flex: "1 1 140px" }}>
-            <Label htmlFor="spell-template-opacity">Opacity</Label>
+            <Label htmlFor="spell-template-opacity">
+              {t("tools.spellTemplateTool.opacity")}
+            </Label>
             <Input
               id="spell-template-opacity"
               type="number"
@@ -405,7 +420,9 @@ function SpellTemplateToolSettings({
             />
           </Box>
           <Box sx={{ minWidth: "140px", flex: "1 1 140px" }}>
-            <Label htmlFor="spell-template-stroke">Stroke</Label>
+            <Label htmlFor="spell-template-stroke">
+              {t("tools.spellTemplateTool.stroke")}
+            </Label>
             <Input
               id="spell-template-stroke"
               type="number"
@@ -446,16 +463,16 @@ function SpellTemplateToolSettings({
       />
       <Divider vertical />
       <IconButton
-        aria-label="Remove Selected Template"
-        title="Remove Selected Template"
+        aria-label={t("tools.spellTemplateTool.removeSelected")}
+        title={t("tools.spellTemplateTool.removeSelected")}
         onClick={() => onRemoveSelectedTemplate && onRemoveSelectedTemplate()}
         disabled={!selectedTemplateId || !onRemoveSelectedTemplate}
       >
         <RemoveTokenIcon />
       </IconButton>
       <IconButton
-        aria-label="Erase All"
-        title="Erase All"
+        aria-label={t("tools.eraseAll")}
+        title={t("tools.eraseAll")}
         onClick={() => {
           if (!hasTemplates || !onRemoveAllTemplates) {
             return;
@@ -481,19 +498,19 @@ function SpellTemplateToolSettings({
             onRemoveAllTemplates && onRemoveAllTemplates();
           }}
         >
-          Erase All
+          {t("tools.eraseAll")}
         </Button>
       </MapMenu>
       <IconButton
         aria-label={
           settings.previewOnRotate
-            ? "Disable Real-time Preview"
-            : "Enable Real-time Preview"
+            ? t("tools.spellTemplateTool.disablePreview")
+            : t("tools.spellTemplateTool.enablePreview")
         }
         title={
           settings.previewOnRotate
-            ? "Disable Real-time Preview"
-            : "Enable Real-time Preview"
+            ? t("tools.spellTemplateTool.disablePreview")
+            : t("tools.spellTemplateTool.enablePreview")
         }
         onClick={() =>
           onSettingChange({ previewOnRotate: !settings.previewOnRotate })
@@ -503,8 +520,8 @@ function SpellTemplateToolSettings({
         {settings.previewOnRotate ? <FogPreviewOnIcon /> : <FogPreviewOffIcon />}
       </IconButton>
       <IconButton
-        aria-label="Template Settings"
-        title="Template Settings"
+        aria-label={t("tools.spellTemplateTool.settings")}
+        title={t("tools.spellTemplateTool.settings")}
         onClick={handleSettingsClick}
         sx={{ color: showSettingsMenu ? "primary" : "text" }}
       >

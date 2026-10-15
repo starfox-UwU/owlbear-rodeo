@@ -4,6 +4,8 @@ import Modal from "../components/Modal";
 import Markdown from "../components/Markdown";
 import Link from "../components/Link";
 
+import { useI18n } from "../i18n";
+
 import { RequestCloseEventHandler } from "../types/Events";
 
 import gettingStarted from "../docs/howTo/gettingStarted.md?raw";
@@ -17,6 +19,8 @@ function GettingStartedModal({
   isOpen,
   onRequestClose,
 }: GettingStartedModalProps) {
+  const { t } = useI18n();
+
   return (
     <Modal
       isOpen={isOpen}
@@ -24,10 +28,12 @@ function GettingStartedModal({
       style={{ content: { maxWidth: "450px" } }}
     >
       <Box>
-        <Label py={2}>Getting Started</Label>
+        <Label py={2}>{t("dialogs.gettingStarted.title")}</Label>
         <Markdown source={gettingStarted} />
         <Text variant="body2" my={2}>
-          For more tutorials visit the <Link to="/how-to">How To</Link> page
+          {t("game.gettingStarted.tutorialsPrefix")}
+          <Link to="/how-to">{t("footer.howTo")}</Link>
+          {t("game.gettingStarted.tutorialsSuffix")}
         </Text>
       </Box>
     </Modal>

@@ -4,6 +4,8 @@ import { useThemeUI, Close } from "theme-ui";
 import { useSpring, animated, config } from "react-spring";
 import CSS from "csstype";
 
+import { useI18n } from "../i18n";
+
 type ModalProps = Props & {
   children: ReactChild | ReactChild[];
   allowClose: boolean;
@@ -18,6 +20,7 @@ function StyledModal({
   ...props
 }: ModalProps) {
   const { theme } = useThemeUI();
+  const { t } = useI18n();
 
   const openAnimation = useSpring({
     opacity: isOpen ? 1 : 0,
@@ -71,6 +74,8 @@ function StyledModal({
       {allowClose && (
         <Close
           m={0}
+          title={t("common.close")}
+          aria-label={t("common.close")}
           sx={{ position: "absolute", top: 0, right: 0 }}
           onClick={onRequestClose}
         />

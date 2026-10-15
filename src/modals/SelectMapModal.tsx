@@ -40,6 +40,8 @@ import {
   RequestCloseEventHandler,
 } from "../types/Events";
 
+import { useI18n } from "../i18n";
+
 type SelectMapProps = {
   isOpen: boolean;
   onDone: RequestCloseEventHandler;
@@ -56,6 +58,8 @@ function SelectMapModal({
   // The map currently being view in the map screen
   currentMap,
 }: SelectMapProps) {
+  const { t } = useI18n();
+
   const { addToast } = useToasts();
 
   const { databaseStatus } = useDatabase();
@@ -105,7 +109,7 @@ function SelectMapModal({
     let mapFiles = [];
     for (let file of files) {
       if (file.size > 5e7) {
-        addToast(`Unable to import map ${file.name} as it is over 50MB`);
+        addToast(t("maps.importTooLarge", { name: file.name }));
       } else {
         mapFiles.push(file);
       }
@@ -172,7 +176,7 @@ function SelectMapModal({
       await addAssets(assets);
     } catch (error) {
       console.error("MAP_IMPORT_FAILED", error);
-      addToast("导入地图失败，请稍后重试");
+      addToast(t("maps.importFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -251,7 +255,7 @@ function SelectMapModal({
     >
       <ImageDrop
         onDrop={({ files }) => handleImagesUpload(files)}
-        dropText="Drop map to import"
+        dropText={t("maps.dropToImport")}
       >
         <input
           onChange={(event) =>
@@ -283,9 +287,12 @@ function SelectMapModal({
               }}
             >
               <Label pt={2} pb={1}>
-                Select or import a map
+                {t("maps.selectOrImport")}
               </Label>
-              <TileActionBar onAdd={openImageDialog} addTitle="Import Map(s)" />
+              <TileActionBar
+                onAdd={openImageDialog}
+                addTitle={t("maps.importMaps")}
+              />
               <Box sx={{ position: "relative" }}>
                 <TileDragProvider
                   onDragAdd={(canAddDraggedMap && handleDragAdd) || undefined}
@@ -352,9 +359,9 @@ function SelectMapModal({
         isOpen={isLargeImageWarningModalOpen}
         onRequestClose={handleLargeImageWarningCancel}
         onConfirm={handleLargeImageWarningConfirm}
-        confirmText="Continue"
-        label="Warning"
-        description="An imported image is larger than 20MB, this may cause slowness. Continue?"
+        confirmText={t("maps.warning.confirm")}
+        label={t("maps.warning.title")}
+        description={t("maps.warning.largeImage")}
       />
     </Modal>
   );

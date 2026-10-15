@@ -5,16 +5,20 @@ import UndoIcon from "../../../icons/UndoIcon";
 
 import { isMacLike } from "../../../helpers/shared";
 
+import { useI18n } from "../../../i18n";
+
 type UndoButtonProps = {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
 };
 
 function UndoButton({ onClick, disabled }: UndoButtonProps) {
+  const { t } = useI18n();
+  const label = t("tools.undoTitle", { modifier: isMacLike ? "Cmd" : "Ctrl" });
   return (
     <IconButton
-      title={`Undo (${isMacLike ? "Cmd" : "Ctrl"} + Z)`}
-      aria-label={`Undo (${isMacLike ? "Cmd" : "Ctrl"} + Z)`}
+      title={label}
+      aria-label={label}
       onClick={onClick}
       disabled={disabled}
     >

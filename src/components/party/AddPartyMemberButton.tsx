@@ -4,7 +4,10 @@ import { IconButton } from "theme-ui";
 import AddPartyMemberModal from "../../modals/AddPartyMemberModal";
 import AddPartyMemberIcon from "../../icons/AddPartyMemberIcon";
 
+import { useI18n } from "../../i18n";
+
 function AddPartyMemberButton({ gameId }: { gameId: string }) {
+  const { t } = useI18n();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   function openModal() {
     setIsAddModalOpen(true);
@@ -17,8 +20,8 @@ function AddPartyMemberButton({ gameId }: { gameId: string }) {
     <>
       <IconButton
         m={1}
-        aria-label="Add Party Member"
-        title="Add Party Member"
+        aria-label={t("dialogs.addPartyMember.title")}
+        title={t("dialogs.addPartyMember.title")}
         onClick={openModal}
       >
         <AddPartyMemberIcon />

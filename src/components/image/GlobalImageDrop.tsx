@@ -25,6 +25,8 @@ import { ImageImportProvider } from "../../contexts/ImageImportContext";
 import useImageDrop, { ImageDropEvent } from "../../hooks/useImageDrop";
 import useSetting from "../../hooks/useSetting";
 
+import { useTranslation } from "../../i18n";
+
 import { Map } from "../../types/Map";
 import { MapState } from "../../types/MapState";
 import { TokenState } from "../../types/TokenState";
@@ -41,6 +43,7 @@ function GlobalImageDrop({
   onMapTokensStateCreate,
 }: GlobalImageDropProps) {
   const { addToast } = useToasts();
+  const t = useTranslation();
 
   const userId = useUserId();
   const { addMap, getMapState } = useMapData();
@@ -118,11 +121,11 @@ function GlobalImageDrop({
     const nextFiles: File[] = [];
     for (let file of Array.from(files)) {
       if (!supportedFileTypes.includes(file.type)) {
-        addToast(`Unsupported file type for ${file.name}`);
+        addToast(t("misc.imageDrop.unsupportedFileType", { name: file.name }));
         continue;
       }
       if (file.size > 5e7) {
-        addToast(`Unable to import image ${file.name} as it is over 50MB`);
+        addToast(t("misc.imageDrop.fileTooLarge", { name: file.name }));
         continue;
       }
       nextFiles.push(file);
@@ -265,17 +268,17 @@ function GlobalImageDrop({
     event?.preventDefault();
     const trimmedUrl = externalUrl.trim();
     if (!trimmedUrl) {
-      addToast("请输入图片 URL");
+      addToast(t("misc.imageImport.urlRequired"));
       return;
     }
     if (!isHttpUrl(trimmedUrl)) {
-      addToast("请输入有效的图片 URL");
+      addToast(t("misc.imageImport.urlInvalid"));
       return;
     }
 
     try {
       if (!userId) {
-        addToast("请先登录后再导入图片");
+        addToast(t("misc.imageImport.signInRequired"));
         return;
       }
 
@@ -292,19 +295,19 @@ function GlobalImageDrop({
         if (mapState) {
           onMapChange(map, mapState);
         }
-        addToast("地图导入成功");
+        addToast(t("misc.imageImport.mapImported"));
       } else {
         const { token, assets } = await createTokenFromUrl(trimmedUrl, userId);
         await addToken(token);
         await addAssets(assets);
-        addToast("标记导入成功");
+        addToast(t("misc.imageImport.tokenImported"));
       }
 
       setUrlModalOpen(false);
       setExternalUrl("");
     } catch (error) {
       console.error("EXTERNAL_ASSET_IMPORT_FAILED", error);
-      addToast("无法从该 URL 加载图片");
+      addToast(t("misc.imageImport.loadFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -335,7 +338,7 @@ function GlobalImageDrop({
         }
       } catch (error) {
         console.error("MAP_IMPORT_FAILED", error);
-        addToast("导入地图失败，请稍后重试");
+        addToast(t("misc.imageDrop.importMapFailed"));
       } finally {
         setIsLoading(false);
         droppedImagesRef.current = undefined;
@@ -388,7 +391,7 @@ function GlobalImageDrop({
         }
       } catch (error) {
         console.error("TOKEN_IMPORT_FAILED", error);
-        addToast("导入标记失败，请稍后重试");
+        addToast(t("misc.imageDrop.importTokenFailed"));
       } finally {
         setIsLoading(false);
         droppedImagesRef.current = undefined;
@@ -457,7 +460,7 @@ function GlobalImageDrop({
                 }}
               />
               <Text sx={{ pointerEvents: "none", userSelect: "none" }}>
-                Drop as map
+                {t("misc.imageDrop.dropAsMap")}
               </Text>
             </Flex>
             <Flex
@@ -487,7 +490,7 @@ function GlobalImageDrop({
                 }}
               />
               <Text sx={{ pointerEvents: "none", userSelect: "none" }}>
-                Drop as token
+                {t("misc.imageDrop.dropAsToken")}
               </Text>
             </Flex>
           </Flex>
@@ -496,9 +499,9 @@ function GlobalImageDrop({
           isOpen={isLargeImageWarningModalOpen}
           onRequestClose={handleLargeImageWarningCancel}
           onConfirm={handleLargeImageWarningConfirm}
-          confirmText="Continue"
-          label="Warning"
-          description="An imported image is larger than 20MB, this may cause slowness. Continue?"
+          confirmText={t("misc.imageDrop.largeImageWarningConfirm")}
+          label={t("misc.imageDrop.largeImageWarningTitle")}
+          description={t("misc.imageDrop.largeImageWarningDescription")}
         />
         <Modal
           isOpen={isUrlModalOpen}
@@ -520,7 +523,7 @@ function GlobalImageDrop({
             }}
           >
             <Text sx={{ mb: 3, fontSize: 2, fontWeight: "bold" }}>
-              通过 URL 导入图片
+              {t("misc.imageImport.title")}
             </Text>
             <Box
               sx={{
@@ -539,7 +542,7 @@ function GlobalImageDrop({
               onDrop={handleUrlModalDrop}
             >
               <Text sx={{ fontSize: 1 }}>
-                拖拽图片到此处或直接粘贴
+                {t("misc.imageImport.dropHint")}
               </Text>
             </Box>
             <Input
@@ -557,7 +560,7 @@ function GlobalImageDrop({
                 onClick={() => setExternalType("maps")}
                 disabled={isLoading}
               >
-                导入为地图
+                {t("misc.imageImport.importAsMap")}
               </Button>
               <Button
                 type="button"
@@ -565,7 +568,7 @@ function GlobalImageDrop({
                 onClick={() => setExternalType("tokens")}
                 disabled={isLoading}
               >
-                导入为标记
+                {t("misc.imageImport.importAsToken")}
               </Button>
             </Flex>
             <Flex sx={{ justifyContent: "flex-end", gap: 2 }}>
@@ -575,10 +578,10 @@ function GlobalImageDrop({
                 onClick={handleUrlModalClose}
                 disabled={isLoading}
               >
-                取消
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isLoading || !externalUrl.trim()}>
-                导入
+                {t("misc.imageImport.submit")}
               </Button>
             </Flex>
           </Box>

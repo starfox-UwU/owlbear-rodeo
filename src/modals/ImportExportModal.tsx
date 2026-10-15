@@ -14,6 +14,8 @@ import ErrorBanner from "../components/banner/ErrorBanner";
 import { useUserId } from "../contexts/UserIdContext";
 import { useDatabase } from "../contexts/DatabaseContext";
 
+import { useI18n } from "../i18n";
+
 import SelectDataModal, { SelectData } from "./SelectDataModal";
 
 import { getDatabase } from "../database";
@@ -43,6 +45,8 @@ function ImportExportModal({
   const { worker } = useDatabase();
   const userId = useUserId();
 
+  const { t } = useI18n();
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error>();
 
@@ -58,14 +62,40 @@ function ImportExportModal({
     maps: number,
     tokens: number
   ) {
-    const mapText = `${maps} map${maps > 1 ? "s" : ""}`;
-    const tokenText = `${tokens} token${tokens > 1 ? "s" : ""}`;
+    const mapText = t(
+      maps > 1
+        ? "transfer.importExport.mapCountPlural"
+        : "transfer.importExport.mapCount",
+      { count: maps }
+    );
+    const tokenText = t(
+      tokens > 1
+        ? "transfer.importExport.tokenCountPlural"
+        : "transfer.importExport.tokenCount",
+      { count: tokens }
+    );
     if (maps > 0 && tokens > 0) {
-      addToast(`${message} ${mapText} and ${tokenText}`);
+      addToast(
+        t("transfer.importExport.successMessageBoth", {
+          action: message,
+          maps: mapText,
+          tokens: tokenText,
+        })
+      );
     } else if (maps > 0) {
-      addToast(`${message} ${mapText}`);
+      addToast(
+        t("transfer.importExport.successMessageMaps", {
+          action: message,
+          maps: mapText,
+        })
+      );
     } else if (tokens > 0) {
-      addToast(`${message} ${tokenText}`);
+      addToast(
+        t("transfer.importExport.successMessageTokens", {
+          action: message,
+          tokens: tokenText,
+        })
+      );
     }
   }
 
@@ -126,9 +156,7 @@ function ImportExportModal({
       if (e instanceof (Error)) {
         if (e.message.startsWith("Max buffer length exceeded")) {
           setError(
-            new Error(
-              "Max image size exceeded ensure your database doesn't have an image over 100MB"
-            )
+            new Error(t("transfer.importExport.errorMaxImageSize"))
           );
         } else {
           console.error(e);
@@ -149,8 +177,7 @@ function ImportExportModal({
   useEffect(() => {
     function handleBeforeUnload(event: BeforeUnloadEvent) {
       if (backgroundTaskRunningRef.current) {
-        event.returnValue =
-          "Database is still processing, are you sure you want to leave?";
+        event.returnValue = t("transfer.importExport.processingWarning");
       }
     }
 
@@ -158,7 +185,7 @@ function ImportExportModal({
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, []);
+  }, [t]);
 
   function handleClose() {
     if (isLoading) {
@@ -366,7 +393,7 @@ function ImportExportModal({
         }
 
         const unprocessedItemNames = unprocessedItems.map(item => item.name)
-        addWarningToast("Could not import item(s)", unprocessedItemNames)
+        addWarningToast(t("transfer.importExport.warningCouldNotImport"), unprocessedItemNames)
       }
 
       // Add map groups with new ids
@@ -445,13 +472,13 @@ function ImportExportModal({
       );
       const totalImportedMaps = checkedMaps.length - unprocessedMaps
       const totalImportedTokens = checkedTokens.length - unprocessedTokens
-      addSuccessToast("Imported", totalImportedMaps, totalImportedTokens);
+      addSuccessToast(t("transfer.importExport.imported"), totalImportedMaps, totalImportedTokens);
     } catch (e) {
       console.error(e);
       if (e instanceof MissingAssetError) {
         setError(e);
       } else {
-        setError(new Error("Unable to import data"));
+        setError(new Error(t("transfer.importExport.errorUnableToImport")));
       }
     }
     await importDB.delete();
@@ -492,7 +519,7 @@ function ImportExportModal({
       );
       const blob = new Blob([buffer]);
       saveAs(blob, `${shortid.generate()}.owlbear`);
-      addSuccessToast("Exported", checkedMaps.length, checkedTokens.length);
+      addSuccessToast(t("transfer.importExport.exported"), checkedMaps.length, checkedTokens.length);
     } catch (e: unknown) {
       if (e instanceof (Error)) {
         console.error(e);
@@ -515,9 +542,9 @@ function ImportExportModal({
         m={2}
       >
         <Box>
-          <Label>Import / Export</Label>
+          <Label>{t("dialogs.importExport.title")}</Label>
           <Text as="p" mb={2} variant="caption">
-            Select import or export then select the data you wish to use
+            {t("transfer.importExport.description")}
           </Text>
           <input
             onChange={(event) =>
@@ -530,10 +557,10 @@ function ImportExportModal({
           />
           <Flex>
             <Button mr={1} sx={{ flexGrow: 1 }} onClick={openFileDialog}>
-              Import
+              {t("transfer.importExport.import")}
             </Button>
             <Button ml={1} sx={{ flexGrow: 1 }} onClick={handleExportDatabase}>
-              Export
+              {t("transfer.importExport.export")}
             </Button>
           </Flex>
         </Box>
@@ -562,15 +589,15 @@ function ImportExportModal({
           onRequestClose={handleImportSelectorClose}
           onConfirm={handleImportSelectorConfirm}
           databaseName={importDBName}
-          confirmText="Import"
-          label="Select data to import"
+          confirmText={t("transfer.importExport.import")}
+          label={t("transfer.selectData.selectToImport")}
         />
         <SelectDataModal
           isOpen={showExportSelector}
           onRequestClose={handleExportSelectorClose}
           onConfirm={handleExportSelectorConfirm}
-          confirmText="Export"
-          label="Select data to export"
+          confirmText={t("transfer.importExport.export")}
+          label={t("transfer.selectData.selectToExport")}
           filter={exportSelectorFilter}
         />
       </Flex>

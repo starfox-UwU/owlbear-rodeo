@@ -27,6 +27,8 @@ import ExpandMoreIcon from "../../icons/ExpandMoreIcon";
 
 import { useUserId } from "../../contexts/UserIdContext";
 
+import { useI18n } from "../../i18n";
+
 import {
   RequestCloseEventHandler,
   TokenStateChangeEventHandler,
@@ -34,32 +36,6 @@ import {
 import { TokenState } from "../../types/TokenState";
 import { Map } from "../../types/Map";
 import { TokenCategory } from "../../types/Token";
-
-const tokenCategories: Record<
-  TokenCategory,
-  { title: string; icon: React.ReactNode; next: TokenCategory }
-> = {
-  character: {
-    title: "Character",
-    icon: <TokenCharacterIcon />,
-    next: "prop",
-  },
-  prop: {
-    title: "Prop",
-    icon: <TokenPropIcon />,
-    next: "vehicle",
-  },
-  vehicle: {
-    title: "Mount",
-    icon: <TokenMountIcon />,
-    next: "attachment",
-  },
-  attachment: {
-    title: "Attachment",
-    icon: <TokenAttachmentIcon />,
-    next: "character",
-  },
-};
 
 type TokenMenuProps = {
   isOpen: boolean;
@@ -82,7 +58,35 @@ function TokenMenu({
   map,
   fogEnabled = true,
 }: TokenMenuProps) {
+  const { t } = useI18n();
+
   const userId = useUserId();
+
+  const tokenCategories: Record<
+    TokenCategory,
+    { title: string; icon: React.ReactNode; next: TokenCategory }
+  > = {
+    character: {
+      title: t("tokens.category.character"),
+      icon: <TokenCharacterIcon />,
+      next: "prop",
+    },
+    prop: {
+      title: t("tokens.category.prop"),
+      icon: <TokenPropIcon />,
+      next: "vehicle",
+    },
+    vehicle: {
+      title: t("tokens.category.mount"),
+      icon: <TokenMountIcon />,
+      next: "attachment",
+    },
+    attachment: {
+      title: t("tokens.category.attachment"),
+      icon: <TokenAttachmentIcon />,
+      next: "character",
+    },
+  };
 
   const wasOpen = usePrevious(isOpen);
 
@@ -347,7 +351,7 @@ function TokenMenu({
             sx={{ width: "45%", fontSize: "16px" }}
             p={1}
           >
-            Label:
+            {t("tokens.label")}
           </Text>
           <Input
             id="changeTokenLabel"
@@ -384,7 +388,7 @@ function TokenMenu({
                   cursor: "pointer",
                 }}
                 onClick={() => handleStatusChange(color)}
-                aria-label={`Token label Color ${color}`}
+                aria-label={t("tokens.labelColor", { color })}
               >
                 {tokenState &&
                   tokenState.statuses &&
@@ -407,11 +411,11 @@ function TokenMenu({
           <Box mt={2} sx={{ position: "relative" }}>
             <Flex sx={{ alignItems: "center", justifyContent: "space-between" }}>
               <Text as="label" variant="body2">
-                Attributes
+                {t("tokens.attributes")}
               </Text>
               <IconButton
-                aria-label="Toggle Attributes"
-                title="Toggle Attributes"
+                aria-label={t("tokens.toggleAttributes")}
+                title={t("tokens.toggleAttributes")}
                 onClick={() =>
                   setAttributesOpen((prev) => {
                     if (hasAttributes && prev) {
@@ -438,8 +442,8 @@ function TokenMenu({
             <Flex sx={{ alignItems: "center", justifyContent: "space-around" }}>
               <IconButton
                 onClick={handleVisibleChange}
-                title={tokenState.visible ? "Hide Token" : "Show Token"}
-                aria-label={tokenState.visible ? "Hide Token" : "Show Token"}
+                title={tokenState.visible ? t("tokens.hideToken") : t("tokens.showToken")}
+                aria-label={tokenState.visible ? t("tokens.hideToken") : t("tokens.showToken")}
               >
                 {tokenState.visible ? <ShowIcon /> : <HideIcon />}
               </IconButton>
@@ -447,10 +451,14 @@ function TokenMenu({
                 <IconButton
                   onClick={handleVisionChange}
                   title={
-                    tokenState.hasVision ? "Disable Vision" : "Enable Vision"
+                    tokenState.hasVision
+                      ? t("tokens.disableVision")
+                      : t("tokens.enableVision")
                   }
                   aria-label={
-                    tokenState.hasVision ? "Disable Vision" : "Enable Vision"
+                    tokenState.hasVision
+                      ? t("tokens.disableVision")
+                      : t("tokens.enableVision")
                   }
                 >
                   {tokenState.hasVision ? <TokenShowIcon /> : <TokenHideIcon />}
@@ -458,8 +466,8 @@ function TokenMenu({
               )}
               <IconButton
                 onClick={handleLockChange}
-                title={tokenState.locked ? "Unlock Token" : "Lock Token"}
-                aria-label={tokenState.locked ? "Unlock Token" : "Lock Token"}
+                title={tokenState.locked ? t("tokens.unlockToken") : t("tokens.lockToken")}
+                aria-label={tokenState.locked ? t("tokens.unlockToken") : t("tokens.lockToken")}
               >
                 {tokenState.locked ? <LockIcon /> : <UnlockIcon />}
               </IconButton>
@@ -480,11 +488,11 @@ function TokenMenu({
                   }}
                 >
                   <Text as="label" variant="body2">
-                    Vision & Light
+                    {t("tokens.visionLight")}
                   </Text>
                   <IconButton
-                    aria-label="Toggle Vision and Light"
-                    title="Toggle Vision and Light"
+                    aria-label={t("tokens.toggleVisionAndLight")}
+                    title={t("tokens.toggleVisionAndLight")}
                     onClick={() =>
                       setVisionLightOpen((prev) => {
                         const next = !prev;
@@ -520,10 +528,10 @@ function TokenMenu({
             p={2}
           >
             <Text as="label" variant="body2">
-              Vision
+              {t("tokens.vision")}
             </Text>
             <Text variant="body2" sx={{ opacity: 0.8, mt: 1 }}>
-              Range (cells)
+              {t("tokens.rangeCells")}
             </Text>
             <Input
               type="number"
@@ -541,7 +549,7 @@ function TokenMenu({
               sx={{ width: "100%", px: 1, py: "2px", mt: 1 }}
             />
             <Text as="label" variant="body2" sx={{ mt: 2 }}>
-              Light
+              {t("tokens.light")}
             </Text>
             <Label sx={{ display: "flex", alignItems: "center", mt: 1 }}>
               <Checkbox
@@ -549,11 +557,11 @@ function TokenMenu({
                 onChange={(e) => handleLightToggle(e.target.checked)}
               />
               <Text variant="body2" sx={{ ml: 2 }}>
-                Enable
+                {t("tokens.enable")}
               </Text>
             </Label>
             <Text variant="body2" sx={{ opacity: 0.8, mt: 1 }}>
-              Color
+              {t("tokens.color")}
             </Text>
             <Input
               type="color"
@@ -562,7 +570,7 @@ function TokenMenu({
               sx={{ width: "100%", height: "24px", p: 0, mt: 1 }}
             />
             <Text variant="body2" sx={{ opacity: 0.8, mt: 1 }}>
-              Bright
+              {t("tokens.bright")}
             </Text>
             <Input
               type="number"
@@ -577,7 +585,7 @@ function TokenMenu({
               sx={{ width: "100%", px: 1, py: "2px", mt: 1 }}
             />
             <Text variant="body2" sx={{ opacity: 0.8, mt: 1 }}>
-              Dim
+              {t("tokens.dim")}
             </Text>
             <Input
               type="number"
@@ -611,7 +619,7 @@ function TokenMenu({
               attributes={attributes}
               onChange={updateAttributes}
               canEdit={canEditAttributes}
-              title="Attributes"
+              title={t("tokens.attributes")}
               compact
             />
           </Box>

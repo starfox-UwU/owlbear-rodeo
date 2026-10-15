@@ -5,16 +5,20 @@ import RedoIcon from "../../../icons/RedoIcon";
 
 import { isMacLike } from "../../../helpers/shared";
 
+import { useI18n } from "../../../i18n";
+
 type RedoButtonProps = {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
 };
 
 function RedoButton({ onClick, disabled }: RedoButtonProps) {
+  const { t } = useI18n();
+  const label = t("tools.redoTitle", { modifier: isMacLike ? "Cmd" : "Ctrl" });
   return (
     <IconButton
-      title={`Redo (${isMacLike ? "Cmd" : "Ctrl"} + Shift + Z)`}
-      aria-label={`Redo (${isMacLike ? "Cmd" : "Ctrl"} + Shift + Z)`}
+      title={label}
+      aria-label={label}
       onClick={onClick}
       disabled={disabled}
     >

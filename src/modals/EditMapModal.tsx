@@ -17,6 +17,8 @@ import {
   UpdateMapStateEventHandler,
 } from "../contexts/MapDataContext";
 
+import { useI18n } from "../i18n";
+
 type EditMapProps = {
   isOpen: boolean;
   onDone: () => void;
@@ -34,6 +36,8 @@ function EditMapModal({
   onUpdateMap,
   onUpdateMapState,
 }: EditMapProps) {
+  const { t } = useI18n();
+
   const { theme } = useThemeUI();
 
   function handleClose() {
@@ -139,7 +143,7 @@ function EditMapModal({
         }}
       >
         <Label pt={2} pb={1} px={3}>
-          Edit map
+          {t("dialogs.editMap.title")}
         </Label>
         <SimpleBar
           style={{
@@ -162,7 +166,7 @@ function EditMapModal({
           />
         </SimpleBar>
         <Button m={3} onClick={handleSave}>
-          Save
+          {t("common.save")}
         </Button>
       </Flex>
     </Modal>

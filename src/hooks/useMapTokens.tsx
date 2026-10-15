@@ -30,6 +30,7 @@ import { useUserId } from "../contexts/UserIdContext";
 import { useBlur, useKeyboard } from "../contexts/KeyboardContext";
 import shortcuts from "../shortcuts";
 import { buildNextAttributes, parseNumericExpression } from "../helpers/tokenAttributes";
+import { useTranslation } from "../i18n";
 
 type MapTokenPreviewOptions = {
   enableTokenDragPreview?: boolean;
@@ -63,6 +64,7 @@ function useMapTokens(
   previewOptions?: MapTokenPreviewOptions
 ) {
   const userId = useUserId();
+  const t = useTranslation();
   const disabledTokens: Record<string, boolean> = {};
   if (mapState && map) {
     if (!mapState.editFlags.includes("tokens") && map.owner !== userId) {
@@ -165,7 +167,7 @@ function useMapTokens(
       expression
     );
     if (!result.ok) {
-      setCountError(result.error);
+      setCountError(t(result.errorKey));
       return;
     }
     const tokenState = mapState.tokens[tokenAttributeCountMenu.tokenStateId];
@@ -403,7 +405,7 @@ function useMapTokens(
           }}
           sx={{ width: "100%", px: 2, py: 1, height: "28px" }}
           placeholder={`${tokenAttributeCountMenu.target.current}`}
-          aria-label="Count"
+          aria-label={t("misc.tokenAttributes.count")}
         />
         {countError ? (
           <Text variant="body2" sx={{ color: "red", mt: 1 }}>

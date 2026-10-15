@@ -5,6 +5,8 @@ import shortid from "shortid";
 
 import { useAuth } from "../contexts/AuthContext";
 
+import { useI18n } from "../i18n";
+
 import useSetting from "../hooks/useSetting";
 
 import Modal from "../components/Modal";
@@ -18,6 +20,7 @@ type StartModalProps = {
 
 function StartModal({ isOpen, onRequestClose }: StartModalProps) {
   let history = useHistory();
+  const { t } = useI18n();
   const { password, setPassword } = useAuth();
 
   function handlePasswordChange(event: ChangeEvent<HTMLInputElement>) {
@@ -58,7 +61,7 @@ function StartModal({ isOpen, onRequestClose }: StartModalProps) {
         m={2}
       >
         <Box as="form" onSubmit={handleSubmit}>
-          <Label htmlFor="password">Game Password</Label>
+          <Label htmlFor="password">{t("dialogs.start.password")}</Label>
           <Input
             my={1}
             id="password"
@@ -75,12 +78,12 @@ function StartModal({ isOpen, onRequestClose }: StartModalProps) {
                 checked={usePassword}
                 onChange={handleUsePasswordChange}
               />
-              Use password
+              {t("dialogs.start.usePassword")}
             </Label>
           </Box>
           <Flex>
             <Button sx={{ flexGrow: 1 }} disabled={!password && usePassword}>
-              Start
+              {t("dialogs.start.submit")}
             </Button>
           </Flex>
         </Box>

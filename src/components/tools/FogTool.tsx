@@ -48,6 +48,8 @@ import useSetting from "../../hooks/useSetting";
 
 import shortcuts from "../../shortcuts";
 
+import { useI18n } from "../../i18n";
+
 import { Map } from "../../types/Map";
 import { Fog, FogToolSettings } from "../../types/Fog";
 
@@ -85,6 +87,8 @@ function FogTool({
   toolSettings,
   editable,
 }: MapFogProps) {
+  const { t } = useI18n();
+
   const stageScale = useDebouncedStageScale();
   const mapWidth = useMapWidth();
   const mapHeight = useMapHeight();
@@ -306,7 +310,7 @@ function FogTool({
             const state = cutAction.execute(keyBy(shapes, "id"));
 
             if (Object.keys(state).length === shapes.length) {
-              onShapeError("No fog to cut");
+              onShapeError(t("tools.fogTool.noFogToCut"));
             } else {
               onShapesCut(drawingShapes);
             }
@@ -317,9 +321,9 @@ function FogTool({
           }
         } else {
           if (cut) {
-            onShapeError("Fog already cut");
+            onShapeError(t("tools.fogTool.fogAlreadyCut"));
           } else {
-            onShapeError("Fog already placed");
+            onShapeError(t("tools.fogTool.fogAlreadyPlaced"));
           }
         }
         setDrawingShape(null);
@@ -478,7 +482,7 @@ function FogTool({
         const state = cutAction.execute(keyBy(shapes, "id"));
 
         if (Object.keys(state).length === shapes.length) {
-          onShapeError("No fog to cut");
+          onShapeError(t("tools.fogTool.noFogToCut"));
         } else {
           onShapesCut(polygonShapes);
         }
@@ -494,9 +498,9 @@ function FogTool({
       }
     } else {
       if (cut) {
-        onShapeError("Fog already cut");
+        onShapeError(t("tools.fogTool.fogAlreadyCut"));
       } else {
-        onShapeError("Fog already placed");
+        onShapeError(t("tools.fogTool.fogAlreadyPlaced"));
       }
     }
 
@@ -508,6 +512,7 @@ function FogTool({
     onShapesAdd,
     onShapeError,
     shapes,
+    t,
   ]);
 
   // Add keyboard shortcuts

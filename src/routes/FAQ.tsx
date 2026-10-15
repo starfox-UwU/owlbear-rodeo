@@ -11,7 +11,11 @@ import audioSharing from "../docs/faq/audio-sharing.md?raw";
 import general from "../docs/faq/general.md?raw";
 import connection from "../docs/faq/connection.md?raw";
 
+import { useI18n } from "../i18n";
+
 function FAQ() {
+  const { t } = useI18n();
+
   return (
     <Flex
       sx={{
@@ -30,7 +34,7 @@ function FAQ() {
         m={4}
       >
         <Text mb={2} variant="heading" as="h1" sx={{ fontSize: 5 }}>
-          Frequently Asked Questions
+          {t("faq.title")}
         </Text>
         <Box my={1} id="general">
           <Markdown source={general} assets={assets} />

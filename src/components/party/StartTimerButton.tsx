@@ -3,6 +3,9 @@ import { IconButton } from "theme-ui";
 
 import StartTimerModal from "../../modals/StartTimerModal";
 import StartTimerIcon from "../../icons/StartTimerIcon";
+
+import { useI18n } from "../../i18n";
+
 import {
   TimerStartEventHandler,
   TimerStopEventHandler,
@@ -20,6 +23,7 @@ function StartTimerButton({
   onTimerStop,
   timer,
 }: StartTimerButtonProps) {
+  const { t } = useI18n();
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
 
   function openModal() {
@@ -33,8 +37,8 @@ function StartTimerButton({
     <>
       <IconButton
         m={1}
-        aria-label="Start Timer"
-        title="Start Timer"
+        aria-label={t("dialogs.startTimer.title")}
+        title={t("dialogs.startTimer.title")}
         onClick={openModal}
       >
         <StartTimerIcon />

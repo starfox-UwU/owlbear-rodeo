@@ -29,6 +29,8 @@ import { useKeyboard } from "../../contexts/KeyboardContext";
 
 import shortcuts from "../../shortcuts";
 
+import { useI18n } from "../../i18n";
+
 import {
   DrawingToolSettings as DrawingToolSettingsType,
   DrawingToolType,
@@ -49,6 +51,8 @@ function DrawingToolSettings({
   onToolAction,
   disabledActions,
 }: DrawingToolSettingsProps) {
+  const { t } = useI18n();
+
   // Keyboard shotcuts
   function handleKeyDown(event: KeyboardEvent) {
     if (shortcuts.drawBrush(event)) {
@@ -112,49 +116,49 @@ function DrawingToolSettings({
   const tools = [
     {
       id: "brush",
-      title: "Brush (B)",
+      title: t("tools.drawingTool.brush"),
       isSelected: settings.type === "brush",
       icon: <BrushIcon />,
     },
     {
       id: "paint",
-      title: "Paint (P)",
+      title: t("tools.drawingTool.paint"),
       isSelected: settings.type === "paint",
       icon: <BrushPaintIcon />,
     },
     {
       id: "line",
-      title: "Line (L)",
+      title: t("tools.drawingTool.line"),
       isSelected: settings.type === "line",
       icon: <BrushLineIcon />,
     },
     {
       id: "rectangle",
-      title: "Rectangle (R)",
+      title: t("tools.drawingTool.rectangle"),
       isSelected: settings.type === "rectangle",
       icon: <BrushRectangleIcon />,
     },
     {
       id: "circle",
-      title: "Circle (C)",
+      title: t("tools.drawingTool.circle"),
       isSelected: settings.type === "circle",
       icon: <BrushCircleIcon />,
     },
     {
       id: "triangle",
-      title: "Triangle (T)",
+      title: t("tools.drawingTool.triangle"),
       isSelected: settings.type === "triangle",
       icon: <BrushTriangleIcon />,
     },
     {
       id: "pen",
-      title: "Pen (Y)",
+      title: t("tools.drawingTool.pen"),
       isSelected: settings.type === "pen",
       icon: <PenToolIcon />,
     },
     {
       id: "drag",
-      title: "Drag",
+      title: t("tools.drawingTool.drag"),
       isSelected: settings.type === "drag",
       icon: <MoveToolIcon />,
     },
@@ -180,9 +184,9 @@ function DrawingToolSettings({
   const [advancedMenuOptions, setAdvancedMenuOptions] = useState({});
 
   const dashOptions: { id: DashStyle; title: string; dash: number[] }[] = [
-    { id: "solid", title: "Solid", dash: [] },
-    { id: "dashed", title: "Dashed", dash: [6, 4] },
-    { id: "dotted", title: "Dotted", dash: [2, 3] },
+    { id: "solid", title: t("tools.drawingTool.solid"), dash: [] },
+    { id: "dashed", title: t("tools.drawingTool.dashed"), dash: [6, 4] },
+    { id: "dotted", title: t("tools.drawingTool.dotted"), dash: [2, 3] },
   ];
 
   const advancedMenu = (
@@ -204,7 +208,7 @@ function DrawingToolSettings({
         p={2}
       >
         <Box>
-          <Label>Opacity</Label>
+          <Label>{t("tools.drawingTool.opacity")}</Label>
           <Slider
             min={0}
             max={1}
@@ -222,7 +226,7 @@ function DrawingToolSettings({
         </Box>
         <Divider />
         <Box>
-          <Label>Stroke</Label>
+          <Label>{t("tools.drawingTool.stroke")}</Label>
           <Slider
             min={0.25}
             max={4}
@@ -237,8 +241,8 @@ function DrawingToolSettings({
         <Divider />
         <Box>
           <Label>
-            Dash {dashStyle ? `(${dashStyle})` : ""}
-            {dashInactive ? " (line/shape only)" : ""}
+            {t("tools.drawingTool.dash")} {dashStyle ? `(${dashStyle})` : ""}
+            {dashInactive ? ` ${t("tools.drawingTool.lineShapeOnly")}` : ""}
           </Label>
           <Flex sx={{ gap: 1, flexWrap: "wrap" }}>
             {dashOptions.map((option) => (
@@ -308,7 +312,7 @@ function DrawingToolSettings({
       />
       <Divider vertical />
       <RadioIconButton
-        title="Erase (E)"
+        title={t("tools.drawingTool.erase")}
         onClick={() => onSettingChange({ type: "erase" })}
         isSelected={settings.type === "erase"}
         disabled={disabledActions.includes("erase")}
@@ -331,8 +335,8 @@ function DrawingToolSettings({
         onShapeFillChange={(useShapeFill) => onSettingChange({ useShapeFill })}
       />
       <IconButton
-        aria-label="Drawing Advanced Settings"
-        title="Drawing Advanced Settings"
+        aria-label={t("tools.drawingTool.advancedSettings")}
+        title={t("tools.drawingTool.advancedSettings")}
         onClick={handleAdvancedClick}
         sx={{ color: showAdvancedMenu ? "primary" : "text" }}
       >

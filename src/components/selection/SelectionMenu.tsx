@@ -36,6 +36,7 @@ import { useKeyboard } from "../../contexts/KeyboardContext";
 import shortcuts from "../../shortcuts";
 import { clipboardSupported } from "../../helpers/shared";
 import { buildNextAttributes, parseNumericExpression } from "../../helpers/tokenAttributes";
+import { useI18n } from "../../i18n";
 
 type SelectionMenuProps = {
   isOpen: boolean;
@@ -64,6 +65,7 @@ function SelectionMenu({
   map,
   mapState,
 }: SelectionMenuProps) {
+  const { t } = useI18n();
   const { addToast } = useToasts();
 
   const userId = useUserId();
@@ -209,13 +211,13 @@ function SelectionMenu({
 
   function handleApplyEffect() {
     if (!selection || !mapState) {
-      addToast("No selection", { appearance: "warning" });
+      addToast(t("tokens.selection.noSelection"), { appearance: "warning" });
       return;
     }
     const label = effectLabel.trim();
     const expression = effectExpression.trim();
     if (!expression) {
-      addToast("请输入表达式", { appearance: "error" });
+      addToast(t("tokens.selection.enterExpression"), { appearance: "error" });
       return;
     }
     const tokenChanges: Record<string, Partial<TokenState>> = {};
@@ -242,7 +244,7 @@ function SelectionMenu({
       const bar = bars[barIndex];
       const result = parseNumericExpression(bar.current, expression);
       if (!result.ok) {
-        addToast(result.error, { appearance: "error" });
+        addToast(t(result.errorKey), { appearance: "error" });
         return;
       }
       const nextBars = bars.map((existing, index) =>
@@ -258,11 +260,16 @@ function SelectionMenu({
       affected += 1;
     }
     if (affected === 0) {
-      addToast("没有匹配到可更新的属性", { appearance: "warning" });
+      addToast(t("tokens.selection.noMatchingAttributes"), { appearance: "warning" });
       return;
     }
     onSelectionItemsChange(tokenChanges, {});
-    addToast(`已更新 ${affected} 个 token`, { appearance: "success" });
+    addToast(
+      affected === 1
+        ? t("tokens.selection.updatedTokens", { count: affected })
+        : t("tokens.selection.updatedTokensPlural", { count: affected }),
+      { appearance: "success" }
+    );
   }
 
   const [effectLabel, setEffectLabel] = useState("HP");
@@ -304,14 +311,36 @@ function SelectionMenu({
   ) {
     const numTokens = tokens ? Object.keys(tokens).length : 0;
     const numNotes = notes ? Object.keys(notes).length : 0;
-    const tokenText = `${numTokens} token${numTokens > 1 ? "s" : ""}`;
-    const noteText = `${numNotes} note${numNotes > 1 ? "s" : ""}`;
+    const tokenText =
+      numTokens === 1
+        ? t("tokens.selection.countTokens", { count: numTokens })
+        : t("tokens.selection.countTokensPlural", { count: numTokens });
+    const noteText =
+      numNotes === 1
+        ? t("tokens.selection.countNotes", { count: numNotes })
+        : t("tokens.selection.countNotesPlural", { count: numNotes });
     if (numTokens > 0 && numNotes > 0) {
-      addToast(`${message} ${tokenText} and ${noteText}`);
+      addToast(
+        t("tokens.selection.copiedWithBoth", {
+          message,
+          tokens: tokenText,
+          notes: noteText,
+        })
+      );
     } else if (numTokens > 0) {
-      addToast(`${message} ${tokenText}`);
+      addToast(
+        t("tokens.selection.copiedWithTokens", {
+          message,
+          tokens: tokenText,
+        })
+      );
     } else if (numNotes > 0) {
-      addToast(`${message} ${noteText}`);
+      addToast(
+        t("tokens.selection.copiedWithNotes", {
+          message,
+          notes: noteText,
+        })
+      );
     }
   }
 
@@ -348,7 +377,7 @@ function SelectionMenu({
     } else {
       localClipboardDataRef.current = JSON.stringify(clipboard);
     }
-    addSuccessToast("Copied", clipboard.data.tokens, clipboard.data.notes);
+    addSuccessToast(t("common.copied"), clipboard.data.tokens, clipboard.data.notes);
   }
 
   async function handlePaste() {
@@ -435,12 +464,11 @@ function SelectionMenu({
 
         onRequestClose();
       } else {
-        addToast("Invalid data");
+        addToast(t("tokens.selection.invalidData"));
       }
     } catch {
-      addToast("Unable to paste");
-    }
-  }
+      addToast(t("tokens.selection.unableToPaste"));
+    }  }
 
   function handleKeyDown(event: KeyboardEvent) {
     if (active) {
@@ -472,23 +500,23 @@ function SelectionMenu({
                 <>
                   <IconButton
                     onClick={handleVisibleChange}
-                    title={itemsVisible ? "Hide Items" : "Show Items"}
-                    aria-label={itemsVisible ? "Hide Items" : "Show Items"}
+                    title={itemsVisible ? t("tokens.selection.hideItems") : t("tokens.selection.showItems")}
+                    aria-label={itemsVisible ? t("tokens.selection.hideItems") : t("tokens.selection.showItems")}
                   >
                     {itemsVisible ? <ShowIcon /> : <HideIcon />}
                   </IconButton>
                   <IconButton
                     onClick={handleLockChange}
-                    title={itemsLocked ? "Unlock Items" : "Lock Items"}
-                    aria-label={itemsLocked ? "Unlock Items" : "Lock Items"}
+                    title={itemsLocked ? t("tokens.selection.unlockItems") : t("tokens.selection.lockItems")}
+                    aria-label={itemsLocked ? t("tokens.selection.unlockItems") : t("tokens.selection.lockItems")}
                   >
                     {itemsLocked ? <LockIcon /> : <UnlockIcon />}
                   </IconButton>
                 </>
               )}
               <IconButton
-                title="Copy Items"
-                aria-label="Copy Items"
+                title={t("tokens.selection.copyItems")}
+                aria-label={t("tokens.selection.copyItems")}
                 onClick={handleCopy}
               >
                 <CopyIcon />
@@ -496,8 +524,8 @@ function SelectionMenu({
             </>
           ) : (
             <IconButton
-              title="Paste Items"
-              aria-label="Paste Items"
+              title={t("tokens.selection.pasteItems")}
+              aria-label={t("tokens.selection.pasteItems")}
               onClick={handlePaste}
             >
               <PasteIcon />
@@ -506,10 +534,10 @@ function SelectionMenu({
         </Flex>
         {effectMode && selection && (
           <Box mt={2}>
-            <Text variant="body2">效果应用</Text>
+            <Text variant="body2">{t("tokens.selection.effect.heading")}</Text>
             <Box mt={1}>
               <Text variant="body2" sx={{ opacity: 0.8 }}>
-                目标条目
+                {t("tokens.selection.effect.targetBar")}
               </Text>
               <Input
                 value={effectLabel}
@@ -519,7 +547,7 @@ function SelectionMenu({
             </Box>
             <Box mt={2}>
               <Text variant="body2" sx={{ opacity: 0.8 }}>
-                表达式
+                {t("tokens.selection.effect.expression")}
               </Text>
               <Input
                 value={effectExpression}
@@ -530,8 +558,8 @@ function SelectionMenu({
             <Box mt={2}>
               <IconButton
                 onClick={handleApplyEffect}
-                aria-label="Apply Effect"
-                title="Apply Effect"
+                aria-label={t("tokens.selection.effect.apply")}
+                title={t("tokens.selection.effect.apply")}
                 sx={{
                   width: "100%",
                   justifyContent: "center",
@@ -539,7 +567,7 @@ function SelectionMenu({
                 }}
               >
                 <Text as="span" sx={{ fontSize: "14px" }}>
-                  应用
+                  {t("tokens.selection.effect.apply")}
                 </Text>
               </IconButton>
             </Box>

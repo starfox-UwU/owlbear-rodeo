@@ -11,14 +11,9 @@ import { TokenSettingsChangeEventHandler } from "../../types/Events";
 import { buildNextAttributes, createEmptyAttributes } from "../../helpers/tokenAttributes";
 import ExpandMoreIcon from "../../icons/ExpandMoreIcon";
 import { useUserId } from "../../contexts/UserIdContext";
+import { useI18n } from "../../i18n";
 
 type CategorySetting = { value: TokenCategory; label: string };
-const categorySettings: CategorySetting[] = [
-  { value: "character", label: "Character" },
-  { value: "prop", label: "Prop" },
-  { value: "vehicle", label: "Mount" },
-  { value: "attachment", label: "Attachment" },
-];
 
 type TokenSettingsProps = {
   token: Token;
@@ -26,6 +21,15 @@ type TokenSettingsProps = {
 };
 
 function TokenSettings({ token, onSettingsChange }: TokenSettingsProps) {
+  const { t } = useI18n();
+
+  const categorySettings: CategorySetting[] = [
+    { value: "character", label: t("tokens.category.character") },
+    { value: "prop", label: t("tokens.category.prop") },
+    { value: "vehicle", label: t("tokens.category.mount") },
+    { value: "attachment", label: t("tokens.category.attachment") },
+  ];
+
   const tokenEmpty = !token || isEmpty(token);
   const userId = useUserId();
   const [showDefaultAttributes, setShowDefaultAttributes] = useState(false);
@@ -50,7 +54,7 @@ function TokenSettings({ token, onSettingsChange }: TokenSettingsProps) {
   return (
     <Flex sx={{ flexDirection: "column" }}>
       <Box mt={2} sx={{ flexGrow: 1 }}>
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name">{t("common.name")}</Label>
         <Input
           name="name"
           value={(token && token.name) || ""}
@@ -60,7 +64,7 @@ function TokenSettings({ token, onSettingsChange }: TokenSettingsProps) {
         />
       </Box>
       <Box mt={2}>
-        <Label>Default Category</Label>
+        <Label>{t("tokens.defaultCategory")}</Label>
         <Select
           options={categorySettings}
           value={
@@ -77,7 +81,7 @@ function TokenSettings({ token, onSettingsChange }: TokenSettingsProps) {
         />
       </Box>
       <Box mt={2} sx={{ flexGrow: 1 }}>
-        <Label htmlFor="tokenSize">Default Size</Label>
+        <Label htmlFor="tokenSize">{t("tokens.defaultSize")}</Label>
         <Input
           type="number"
           name="tokenSize"
@@ -91,7 +95,7 @@ function TokenSettings({ token, onSettingsChange }: TokenSettingsProps) {
         />
       </Box>
       <Box my={2} mb={3} sx={{ flexGrow: 1 }}>
-        <Label htmlFor="label">Default Label</Label>
+        <Label htmlFor="label">{t("tokens.defaultLabel")}</Label>
         <Input
           name="label"
           value={(token && token.defaultLabel) || ""}
@@ -106,11 +110,11 @@ function TokenSettings({ token, onSettingsChange }: TokenSettingsProps) {
           onClick={() => setShowDefaultAttributes((prev) => !prev)}
         >
           <Text as="label" variant="body2">
-            Default Attributes
+            {t("tokens.defaultAttributes")}
           </Text>
           <IconButton
-            title={showDefaultAttributes ? "Show Less" : "Show More"}
-            aria-label={showDefaultAttributes ? "Show Less" : "Show More"}
+            title={showDefaultAttributes ? t("tokens.showLess") : t("tokens.showMore")}
+            aria-label={showDefaultAttributes ? t("tokens.showLess") : t("tokens.showMore")}
             sx={{ transform: showDefaultAttributes ? "rotate(180deg)" : "none" }}
           >
             <ExpandMoreIcon />

@@ -25,6 +25,8 @@ import { useKeyboard } from "../../contexts/KeyboardContext";
 
 import shortcuts from "../../shortcuts";
 
+import { useI18n } from "../../i18n";
+
 import {
   FogToolSettings as FogToolSettingsType,
   FogToolType,
@@ -51,6 +53,8 @@ function FogToolSettings({
   gmOpacity = 0.35,
   showExplored = false,
 }: FogToolSettingsProps) {
+  const { t } = useI18n();
+
   const exploredVisible = !!showExplored;
   const previewOnDrag = !!settings.previewOnDrag;
   const autoVisionOnDrop = !!settings.autoVisionOnDrop;
@@ -73,19 +77,19 @@ function FogToolSettings({
   const drawTools = [
     {
       id: "polygon",
-      title: "Wall Pen (P)",
+      title: t("tools.fogTool.pen"),
       isSelected: settings.type === "polygon",
       icon: <FogPolygonIcon />,
     },
     {
       id: "rectangle",
-      title: "Wall Line (R)",
+      title: t("tools.fogTool.line"),
       isSelected: settings.type === "rectangle",
       icon: <FogRectangleIcon />,
     },
     {
       id: "brush",
-      title: "Wall Brush (B)",
+      title: t("tools.fogTool.brush"),
       isSelected: settings.type === "brush",
       icon: <FogBrushIcon />,
     },
@@ -94,7 +98,9 @@ function FogToolSettings({
   return (
     <Flex sx={{ alignItems: "center" }}>
       <RadioIconButton
-        title={fogEnabled ? "Disable Fog" : "Enable Fog"}
+        title={
+          fogEnabled ? t("tools.fogTool.disableFog") : t("tools.fogTool.enableFog")
+        }
         onClick={() => onToolAction?.("toggleFogEnabled")}
         isSelected={fogEnabled}
       >
@@ -102,15 +108,19 @@ function FogToolSettings({
       </RadioIconButton>
       <Divider vertical />
       <RadioIconButton
-        title={exploredVisible ? "Hide Explored" : "Show Explored"}
+        title={
+          exploredVisible
+            ? t("tools.fogTool.hideExplored")
+            : t("tools.fogTool.showExplored")
+        }
         onClick={() => onToolAction?.("toggleExplored")}
         isSelected={exploredVisible}
       >
         {exploredVisible ? <FogCutOnIcon /> : <FogCutOffIcon />}
       </RadioIconButton>
       <IconButton
-        aria-label="Reset Explored Fog"
-        title="Reset Explored Fog"
+        aria-label={t("tools.fogTool.resetExplored")}
+        title={t("tools.fogTool.resetExplored")}
         onClick={() => onToolAction?.("resetExplored")}
       >
         <ResetMapIcon />
@@ -119,13 +129,13 @@ function FogToolSettings({
       <IconButton
         aria-label={
           previewOnDrag
-            ? "Disable Real-time Lighting Preview"
-            : "Enable Real-time Lighting Preview"
+            ? t("tools.fogTool.disableLightingPreview")
+            : t("tools.fogTool.enableLightingPreview")
         }
         title={
           previewOnDrag
-            ? "Disable Real-time Lighting Preview"
-            : "Enable Real-time Lighting Preview"
+            ? t("tools.fogTool.disableLightingPreview")
+            : t("tools.fogTool.enableLightingPreview")
         }
         onClick={() => onSettingChange({ previewOnDrag: !previewOnDrag })}
         sx={{ color: previewOnDrag ? "primary" : "text" }}
@@ -135,13 +145,13 @@ function FogToolSettings({
       <IconButton
         aria-label={
           autoVisionOnDrop
-            ? "Disable Auto Vision on Drop"
-            : "Enable Auto Vision on Drop"
+            ? t("tools.fogTool.disableAutoVision")
+            : t("tools.fogTool.enableAutoVision")
         }
         title={
           autoVisionOnDrop
-            ? "Disable Auto Vision on Drop"
-            : "Enable Auto Vision on Drop"
+            ? t("tools.fogTool.disableAutoVision")
+            : t("tools.fogTool.enableAutoVision")
         }
         onClick={() => onSettingChange({ autoVisionOnDrop: !autoVisionOnDrop })}
         sx={{ color: autoVisionOnDrop ? "primary" : "text" }}
@@ -153,7 +163,7 @@ function FogToolSettings({
           <Divider vertical />
           <Flex sx={{ alignItems: "center" }}>
             <Text variant="body2" sx={{ mr: 2 }}>
-              GM Fog
+              {t("tools.fogTool.gmFog")}
             </Text>
             <Slider
               min={0}
@@ -182,7 +192,7 @@ function FogToolSettings({
       />
       <Divider vertical />
       <RadioIconButton
-        title="Erase Wall (E)"
+        title={t("tools.fogTool.eraseWall")}
         onClick={() => onSettingChange({ type: "remove" })}
         isSelected={settings.type === "remove"}
       >

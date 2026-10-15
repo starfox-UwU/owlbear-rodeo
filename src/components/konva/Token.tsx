@@ -7,6 +7,8 @@ import useImage from "use-image";
 import usePrevious from "../../hooks/usePrevious";
 import useGridSnapping from "../../hooks/useGridSnapping";
 
+import { useI18n } from "../../i18n";
+
 import { useUserId } from "../../contexts/UserIdContext";
 import {
   useSetPreventMapInteraction,
@@ -93,6 +95,7 @@ function Token({
   onTokenNoteOpen,
 }: MapTokenProps) {
   const userId = useUserId();
+  const { t } = useI18n();
   const isMapOwner = map.owner === userId;
   const isTokenOwner = tokenState.owner === userId;
   const canEditAttributes = isMapOwner || isTokenOwner;
@@ -506,7 +509,7 @@ function Token({
       target: {
         type: "bar",
         id: bar.id,
-        label: bar.label || "Bar",
+        label: bar.label || t("konva.attributeBar"),
         current: bar.current,
       },
       node,
@@ -527,7 +530,7 @@ function Token({
       target: {
         type: "value",
         id: value.id,
-        label: value.label || "Value",
+        label: value.label || t("konva.attributeValue"),
         current: numeric,
       },
       node,

@@ -10,6 +10,8 @@ import {
 } from "theme-ui";
 import ReactMarkdown from "react-markdown";
 
+import { useI18n } from "../i18n";
+
 function Paragraph(props: TextProps) {
   return <Text as="p" my={2} variant="body2" {...props} />;
 }
@@ -29,6 +31,8 @@ function Heading({ level, ...props }: { level: number } & TextProps) {
 }
 
 function Image(props: ImageProps) {
+  const { t } = useI18n();
+
   if (props.alt === "embed:") {
     return (
       <Box
@@ -53,7 +57,7 @@ function Image(props: ImageProps) {
             left: 0,
             border: 0,
           }}
-          title="Video"
+          title={t("transfer.markdown.video")}
         />
       </Box>
     );

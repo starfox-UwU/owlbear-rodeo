@@ -23,6 +23,8 @@ import Dice from "../../dice/Dice";
 import { dice } from "../../dice";
 import useSetting from "../../hooks/useSetting";
 
+import { useI18n } from "../../i18n";
+
 import { DefaultDice, DiceRoll, DiceType } from "../../types/Dice";
 import { DiceShareChangeEventHandler } from "../../types/Events";
 
@@ -47,6 +49,7 @@ function DiceButtons({
   onShareDiceChange,
   loading,
 }: DiceButtonsProps) {
+  const { t } = useI18n();
   const [currentDiceStyle, setCurrentDiceStyle] = useSetting("dice.style");
   const [currentDice, setCurrentDice] = useState<DefaultDice>(
     dice.find((d) => d.key === currentDiceStyle) || dice[0]
@@ -80,49 +83,49 @@ function DiceButtons({
   let buttons = [
     {
       key: "d20",
-      title: "Add D20",
+      title: t("dice.addDice", { type: "D20" }),
       count: diceCounts.d20,
       onClick: () => onDiceAdd(currentDice.class, "d20"),
       children: <D20Icon />,
     },
     {
       key: "d12",
-      title: "Add D12",
+      title: t("dice.addDice", { type: "D12" }),
       count: diceCounts.d12,
       onClick: () => onDiceAdd(currentDice.class, "d12"),
       children: <D12Icon />,
     },
     {
       key: "d10",
-      title: "Add D10",
+      title: t("dice.addDice", { type: "D10" }),
       count: diceCounts.d10,
       onClick: () => onDiceAdd(currentDice.class, "d10"),
       children: <D10Icon />,
     },
     {
       key: "d8",
-      title: "Add D8",
+      title: t("dice.addDice", { type: "D8" }),
       count: diceCounts.d8,
       onClick: () => onDiceAdd(currentDice.class, "d8"),
       children: <D8Icon />,
     },
     {
       key: "d6",
-      title: "Add D6",
+      title: t("dice.addDice", { type: "D6" }),
       count: diceCounts.d6,
       onClick: () => onDiceAdd(currentDice.class, "d6"),
       children: <D6Icon />,
     },
     {
       key: "d4",
-      title: "Add D4",
+      title: t("dice.addDice", { type: "D4" }),
       count: diceCounts.d4,
       onClick: () => onDiceAdd(currentDice.class, "d4"),
       children: <D4Icon />,
     },
     {
       key: "d100",
-      title: "Add D100",
+      title: t("dice.addDice", { type: "D100" }),
       count: diceCounts.d100,
       onClick: () => onDiceAdd(currentDice.class, "d100"),
       children: <D100Icon />,
@@ -164,13 +167,13 @@ function DiceButtons({
           <IconButton
             aria-label={
               diceTraySize === "single"
-                ? "Expand Dice Tray"
-                : "Shrink Dice Tray"
+                ? t("dice.expandTray")
+                : t("dice.shrinkTray")
             }
             title={
               diceTraySize === "single"
-                ? "Expand Dice Tray"
-                : "Shrink Dice Tray"
+                ? t("dice.expandTray")
+                : t("dice.shrinkTray")
             }
             sx={{
               transform:
@@ -187,8 +190,8 @@ function DiceButtons({
           </IconButton>
           <Divider />
           <IconButton
-            aria-label={shareDice ? "Hide Dice Rolls" : "Share Dice Rolls"}
-            title={shareDice ? "Hide Dice Rolls" : "Share Dice Rolls"}
+            aria-label={shareDice ? t("dice.hideRolls") : t("dice.shareRolls")}
+            title={shareDice ? t("dice.hideRolls") : t("dice.shareRolls")}
             onClick={() => onShareDiceChange(!shareDice)}
             disabled={loading}
           >

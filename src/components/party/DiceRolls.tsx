@@ -12,6 +12,8 @@ import D100Icon from "../../icons/D100Icon";
 
 import DiceRoll from "./DiceRoll";
 
+import { useI18n } from "../../i18n";
+
 import { getDiceRollTotal } from "../../helpers/dice";
 import { DiceRoll as DiceRollType, DiceType } from "../../types/Dice";
 
@@ -30,6 +32,7 @@ type DiceRollsProps = {
 };
 
 function DiceRolls({ rolls }: DiceRollsProps) {
+  const { t } = useI18n();
   const total = getDiceRollTotal(rolls);
 
   const [expanded, setExpanded] = useState<boolean>(false);
@@ -53,8 +56,12 @@ function DiceRolls({ rolls }: DiceRollsProps) {
     <Flex sx={{ flexDirection: "column" }}>
       <Flex sx={{ alignItems: "center" }}>
         <IconButton
-          title={expanded ? "Hide Rolls" : "Show Rolls"}
-          aria-label={expanded ? "Hide Rolls" : "Show Rolls"}
+          title={
+            expanded ? t("party.diceRolls.hide") : t("party.diceRolls.show")
+          }
+          aria-label={
+            expanded ? t("party.diceRolls.hide") : t("party.diceRolls.show")
+          }
           onClick={() => setExpanded(!expanded)}
         >
           <DiceRollsIcon />

@@ -13,6 +13,7 @@ import useResponsiveLayout from "../hooks/useResponsiveLayout";
 import { Token } from "../types/Token";
 
 import { UpdateTokenEventHandler } from "../contexts/TokenDataContext";
+import { useI18n } from "../i18n";
 
 type EditModalProps = {
   isOpen: boolean;
@@ -27,6 +28,7 @@ function EditTokenModal({
   token,
   onUpdateToken,
 }: EditModalProps) {
+  const { t } = useI18n();
   const { theme } = useThemeUI();
 
   function handleClose() {
@@ -96,7 +98,7 @@ function EditTokenModal({
         }}
       >
         <Label pt={2} pb={1} px={3}>
-          Edit token
+          {t("tokens.editTitle")}
         </Label>
         <SimpleBar
           style={{
@@ -114,7 +116,7 @@ function EditTokenModal({
           />
         </SimpleBar>
         <Button m={3} onClick={handleSave}>
-          Save
+          {t("common.save")}
         </Button>
       </Flex>
     </Modal>

@@ -18,6 +18,8 @@ import AddIcon from "../../icons/AddIcon";
 import TokenShowIcon from "../../icons/TokenShowIcon";
 import TokenHideIcon from "../../icons/TokenHideIcon";
 
+import { useI18n } from "../../i18n";
+
 type TokenAttributeEditorProps = {
   attributes: TokenAttributeState;
   onChange: (nextBars: TokenAttributeBar[], nextValues: TokenAttributeValue[]) => void;
@@ -35,6 +37,7 @@ function TokenAttributeEditor({
   showHeader = true,
   compact = true,
 }: TokenAttributeEditorProps) {
+  const { t } = useI18n();
   const { addToast } = useToasts();
   const [draftInputs, setDraftInputs] = useState<Record<string, string>>({});
   const [openColorPicker, setOpenColorPicker] = useState<string | null>(null);
@@ -66,7 +69,7 @@ function TokenAttributeEditor({
     }
     const result = parseNumericExpression(currentValue, trimmed);
     if (!result.ok) {
-      addToast(result.error, { appearance: "error" });
+      addToast(t(result.errorKey), { appearance: "error" });
       return;
     }
     onCommit(result.value);
@@ -188,8 +191,8 @@ function TokenAttributeEditor({
           ) : null}
           <Flex sx={{ alignItems: "center", gap: "4px" }}>
             <IconButton
-              title={showMinMaxAll ? "Hide Min/Max" : "Show Min/Max"}
-              aria-label={showMinMaxAll ? "Hide Min/Max" : "Show Min/Max"}
+              title={showMinMaxAll ? t("tokens.attribute.hideMinMax") : t("tokens.attribute.showMinMax")}
+              aria-label={showMinMaxAll ? t("tokens.attribute.hideMinMax") : t("tokens.attribute.showMinMax")}
               onClick={() => setAllShowMinMax(!showMinMaxAll)}
               disabled={!canEdit || attributes.bars.length === 0}
               sx={{ padding: "2px", opacity: showMinMaxAll ? 1 : 0.6 }}
@@ -199,8 +202,8 @@ function TokenAttributeEditor({
               </Text>
             </IconButton>
             <IconButton
-              title={allVisible ? "Hide From Others" : "Visible To Others"}
-              aria-label={allVisible ? "Hide From Others" : "Visible To Others"}
+              title={allVisible ? t("tokens.attribute.hideFromOthers") : t("tokens.attribute.visibleToOthers")}
+              aria-label={allVisible ? t("tokens.attribute.hideFromOthers") : t("tokens.attribute.visibleToOthers")}
               onClick={() => setAllVisibility(!allVisible)}
               disabled={!canEdit}
               sx={{ padding: "2px", opacity: allVisible ? 1 : 0.6 }}
@@ -210,16 +213,16 @@ function TokenAttributeEditor({
             {canEdit && (
               <>
                 <IconButton
-                  title="Add Bar"
-                  aria-label="Add Bar"
+                  title={t("tokens.attribute.addBar")}
+                  aria-label={t("tokens.attribute.addBar")}
                   onClick={addBar}
                   sx={{ padding: "2px" }}
                 >
                   <AddIcon />
                 </IconButton>
                 <IconButton
-                  title="Add Value"
-                  aria-label="Add Value"
+                  title={t("tokens.attribute.addValue")}
+                  aria-label={t("tokens.attribute.addValue")}
                   onClick={addValue}
                   sx={{ padding: "2px" }}
                 >
@@ -234,7 +237,7 @@ function TokenAttributeEditor({
       )}
       {attributes.bars.length === 0 && attributes.values.length === 0 && (
         <Text variant="body2" sx={{ opacity: 0.7, mt: 1, fontSize: smallFontSize }}>
-          No attributes
+          {t("tokens.attribute.none")}
         </Text>
       )}
       {attributes.bars.map((bar) => {
@@ -264,8 +267,8 @@ function TokenAttributeEditor({
                     disabled={!canEdit}
                   />
                   <IconButton
-                    title="Change Color"
-                    aria-label="Change Color"
+                    title={t("tokens.attribute.changeColor")}
+                    aria-label={t("tokens.attribute.changeColor")}
                     onClick={() =>
                       setOpenColorPicker((prev) =>
                         prev === `bar:${bar.id}:color` ? null : `bar:${bar.id}:color`
@@ -283,8 +286,8 @@ function TokenAttributeEditor({
                   />
                   {canEdit && (
                     <IconButton
-                      title="Remove Bar"
-                      aria-label="Remove Bar"
+                      title={t("tokens.attribute.removeBar")}
+                      aria-label={t("tokens.attribute.removeBar")}
                       onClick={() => removeBar(bar.id)}
                       sx={{ padding: "2px" }}
                     >
@@ -345,8 +348,8 @@ function TokenAttributeEditor({
                     }}
                     sx={inputSx}
                     disabled={!canEdit}
-                    placeholder="Cur"
-                    aria-label="Current"
+                    placeholder={t("tokens.attribute.currentShort")}
+                    aria-label={t("tokens.attribute.current")}
                   />
                   <Input
                     value={maxText}
@@ -374,8 +377,8 @@ function TokenAttributeEditor({
                     }}
                     sx={inputSx}
                     disabled={!canEdit}
-                    placeholder="Max"
-                    aria-label="Max"
+                    placeholder={t("tokens.attribute.max")}
+                    aria-label={t("tokens.attribute.max")}
                   />
                 </Flex>
               </Box>
@@ -410,8 +413,8 @@ function TokenAttributeEditor({
                     disabled={!canEdit}
                   />
                   <IconButton
-                    title="Change Color"
-                    aria-label="Change Color"
+                    title={t("tokens.attribute.changeColor")}
+                    aria-label={t("tokens.attribute.changeColor")}
                     onClick={() =>
                       setOpenColorPicker((prev) =>
                         prev === `value:${value.id}:color`
@@ -431,8 +434,8 @@ function TokenAttributeEditor({
                   />
                   {canEdit && (
                     <IconButton
-                      title="Remove Value"
-                      aria-label="Remove Value"
+                      title={t("tokens.attribute.removeValue")}
+                      aria-label={t("tokens.attribute.removeValue")}
                       onClick={() => removeValue(value.id)}
                       sx={{ padding: "2px" }}
                     >
@@ -494,8 +497,8 @@ function TokenAttributeEditor({
                     }}
                     sx={inputSx}
                     disabled={!canEdit}
-                    placeholder="Value"
-                    aria-label="Value"
+                    placeholder={t("tokens.attribute.value")}
+                    aria-label={t("tokens.attribute.value")}
                   />
                 </Flex>
               </Box>

@@ -3,6 +3,8 @@ import { Box, Input, Button, Label, Flex } from "theme-ui";
 
 import Modal from "../components/Modal";
 
+import { useI18n } from "../i18n";
+
 import { RequestCloseEventHandler } from "../types/Events";
 
 export type GroupNameEventHandler = (name: string) => void;
@@ -20,6 +22,7 @@ function GroupNameModal({
   onSubmit,
   onRequestClose,
 }: GroupNameModalProps) {
+  const { t } = useI18n();
   const [tmpName, setTempName] = useState(name);
 
   useEffect(() => {
@@ -48,7 +51,7 @@ function GroupNameModal({
     >
       <Box as="form" onSubmit={handleSubmit}>
         <Label py={2} htmlFor="name">
-          Group Name
+          {t("dialogs.groupName.title")}
         </Label>
         <Input
           id="name"
@@ -57,7 +60,7 @@ function GroupNameModal({
           ref={inputRef}
         />
         <Flex py={2}>
-          <Button sx={{ flexGrow: 1 }}>Save</Button>
+          <Button sx={{ flexGrow: 1 }}>{t("common.save")}</Button>
         </Flex>
       </Box>
     </Modal>

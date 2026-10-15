@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Flex, Text } from "theme-ui";
 
 import useImageDrop, { ImageDropEvent } from "../../hooks/useImageDrop";
+import { useTranslation } from "../../i18n";
 
 type ImageDropProps = {
   onDrop: (event: ImageDropEvent) => void;
@@ -10,6 +11,7 @@ type ImageDropProps = {
 };
 
 function ImageDrop({ onDrop, dropText, children }: ImageDropProps) {
+  const t = useTranslation();
   const { dragging, containerListeners, overlayListeners } =
     useImageDrop(onDrop);
   return (
@@ -31,7 +33,7 @@ function ImageDrop({ onDrop, dropText, children }: ImageDropProps) {
           {...overlayListeners}
         >
           <Text sx={{ pointerEvents: "none", color: "primary" }}>
-            {dropText || "Drop image to import"}
+            {dropText || t("misc.imageDrop.dropDefault")}
           </Text>
         </Flex>
       )}

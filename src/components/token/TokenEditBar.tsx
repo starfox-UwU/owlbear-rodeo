@@ -14,6 +14,7 @@ import { useTokenData } from "../../contexts/TokenDataContext";
 import { useKeyboard } from "../../contexts/KeyboardContext";
 
 import shortcuts from "../../shortcuts";
+import { useI18n } from "../../i18n";
 
 type TokenEditBarProps = {
   disabled: boolean;
@@ -21,6 +22,8 @@ type TokenEditBarProps = {
 };
 
 function TokenEditBar({ disabled, onLoad }: TokenEditBarProps) {
+  const { t } = useI18n();
+
   const { tokens, removeTokens, updateTokensHidden } = useTokenData();
 
   const { activeGroups, selectedGroupIds, onClearSelection } = useGroup();
@@ -87,9 +90,9 @@ function TokenEditBar({ disabled, onLoad }: TokenEditBarProps) {
 
   let hideTitle = "";
   if (allTokensVisible) {
-    hideTitle = "Hide Selected Token(s) in Sidebar";
+    hideTitle = t("tokens.hideSelectedInSidebar");
   } else {
-    hideTitle = "Show Selected Token(s) in Sidebar";
+    hideTitle = t("tokens.showSelectedInSidebar");
   }
 
   return (
@@ -104,8 +107,8 @@ function TokenEditBar({ disabled, onLoad }: TokenEditBarProps) {
       bg="overlay"
     >
       <Close
-        title="Clear Selection"
-        aria-label="Clear Selection"
+        title={t("tokens.clearSelection")}
+        aria-label={t("tokens.clearSelection")}
         onClick={() => onClearSelection()}
       />
       <Flex>
@@ -117,8 +120,8 @@ function TokenEditBar({ disabled, onLoad }: TokenEditBarProps) {
           {allTokensVisible ? <TokenShowIcon /> : <TokenHideIcon />}
         </IconButton>
         <IconButton
-          aria-label="Remove Selected Token(s)"
-          title="Remove Selected Token(s)"
+          aria-label={t("tokens.removeSelected")}
+          title={t("tokens.removeSelected")}
           onClick={() => setIsTokensRemoveModalOpen(true)}
         >
           <RemoveTokenIcon />
@@ -128,9 +131,9 @@ function TokenEditBar({ disabled, onLoad }: TokenEditBarProps) {
         isOpen={isTokensRemoveModalOpen}
         onRequestClose={() => setIsTokensRemoveModalOpen(false)}
         onConfirm={handleTokensRemove}
-        confirmText="Remove"
-        label="Remove Selected Token(s)"
-        description="This operation cannot be undone."
+        confirmText={t("common.remove")}
+        label={t("tokens.removeSelected")}
+        description={t("tokens.removeSelectedDescription")}
       />
     </Flex>
   );

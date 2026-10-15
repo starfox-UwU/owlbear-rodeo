@@ -7,9 +7,30 @@ import {
   TokenAttributeValue,
 } from "../types/TokenState";
 
+export type ParseNumberError =
+  | "empty"
+  | "invalidNumber"
+  | "invalidFormat"
+  | "divideByZero"
+  | "invalidResult";
+
 export type ParseNumberResult =
   | { ok: true; value: number }
-  | { ok: false; error: string };
+  | {
+      ok: false;
+      /** 稳定错误码，由界面层翻译成当前语言（本文件是纯函数，拿不到语言上下文） */
+      code: ParseNumberError;
+      /** 对应的翻译键，调用方直接 `t(result.errorKey)` 即可 */
+      errorKey: `misc.tokenAttributeErrors.${ParseNumberError}`;
+    };
+
+function parseError(code: ParseNumberError) {
+  return {
+    ok: false as const,
+    code,
+    errorKey: `misc.tokenAttributeErrors.${code}` as const,
+  };
+}
 
 const DEFAULT_BAR_COLOR = colors.red;
 
@@ -82,11 +103,11 @@ export function parseNumericExpression(
 ): ParseNumberResult {
   const trimmed = rawInput.trim();
   if (!trimmed) {
-    return { ok: false, error: "输入为空" };
+    return parseError("empty");
   }
   const tokens = trimmed.split(/\s+/).filter(Boolean);
   if (tokens.length === 0) {
-    return { ok: false, error: "输入为空" };
+    return parseError("empty");
   }
   const first = tokens[0];
   const firstOp = first[0];
@@ -100,7 +121,7 @@ export function parseNumericExpression(
   ) {
     const parsed = Number(first);
     if (!Number.isFinite(parsed)) {
-      return { ok: false, error: "请输入有效数字" };
+      return parseError("invalidNumber");
     }
     return { ok: true, value: parsed };
   }
@@ -109,12 +130,12 @@ export function parseNumericExpression(
   for (const token of tokens) {
     const op = token[0];
     if (op !== "+" && op !== "-" && op !== "*" && op !== "/" && op !== "=") {
-      return { ok: false, error: "表达式格式不正确" };
+      return parseError("invalidFormat");
     }
     const payload = token.slice(1).trim();
     const parsed = Number(payload);
     if (!Number.isFinite(parsed)) {
-      return { ok: false, error: "请输入有效数字" };
+      return parseError("invalidNumber");
     }
     if (op === "+") {
       result = result + parsed;
@@ -124,14 +145,14 @@ export function parseNumericExpression(
       result = result * parsed;
     } else if (op === "/") {
       if (parsed === 0) {
-        return { ok: false, error: "除数不能为 0" };
+        return parseError("divideByZero");
       }
       result = result / parsed;
     } else if (op === "=") {
       result = parsed;
     }
     if (!Number.isFinite(result)) {
-      return { ok: false, error: "结果无效" };
+      return parseError("invalidResult");
     }
   }
   return { ok: true, value: result };

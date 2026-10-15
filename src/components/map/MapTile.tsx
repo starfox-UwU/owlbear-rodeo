@@ -4,6 +4,8 @@ import { Map } from "../../types/Map";
 import Tile from "../tile/Tile";
 import MapImage from "./MapTileImage";
 
+import { useI18n } from "../../i18n";
+
 type MapTileProps = {
   map: Map;
   isSelected: boolean;
@@ -23,6 +25,8 @@ function MapTile({
   canEdit,
   badges,
 }: MapTileProps) {
+  const { t } = useI18n();
+
   return (
     <Tile
       title={map.name}
@@ -32,7 +36,7 @@ function MapTile({
       onDoubleClick={() => canEdit && onDoubleClick()}
       canEdit={canEdit}
       badges={badges}
-      editTitle="Edit Map"
+      editTitle={t("dialogs.editMap.title")}
     >
       <MapImage map={map} />
     </Tile>

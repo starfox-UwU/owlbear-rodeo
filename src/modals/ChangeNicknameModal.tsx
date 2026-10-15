@@ -3,6 +3,8 @@ import { Box, Input, Button, Label, Flex } from "theme-ui";
 
 import Modal from "../components/Modal";
 
+import { useI18n } from "../i18n";
+
 import { RequestCloseEventHandler } from "../types/Events";
 
 type ChangeNicknameModalProps = {
@@ -20,6 +22,7 @@ function ChangeNicknameModal({
   nickname,
   onChange,
 }: ChangeNicknameModalProps) {
+  const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   function focusInput() {
     inputRef.current?.focus();
@@ -33,7 +36,7 @@ function ChangeNicknameModal({
     >
       <Box as="form" onSubmit={onChangeSubmit}>
         <Label py={2} htmlFor="nicknameChange">
-          Change your nickname
+          {t("party.changeNickname.label")}
         </Label>
         <Input
           id="nicknameChange"
@@ -43,7 +46,7 @@ function ChangeNicknameModal({
         />
         <Flex py={2}>
           <Button sx={{ flexGrow: 1 }} disabled={!nickname}>
-            Change
+            {t("dialogs.changeNickname.submit")}
           </Button>
         </Flex>
       </Box>

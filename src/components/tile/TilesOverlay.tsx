@@ -13,6 +13,8 @@ import ChangeNicknameIcon from "../../icons/ChangeNicknameIcon";
 
 import GroupNameModal from "../../modals/GroupNameModal";
 
+import { useI18n } from "../../i18n";
+
 import { renameGroup } from "../../helpers/group";
 
 import Droppable from "../drag/Droppable";
@@ -33,6 +35,8 @@ function TilesOverlay({ modalSize, children }: TilesOverlayProps) {
   } = useGroup();
 
   const { theme } = useThemeUI();
+
+  const { t } = useI18n();
 
   const layout = useResponsiveLayout();
 
@@ -128,8 +132,8 @@ function TilesOverlay({ modalSize, children }: TilesOverlayProps) {
                   position: groupName ? "absolute" : "relative",
                   left: groupName ? "100%" : 0,
                 }}
-                title="Edit Group"
-                aria-label="Edit Group"
+                title={t("common.editGroup")}
+                aria-label={t("common.editGroup")}
                 onClick={() => setIsGroupNameModalOpen(true)}
               >
                 <ChangeNicknameIcon />

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Flex, Button, Image, Text, IconButton, Link } from "theme-ui";
 
 import Footer from "../components/Footer";
+import LanguageToggle from "../components/LanguageToggle";
 
 import StartModal from "../modals/StartModal";
 import JoinModal from "../modals/JoinModal";
@@ -18,7 +19,10 @@ import SocialPatreonIcon from "../icons/SocialPatreonIcon";
 
 import owlington from "../images/Owlington.png";
 
+import { useI18n } from "../i18n";
+
 function Home() {
+  const { t } = useI18n();
   const [isStartModalOpen, setIsStartModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [isGettingStartedModalOpen, setIsGettingStartedModalOpen] =
@@ -49,7 +53,7 @@ function Home() {
         mb={2}
       >
         <Text variant="display" as="h1" sx={{ textAlign: "center" }}>
-          Owlbear Rodeo
+          {t("home.title")}
         </Text>
         <Image src={owlington} m={2} />
         <Button
@@ -62,17 +66,20 @@ function Home() {
             justifyContent: "center",
           }}
         >
-          Getting Started <HelpIcon />
+          {t("home.gettingStarted")} <HelpIcon />
         </Button>
         <Button m={2} onClick={() => setIsStartModalOpen(true)}>
-          Start Game
+          {t("home.startGame")}
         </Button>
         <Button m={2} onClick={() => setIsJoinModalOpen(true)}>
-          Join Game
+          {t("home.joinGame")}
         </Button>
         <Text variant="caption" as="p" sx={{ textAlign: "center" }}>
-          Legacy v{__APP_VERSION__}
+          {t("home.legacyVersion", { version: __APP_VERSION__ })}
         </Text>
+        <Flex sx={{ justifyContent: "center" }}>
+          <LanguageToggle />
+        </Flex>
         <Button
           as="a"
           // @ts-ignore

@@ -5,6 +5,7 @@ import * as Comlink from "comlink";
 import ErrorBanner from "../components/banner/ErrorBanner";
 
 import { getDatabase } from "../database";
+import { useI18n } from "../i18n";
 
 // Vite bundles the worker via the `?worker` suffix and gives us a constructor
 import DatabaseWorker from "../workers/DatabaseWorker?worker";
@@ -27,6 +28,7 @@ const worker: Comlink.Remote<DatabaseWorkerService> = Comlink.wrap(
 );
 
 export function DatabaseProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n();
   const [database, setDatabase] = useState<Dexie>();
   const [databaseStatus, setDatabaseStatus] =
     useState<DatabaseStatus>("loading");
@@ -78,24 +80,23 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
           if (event.reason?.inner?.name === "QuotaExceededError") {
             setDatabaseError({
               name: event.reason?.name,
-              message:
-                "Storage Quota Exceeded Please Clear Space and Try Again.",
+              message: t("misc.database.quotaExceeded"),
             });
           } else if (event.reason?.inner?.name === "DatabaseClosedError") {
             setDatabaseError({
               name: event.reason?.name,
-              message: "Database closed, please refresh your browser.",
+              message: t("misc.database.closed"),
             });
           } else {
             setDatabaseError({
               name: event.reason?.name,
-              message: "Something went wrong, please refresh your browser.",
+              message: t("misc.database.unknown"),
             });
           }
         } else {
           setDatabaseError({
             name: event.reason?.name,
-            message: "Something went wrong, please refresh your browser.",
+            message: t("misc.database.unknown"),
           });
         }
         console.error(event.reason);
@@ -106,7 +107,7 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("unhandledrejection", handleDatabaseError);
     };
-  }, []);
+  }, [t]);
 
   const value = {
     database,

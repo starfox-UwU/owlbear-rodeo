@@ -11,6 +11,8 @@ import ToolSection from "./shared/ToolSection";
 
 import shortcuts from "../../shortcuts";
 
+import { useI18n } from "../../i18n";
+
 import RectIcon from "../../icons/SelectRectangleIcon";
 import PathIcon from "../../icons/SelectPathIcon";
 
@@ -23,6 +25,8 @@ function SelectToolSettings({
   settings,
   onSettingChange,
 }: SelectToolSettingsProps) {
+  const { t } = useI18n();
+
   // Keyboard shotcuts
   function handleKeyDown(event: KeyboardEvent) {
     if (shortcuts.selectPath(event)) {
@@ -36,13 +40,13 @@ function SelectToolSettings({
   const tools = [
     {
       id: "rectangle",
-      title: "Rectangle Selection (R)",
+      title: t("tools.selectTool.rectangle"),
       isSelected: settings.type === "rectangle",
       icon: <RectIcon />,
     },
     {
       id: "path",
-      title: "Lasso Selection (L)",
+      title: t("tools.selectTool.lasso"),
       isSelected: settings.type === "path",
       icon: <PathIcon />,
     },

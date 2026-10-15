@@ -8,6 +8,8 @@ import { dice } from "../dice";
 
 import useResponsiveLayout from "../hooks/useResponsiveLayout";
 
+import { useI18n } from "../i18n";
+
 import {
   DiceSelectEventHandler,
   RequestCloseEventHandler,
@@ -27,6 +29,7 @@ function SelectDiceModal({
   onDone,
   defaultDice,
 }: SelectDiceProps) {
+  const { t } = useI18n();
   const [selectedDice, setSelectedDice] = useState(defaultDice);
   const layout = useResponsiveLayout();
 
@@ -44,7 +47,7 @@ function SelectDiceModal({
         }}
       >
         <Label pt={2} pb={1}>
-          Select a dice style
+          {t("dice.selectStylePrompt")}
         </Label>
         <DiceTiles
           dice={dice}
@@ -53,7 +56,7 @@ function SelectDiceModal({
           onDone={onDone}
         />
         <Button my={2} variant="primary" onClick={() => onDone(selectedDice)}>
-          Select
+          {t("dice.select")}
         </Button>
       </Flex>
     </Modal>

@@ -4,12 +4,15 @@ import { Button, IconButton } from "theme-ui";
 import EraseAllIcon from "../../../icons/EraseAllIcon";
 import MapMenu from "../../map/MapMenu";
 
+import { useI18n } from "../../../i18n";
+
 type EraseAllButtonProps = {
   onToolAction: (action: string) => void;
   disabled: boolean;
 };
 
 function EraseAllButton({ onToolAction, disabled }: EraseAllButtonProps) {
+  const { t } = useI18n();
   const [isEraseAllConfirmOpen, setIsEraseAllConfirmOpen] = useState(false);
 
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -27,8 +30,8 @@ function EraseAllButton({ onToolAction, disabled }: EraseAllButtonProps) {
   return (
     <>
       <IconButton
-        aria-label="Erase All"
-        title="Erase All"
+        aria-label={t("tools.eraseAll")}
+        title={t("tools.eraseAll")}
         onClick={() => setIsEraseAllConfirmOpen(true)}
         disabled={disabled}
         ref={buttonRef}
@@ -49,7 +52,7 @@ function EraseAllButton({ onToolAction, disabled }: EraseAllButtonProps) {
             onToolAction("eraseAll");
           }}
         >
-          Erase All
+          {t("tools.eraseAll")}
         </Button>
       </MapMenu>
     </>
