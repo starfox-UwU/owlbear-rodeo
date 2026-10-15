@@ -13,6 +13,7 @@ import NoteTextOverlay from "../components/note/NoteTextOverlay";
 import NoteTool from "../components/tools/NoteTool";
 import { useBlur, useKeyboard } from "../contexts/KeyboardContext";
 import { useUserId } from "../contexts/UserIdContext";
+import { usePermissions } from "../contexts/PermissionsContext";
 import { useMapStage } from "../contexts/MapStageContext";
 import shortcuts from "../shortcuts";
 import {
@@ -29,6 +30,7 @@ import {
   NoteStyle,
 } from "../types/Note";
 import useDebounce from "./useDebounce";
+import { filterChangesByPermission } from "../helpers/permissions";
 import { getNoteContent, getNoteContentFormat } from "../helpers/notes";
 
 const defaultNoteStyle: NoteStyle = {
@@ -102,10 +104,50 @@ function useMapNotes(
   const { addToast } = useToasts();
   const userId = useUserId();
   const mapStageRef = useMapStage();
-  const allowNoteEditing = !!(
-    map?.owner === userId || mapState?.editFlags.includes("notes")
+  const permissions = usePermissions();
+  // 笔记的可见性 / 文本可见 / 挂靠属于房主工具，沿用旧的房主判定
+  const canManage = permissions.isGM;
+
+  /** 按权限系统判定单个笔记的可查看 / 可移动 / 可编辑 */
+  const canViewNote = useCallback(
+    (noteId: string) => {
+      const note = mapState?.notes[noteId];
+      return permissions.canView("notes", noteId, note?.ownerId);
+    },
+    [mapState, permissions]
   );
-  const canManage = !!userId && map?.owner === userId;
+  const canEditNote = useCallback(
+    (noteId: string) => {
+      const note = mapState?.notes[noteId];
+      return permissions.canEdit("notes", noteId, note?.ownerId);
+    },
+    [mapState, permissions]
+  );
+  const canMoveNote = useCallback(
+    (noteId: string) => {
+      const note = mapState?.notes[noteId];
+      return permissions.canMove("notes", noteId, note?.ownerId);
+    },
+    [mapState, permissions]
+  );
+
+  /**
+   * 所有笔记改动都从这里出去。
+   * 只读玩家即使绕过了 UI（例如直接调 socket）也会在这里被挡下。
+   */
+  const guardedNoteChange = useCallback(
+    (changes: Record<string, Partial<NoteType>>) => {
+      const allowed = filterChangesByPermission<Partial<NoteType>>(
+        changes,
+        (id) => permissions.levelFor("notes", id, mapState?.notes[id]?.ownerId)
+      );
+      if (Object.keys(allowed).length === 0) {
+        return;
+      }
+      onNoteChange(allowed);
+    },
+    [mapState, onNoteChange, permissions]
+  );
 
   const [noteDraggingOptions, setNoteDraggingOptions] =
     useState<NoteDraggingOptions>();
@@ -148,7 +190,7 @@ function useMapNotes(
   }
 
   const commitDraftContent = useCallback((note: NoteType) => {
-    if (!activeNoteId || !allowNoteEditing || !userId) {
+    if (!activeNoteId || !canEditNote(activeNoteId) || !userId) {
       return;
     }
     if (!hasEdited) {
@@ -175,7 +217,7 @@ function useMapNotes(
     });
   }, [
     activeNoteId,
-    allowNoteEditing,
+    canEditNote,
     userId,
     hasEdited,
     draftContent,
@@ -215,7 +257,11 @@ function useMapNotes(
   }
 
   function handleNoteRemove(noteIds: string[]) {
-    onNoteRemove(noteIds);
+    // 拖进垃圾桶也只删除自己有编辑权的笔记
+    const removable = noteIds.filter((id) => canEditNote(id));
+    if (removable.length > 0) {
+      onNoteRemove(removable);
+    }
     setNoteDraggingOptions(undefined);
   }
 
@@ -363,7 +409,7 @@ function useMapNotes(
   const debouncedContent = useDebounce(draftContent, 400);
 
   function handleTextSizeChange(noteId: string, size: number) {
-    if (!allowNoteEditing || !userId) {
+    if (!canEditNote(noteId) || !userId) {
       return;
     }
     onNoteChange({
@@ -379,7 +425,7 @@ function useMapNotes(
     if (
       !activeNoteId ||
       !activeNote ||
-      !allowNoteEditing ||
+      !canEditNote(activeNoteId) ||
       !isEditing ||
       !userId
     ) {
@@ -416,7 +462,7 @@ function useMapNotes(
   }, [
     activeNote,
     activeNoteId,
-    allowNoteEditing,
+    canEditNote,
     debouncedContent,
     draftStyle,
     hasEdited,
@@ -435,7 +481,7 @@ function useMapNotes(
   }, [activeNoteId, handleTextHudClose, mapState]);
 
   function handleContentChange(value: string) {
-    if (!allowNoteEditing) {
+    if (!activeNoteId || !canEditNote(activeNoteId)) {
       return;
     }
     if (!isEditing) {
@@ -448,7 +494,7 @@ function useMapNotes(
   }
 
   function handleStyleChange(change: Partial<NoteStyle>) {
-    if (!allowNoteEditing || !activeNoteId || !userId) {
+    if (!activeNoteId || !canEditNote(activeNoteId) || !userId) {
       return;
     }
     const nextStyle = { ...draftStyle, ...change };
@@ -467,7 +513,7 @@ function useMapNotes(
   }
 
   function handleCommand(command: string, value?: string) {
-    if (!allowNoteEditing) {
+    if (!activeNoteId || !canEditNote(activeNoteId)) {
       return;
     }
     const node = editorRef.current;
@@ -534,9 +580,10 @@ function useMapNotes(
   }
 
   const resolvedNotes = mapState
-    ? Object.values(mapState.notes).sort((a, b) =>
-        sortNotes(a, b, noteDraggingOptions)
-      )
+    ? Object.values(mapState.notes)
+        // 权限判定为「不可见」的笔记直接不进入渲染
+        .filter((note) => canViewNote(note.id))
+        .sort((a, b) => sortNotes(a, b, noteDraggingOptions))
     : [];
 
   const noteMenuEnabled = selectedToolId === "note" || selectedToolId === "move";
@@ -549,36 +596,43 @@ function useMapNotes(
 
   const notes = (
     <Group id="notes">
-      {resolvedNotes.map((note) => (
-        <Note
-          note={resolveAttachedNote(note)}
-          map={map}
-          key={note.id}
-          onNoteMenuOpen={noteMenuEnabled ? handleNoteMenuOpen : undefined}
-          onNoteEditOpen={allowDoubleClickEdit ? handleTextHudOpen : undefined}
-          onNoteMenuClose={handleNoteMenuClose}
-          editable={allowNoteEditing}
-          allowSingleClickEdit={allowSingleClickEdit}
-          openOnClick={noteMenuEnabled || allowSingleClickEdit}
-          openOnDoubleClick={allowDoubleClickEdit}
-          draggable={
-            allowNoteEditing &&
-            (selectedToolId === "note" ||
-              selectedToolId === "text" ||
-              selectedToolId === "move") &&
-            !note.locked &&
-            !note.attachedToTokenId
-          }
-          onNoteChange={onNoteChange}
-          onNoteDragStart={handleNoteDragStart}
-          onNoteDragEnd={handleNoteDragEnd}
-          fadeOnHover={selectedToolId === "drawing"}
-          selected={
-            (isHudOpen && activeNoteId === note.id) ||
-            (isNoteMenuOpen && noteMenuOptions?.noteId === note.id)
-          }
-        />
-      ))}
+      {resolvedNotes.map((note) => {
+        const editable = canEditNote(note.id);
+        const movable = canMoveNote(note.id);
+        return (
+          <Note
+            note={resolveAttachedNote(note)}
+            map={map}
+            key={note.id}
+            onNoteMenuOpen={noteMenuEnabled ? handleNoteMenuOpen : undefined}
+            onNoteEditOpen={
+              allowDoubleClickEdit && editable ? handleTextHudOpen : undefined
+            }
+            onNoteMenuClose={handleNoteMenuClose}
+            editable={editable}
+            transformable={editable}
+            allowSingleClickEdit={allowSingleClickEdit}
+            openOnClick={noteMenuEnabled || allowSingleClickEdit}
+            openOnDoubleClick={allowDoubleClickEdit}
+            draggable={
+              movable &&
+              (selectedToolId === "note" ||
+                selectedToolId === "text" ||
+                selectedToolId === "move") &&
+              !note.locked &&
+              !note.attachedToTokenId
+            }
+            onNoteChange={guardedNoteChange}
+            onNoteDragStart={handleNoteDragStart}
+            onNoteDragEnd={handleNoteDragEnd}
+            fadeOnHover={selectedToolId === "drawing"}
+            selected={
+              (isHudOpen && activeNoteId === note.id) ||
+              (isNoteMenuOpen && noteMenuOptions?.noteId === note.id)
+            }
+          />
+        );
+      })}
       <NoteTool
         map={map}
         active={selectedToolId === "note"}
@@ -600,7 +654,7 @@ function useMapNotes(
     <NoteMenu
       isOpen={isNoteMenuOpen}
       onRequestClose={handleNoteMenuClose}
-      onNoteChange={onNoteChange}
+      onNoteChange={guardedNoteChange}
       note={noteMenuOptions && mapState?.notes[noteMenuOptions.noteId]}
       noteNode={noteMenuOptions?.noteNode}
       focus={noteMenuOptions?.focus}
@@ -613,7 +667,7 @@ function useMapNotes(
       isOpen={isHudOpen && textHudEnabled}
       note={activeNote}
       draftStyle={draftStyle}
-      canEdit={allowNoteEditing}
+      canEdit={!!activeNoteId && canEditNote(activeNoteId)}
       canManage={canManage}
       attachMode={attachMode}
       onRequestClose={handleTextHudClose}

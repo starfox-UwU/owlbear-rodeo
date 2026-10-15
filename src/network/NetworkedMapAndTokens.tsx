@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { useToasts } from "react-toast-notifications";
 
 import { useMapData } from "../contexts/MapDataContext";
@@ -7,6 +7,10 @@ import { useUserId } from "../contexts/UserIdContext";
 import { useDatabase } from "../contexts/DatabaseContext";
 import { useParty } from "../contexts/PartyContext";
 import { useAssets } from "../contexts/AssetsContext";
+import {
+  PermissionStateUpdater,
+  PermissionsProvider,
+} from "../contexts/PermissionsContext";
 
 import useDebounce from "../hooks/useDebounce";
 import useNetworkedState from "../hooks/useNetworkedState";
@@ -14,6 +18,12 @@ import useMapActions from "../hooks/useMapActions";
 import useTokenAttributesSync, {
   TokenAttributeUpdateInput,
 } from "../hooks/useTokenAttributes";
+
+import {
+  canApplyPermissionDiff,
+  normalizePermissionState,
+  permissionStateKey,
+} from "../helpers/permissions";
 
 import { useTranslation } from "../i18n";
 
@@ -29,6 +39,7 @@ import GlobalImageDrop from "../components/image/GlobalImageDrop";
 
 import { Map as MapType } from "../types/Map";
 import { MapState } from "../types/MapState";
+import { PermissionState } from "../types/Permission";
 import {
   Asset,
   AssetManifest,
@@ -951,39 +962,88 @@ function NetworkedMapAndTokens({
 
   const canChangeMap = !isLoading;
 
+  /**
+   * 权限规则和其它 mapState 字段一样走同一条同步通道：
+   * 房主改动后会通过 `map_state_update` 增量广播给所有人。
+   *
+   * 唯一的例外是「这张地图第一次设置权限」：此时 `permissions` 在服务端和
+   * 其它客户端都还不存在，而增量同步会跳过路径不存在的编辑变更
+   * （见 `canApplyPermissionDiff`），改动会被静默丢掉。
+   * 所以第一次必须走整份 `map_state` 全量同步，把字段先在所有端建起来。
+   */
+  const canApplyPermissionDiffNow =
+    currentMapState !== null &&
+    canApplyPermissionDiff(currentMapState?.permissions);
+
+  const handlePermissionChange: PermissionStateUpdater = useCallback(
+    (mutate) => {
+      const needsFullSync = !canApplyPermissionDiffNow;
+      setCurrentMapState(
+        (prevState) => {
+          if (!prevState) {
+            return prevState;
+          }
+          const current: PermissionState = normalizePermissionState(
+            prevState.permissions,
+            prevState.editFlags ?? []
+          );
+          const nextPermissions = mutate(current);
+          if (
+            prevState.permissions &&
+            permissionStateKey(prevState.permissions) ===
+              permissionStateKey(nextPermissions)
+          ) {
+            // 没有实际变化就不要触发同步
+            return prevState;
+          }
+          return { ...prevState, permissions: nextPermissions };
+        },
+        true,
+        needsFullSync
+      );
+    },
+    [canApplyPermissionDiffNow, setCurrentMapState]
+  );
+
   return (
     <GlobalImageDrop
       onMapChange={handleMapChange}
       onMapTokensStateCreate={handleMapTokensStateCreate}
     >
-      <Map
+      <PermissionsProvider
         map={currentMap}
         mapState={currentMapState}
-        mapActions={mapActions}
-        onMapTokenStateChange={handleMapTokenStateChange}
-        onMapTokenStateRemove={handleMapTokenStateRemove}
-        onMapTokensStateCreate={handleMapTokensStateCreate}
-        onSelectionItemsChange={handleSelectionItemsChange}
-        onSelectionItemsRemove={handleSelectionItemsRemove}
-        onSelectionItemsCreate={handleSelectionItemsCreate}
-        onMapChange={handleMapChange}
-        onMapReset={handleMapReset}
-        onMapStateChange={handleMapStateChange}
-        onMapDraw={handleMapDraw}
-        onWallDraw={handleWallDraw}
-        onMapTemplateDraw={handleTemplateDraw}
-        onMapNoteCreate={handleNoteCreate}
-        onMapNoteChange={handleNoteChange}
-        onMapNoteRemove={handleNoteRemove}
-        onMapTokenNoteCreate={handleTokenNoteCreate}
-        onMapTokenNoteChange={handleTokenNoteChange}
-        onMapTokenNoteRemove={handleTokenNoteRemove}
-        allowMapChange={canChangeMap}
-        session={session}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-      />
-      <TokenBar onMapTokensStateCreate={handleMapTokensStateCreate} />
+        onPermissionChange={handlePermissionChange}
+      >
+        <Map
+          map={currentMap}
+          mapState={currentMapState}
+          mapActions={mapActions}
+          onMapTokenStateChange={handleMapTokenStateChange}
+          onMapTokenStateRemove={handleMapTokenStateRemove}
+          onMapTokensStateCreate={handleMapTokensStateCreate}
+          onSelectionItemsChange={handleSelectionItemsChange}
+          onSelectionItemsRemove={handleSelectionItemsRemove}
+          onSelectionItemsCreate={handleSelectionItemsCreate}
+          onMapChange={handleMapChange}
+          onMapReset={handleMapReset}
+          onMapStateChange={handleMapStateChange}
+          onMapDraw={handleMapDraw}
+          onWallDraw={handleWallDraw}
+          onMapTemplateDraw={handleTemplateDraw}
+          onMapNoteCreate={handleNoteCreate}
+          onMapNoteChange={handleNoteChange}
+          onMapNoteRemove={handleNoteRemove}
+          onMapTokenNoteCreate={handleTokenNoteCreate}
+          onMapTokenNoteChange={handleTokenNoteChange}
+          onMapTokenNoteRemove={handleTokenNoteRemove}
+          allowMapChange={canChangeMap}
+          session={session}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+        />
+        <TokenBar onMapTokensStateCreate={handleMapTokensStateCreate} />
+      </PermissionsProvider>
     </GlobalImageDrop>
   );
 }

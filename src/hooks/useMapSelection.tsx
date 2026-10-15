@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 
 import SelectionDragOverlay from "../components/selection/SelectionDragOverlay";
 import SelectionMenu from "../components/selection/SelectionMenu";
 import SelectTool from "../components/tools/SelectTool";
 import { useBlur, useKeyboard } from "../contexts/KeyboardContext";
-import { useUserId } from "../contexts/UserIdContext";
+import { usePermissions } from "../contexts/PermissionsContext";
+import { filterChangesByPermission } from "../helpers/permissions";
 import shortcuts from "../shortcuts";
 import {
   SelectionItemsChangeEventHandler,
@@ -28,23 +29,48 @@ function useMapSelection(
   selectedToolId: MapToolId,
   settings: SelectToolSettings
 ) {
-  const userId = useUserId();
+  const permissions = usePermissions();
+
   const disabledTokens: Record<string, boolean> = {};
   const disabledNotes: Record<string, boolean> = {};
-  if (mapState && map && map.owner !== userId) {
-    if (!mapState.editFlags.includes("tokens")) {
-      for (let token of Object.values(mapState.tokens)) {
-        if (token.owner !== userId) {
-          disabledTokens[token.id] = true;
-        }
+  if (mapState && map) {
+    for (const token of Object.values(mapState.tokens)) {
+      if (!permissions.canMove("tokens", token.id, token.owner)) {
+        disabledTokens[token.id] = true;
       }
     }
-    if (!mapState.editFlags.includes("notes")) {
-      for (let note of Object.values(mapState.notes)) {
+    for (const note of Object.values(mapState.notes)) {
+      if (!permissions.canMove("notes", note.id, note.ownerId)) {
         disabledNotes[note.id] = true;
       }
     }
   }
+
+  /**
+   * 框选拖拽、效果工具改数值都走这里，同样是按权限过滤：
+   * 「可移动」只能改位置，改数值 / 名目需要「可完全编辑」。
+   */
+  const guardedSelectionItemsChange: SelectionItemsChangeEventHandler =
+    useCallback(
+      (tokenChanges, noteChanges) => {
+        const allowedTokens = filterChangesByPermission<Partial<TokenState>>(
+          tokenChanges,
+          (id) => permissions.levelFor("tokens", id, mapState?.tokens[id]?.owner)
+        );
+        const allowedNotes = filterChangesByPermission<Partial<Note>>(
+          noteChanges,
+          (id) => permissions.levelFor("notes", id, mapState?.notes[id]?.ownerId)
+        );
+        if (
+          Object.keys(allowedTokens).length === 0 &&
+          Object.keys(allowedNotes).length === 0
+        ) {
+          return;
+        }
+        onSelectionItemsChange(allowedTokens, allowedNotes);
+      },
+      [mapState, onSelectionItemsChange, permissions]
+    );
 
   const [isSelectionMenuOpen, setIsSelectionMenuOpen] =
     useState<boolean>(false);
@@ -78,12 +104,22 @@ function useMapSelection(
       for (let item of selection.items) {
         if (item.type === "token") {
           const token = mapState?.tokens[item.id];
-          if (token && !token.locked) {
+          // 只有能编辑的物件才允许复制，
+          // 否则「可移动」等级会变成可以无限刷物件
+          if (
+            token &&
+            !token.locked &&
+            permissions.canEdit("tokens", token.id, token.owner)
+          ) {
             tokenStates.push({ ...token, id: uuid() });
           }
         } else {
           const note = mapState?.notes[item.id];
-          if (note && !note.locked) {
+          if (
+            note &&
+            !note.locked &&
+            permissions.canEdit("notes", note.id, note.ownerId)
+          ) {
             notes.push({ ...note, id: uuid() });
           }
         }
@@ -101,8 +137,20 @@ function useMapSelection(
     tokenStateIds: string[],
     noteIds: string[]
   ) {
+    // 选中的物件可能只是「可移动」，删除前再按编辑权限过滤一次
+    const removableTokens = tokenStateIds.filter((id) => {
+      const token = mapState?.tokens[id];
+      return !!token && permissions.canEdit("tokens", id, token.owner);
+    });
+    const removableNotes = noteIds.filter((id) => {
+      const note = mapState?.notes[id];
+      return !!note && permissions.canEdit("notes", id, note.ownerId);
+    });
     setSelection(null);
-    onSelectionItemsRemove(tokenStateIds, noteIds);
+    if (removableTokens.length === 0 && removableNotes.length === 0) {
+      return;
+    }
+    onSelectionItemsRemove(removableTokens, removableNotes);
   }
 
   const [duplicateSelection, setDuplicateSelection] = useState(false);
@@ -142,7 +190,7 @@ function useMapSelection(
     <SelectTool
       active={active}
       toolSettings={settings}
-      onSelectionItemsChange={onSelectionItemsChange}
+      onSelectionItemsChange={guardedSelectionItemsChange}
       selection={selection}
       onSelectionChange={setSelection}
       onSelectionMenuOpen={handleSelectionMenuOpen}
@@ -163,7 +211,7 @@ function useMapSelection(
       onRequestOpen={() => setIsSelectionMenuOpen(true)}
       selection={selection}
       onSelectionChange={setSelection}
-      onSelectionItemsChange={onSelectionItemsChange}
+      onSelectionItemsChange={guardedSelectionItemsChange}
       onSelectionItemsCreate={onSelectionItemsCreate}
       map={map}
       mapState={mapState}

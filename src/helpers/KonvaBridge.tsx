@@ -47,6 +47,7 @@ import {
   GridSnappingSensitivityContext,
 } from "../contexts/GridContext";
 import DatabaseContext, { useDatabase } from "../contexts/DatabaseContext";
+import PermissionsContext from "../contexts/PermissionsContext";
 
 type StageRender = (wrapped: React.ReactNode) => React.ReactElement;
 
@@ -94,10 +95,12 @@ function KonvaBridge({
   const gridSnappingSensitivity = useGridSnappingSensitivity();
 
   const database = useDatabase();
+  const permissions = useContext(PermissionsContext);
 
   return stageRender(
     <DatabaseContext.Provider value={database}>
-      <UserIdContext.Provider value={userId}>
+      <PermissionsContext.Provider value={permissions}>
+        <UserIdContext.Provider value={userId}>
         <SettingsContext.Provider value={settings}>
           <I18nContext.Provider value={i18n}>
             <KeyboardContext.Provider value={keyboardValue}>
@@ -170,6 +173,7 @@ function KonvaBridge({
           </I18nContext.Provider>
         </SettingsContext.Provider>
       </UserIdContext.Provider>
+      </PermissionsContext.Provider>
     </DatabaseContext.Provider>
   );
 }

@@ -52,6 +52,9 @@ export const MapStateSchema: any = {
     tokenNotes: {
       $ref: "#/definitions/TokenNotes",
     },
+    permissions: {
+      $ref: "#/definitions/PermissionState",
+    },
     mapId: {
       type: "string",
     },
@@ -154,6 +157,54 @@ export const MapStateSchema: any = {
           },
         },
       },
+    },
+    PermissionRule: {
+      properties: {
+        everyone: {
+          enum: ["hidden", "view", "move", "edit", "owner"],
+          type: "string",
+        },
+        users: {
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {
+            enum: ["hidden", "view", "move", "edit"],
+            type: "string",
+          },
+          required: [],
+          type: "object",
+        },
+      },
+      required: [],
+      type: "object",
+    },
+    PermissionState: {
+      properties: {
+        defaults: {
+          propertyNames: {
+            enum: ["tokens", "notes", "drawings"],
+            type: "string",
+          },
+          additionalProperties: {
+            $ref: "#/definitions/PermissionRule",
+          },
+          required: [],
+          type: "object",
+        },
+        items: {
+          propertyNames: {
+            type: "string",
+          },
+          additionalProperties: {
+            $ref: "#/definitions/PermissionRule",
+          },
+          required: [],
+          type: "object",
+        },
+      },
+      required: [],
+      type: "object",
     },
   },
 };

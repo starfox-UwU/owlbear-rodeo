@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { Box, Input, Flex, Text, IconButton, Checkbox, Label } from "theme-ui";
 import Konva from "konva";
 
@@ -26,6 +26,9 @@ import TokenHideIcon from "../../icons/TokenHideIcon";
 import ExpandMoreIcon from "../../icons/ExpandMoreIcon";
 
 import { useUserId } from "../../contexts/UserIdContext";
+import { usePermissions } from "../../contexts/PermissionsContext";
+
+import PermissionEditor from "../permission/PermissionEditor";
 
 import { useI18n } from "../../i18n";
 
@@ -46,6 +49,11 @@ type TokenMenuProps = {
   onTokenStateChange: TokenStateChangeEventHandler;
   map: Map | null;
   fogEnabled?: boolean;
+  /**
+   * 当前玩家是否有权编辑这个指示物。
+   * 为 `false` 时菜单退化成只读（权限等级为「只能看 / 可移动」）。
+   */
+  canEdit?: boolean;
 };
 
 function TokenMenu({
@@ -57,6 +65,7 @@ function TokenMenu({
   onTokenStateChange,
   map,
   fogEnabled = true,
+  canEdit = true,
 }: TokenMenuProps) {
   const { t } = useI18n();
 
@@ -90,23 +99,27 @@ function TokenMenu({
 
   const wasOpen = usePrevious(isOpen);
 
+  const permissions = usePermissions();
+
   const menuWidth = 240;
-  const sidePanelWidth = 200;
+  const sidePanelWidth = 240;
 
   const [menuLeft, setMenuLeft] = useState(0);
   const [menuTop, setMenuTop] = useState(0);
   const [visionLightOpen, setVisionLightOpen] = useState(false);
   const [attributesOpen, setAttributesOpen] = useState(false);
+  const [permissionOpen, setPermissionOpen] = useState(false);
   const sidePanelRef = useRef<HTMLDivElement | null>(null);
   const [sidePanelStyle, setSidePanelStyle] = useState<{
     left?: number;
     top?: number;
   }>({});
-  const sidePanelOpen = visionLightOpen || attributesOpen;
+  const sidePanelOpen = visionLightOpen || attributesOpen || permissionOpen;
   useEffect(() => {
     if (isOpen && !wasOpen && tokenState) {
       setVisionLightOpen(false);
       setAttributesOpen(false);
+      setPermissionOpen(false);
       // Update menu position
       if (tokenImage) {
         const imageRect = tokenImage.getClientRect();
@@ -164,9 +177,24 @@ function TokenMenu({
     return () => window.removeEventListener("resize", updateSidePanelPosition);
   }, [sidePanelOpen, menuLeft, menuTop]);
 
+  /**
+   * 所有指示物改动都从这里出去。
+   * 没有编辑权时（权限等级为「只能看 / 可移动」）一律丢弃，
+   * 这样即使从控制台调用也改不动。
+   */
+  const emitChange = useCallback<TokenStateChangeEventHandler>(
+    (changes) => {
+      if (!canEdit) {
+        return;
+      }
+      onTokenStateChange(changes);
+    },
+    [canEdit, onTokenStateChange]
+  );
+
   function handleLabelChange(event: React.ChangeEvent<HTMLInputElement>) {
     const label = event.target.value.substring(0, 48);
-    tokenState && onTokenStateChange({ [tokenState.id]: { label: label } });
+    tokenState && emitChange({ [tokenState.id]: { label: label } });
   }
 
   function handleStatusChange(status: Color) {
@@ -179,14 +207,14 @@ function TokenMenu({
     } else {
       statuses.add(status);
     }
-    onTokenStateChange({
+    emitChange({
       [tokenState.id]: { statuses: [...statuses] },
     });
   }
 
   function handleVisibleChange() {
     tokenState &&
-      onTokenStateChange({
+      emitChange({
         [tokenState.id]: { visible: !tokenState.visible },
       });
   }
@@ -200,21 +228,21 @@ function TokenMenu({
       nextHasVision && (!tokenState.visionRange || tokenState.visionRange <= 0)
         ? 6
         : tokenState.visionRange;
-    onTokenStateChange({
+    emitChange({
       [tokenState.id]: { hasVision: nextHasVision, visionRange: nextRange },
     });
   }
 
   function handleLockChange() {
     tokenState &&
-      onTokenStateChange({
+      emitChange({
         [tokenState.id]: { locked: !tokenState.locked },
       });
   }
 
   function handleCategoryChange() {
     tokenState &&
-      onTokenStateChange({
+      emitChange({
         [tokenState.id]: {
           category: tokenCategories[tokenState.category].next,
         },
@@ -239,7 +267,7 @@ function TokenMenu({
     if (!tokenState) {
       return;
     }
-    onTokenStateChange({
+    emitChange({
       [tokenState.id]: {
         lightConfig: {
           enabled: lightEnabled,
@@ -259,7 +287,7 @@ function TokenMenu({
     const nextBright =
       lightRadiusBright > 0 ? lightRadiusBright : enabled ? 4 : 0;
     const nextDim = lightRadiusDim > 0 ? lightRadiusDim : enabled ? 8 : 0;
-    onTokenStateChange({
+    emitChange({
       [tokenState.id]: {
         lightConfig: {
           enabled,
@@ -271,8 +299,8 @@ function TokenMenu({
       });
   }
 
-  const canEditAttributes =
-    !!(map && tokenState && (map.owner === userId || tokenState.owner === userId));
+  // 有编辑权就能改数值：权限等级为「可完全编辑」，或房主
+  const canEditAttributes = !!(canEdit && map && tokenState);
 
   const attributes = tokenState?.attributes
     ? tokenState.attributes
@@ -294,7 +322,7 @@ function TokenMenu({
       nextValues,
       userId || "unknown"
     );
-    onTokenStateChange({
+    emitChange({
       [tokenState.id]: { attributes: nextAttributes },
     });
   }
@@ -357,6 +385,8 @@ function TokenMenu({
             id="changeTokenLabel"
             onChange={handleLabelChange}
             value={(tokenState && tokenState.label) || ""}
+            disabled={!canEdit}
+            title={!canEdit ? t("permissions.viewOnlyTooltip") : undefined}
             sx={{
               padding: "4px",
               border: "none",
@@ -372,6 +402,7 @@ function TokenMenu({
             display: "flex",
             flexWrap: "wrap",
             justifyContent: "space-between",
+            opacity: canEdit ? 1 : 0.4,
           }}
         >
           {colorOptions
@@ -385,9 +416,9 @@ function TokenMenu({
                   borderRadius: "50%",
                   transform: "scale(0.75)",
                   backgroundColor: colors[color],
-                  cursor: "pointer",
+                  cursor: canEdit ? "pointer" : "not-allowed",
                 }}
-                onClick={() => handleStatusChange(color)}
+                onClick={() => canEdit && handleStatusChange(color)}
                 aria-label={t("tokens.labelColor", { color })}
               >
                 {tokenState &&
@@ -424,12 +455,40 @@ function TokenMenu({
                     const next = !prev;
                     if (next) {
                       setVisionLightOpen(false);
+                      setPermissionOpen(false);
                     }
                     return next;
                   })
                 }
                 sx={{ transform: attributesOpen ? "rotate(180deg)" : "none" }}
                 disabled={hasAttributes && attributesOpen}
+              >
+                <ExpandMoreIcon />
+              </IconButton>
+            </Flex>
+          </Box>
+        )}
+        {/* 物件权限：只有房主能改 */}
+        {permissions.isGM && tokenState && (
+          <Box mt={2} sx={{ position: "relative" }}>
+            <Flex sx={{ alignItems: "center", justifyContent: "space-between" }}>
+              <Text as="label" variant="body2">
+                {t("permissions.title")}
+              </Text>
+              <IconButton
+                aria-label={t("permissions.title")}
+                title={t("permissions.title")}
+                onClick={() =>
+                  setPermissionOpen((prev) => {
+                    const next = !prev;
+                    if (next) {
+                      setVisionLightOpen(false);
+                      setAttributesOpen(false);
+                    }
+                    return next;
+                  })
+                }
+                sx={{ transform: permissionOpen ? "rotate(180deg)" : "none" }}
               >
                 <ExpandMoreIcon />
               </IconButton>
@@ -498,6 +557,7 @@ function TokenMenu({
                         const next = !prev;
                         if (next) {
                           setAttributesOpen(false);
+                          setPermissionOpen(false);
                         }
                         return next;
                       })
@@ -540,7 +600,7 @@ function TokenMenu({
               value={visionRange}
               onChange={(e) =>
                 tokenState &&
-                onTokenStateChange({
+                emitChange({
                   [tokenState.id]: {
                     visionRange: parseFloat(e.target.value) || 0,
                   },
@@ -624,7 +684,43 @@ function TokenMenu({
             />
           </Box>
         )}
-
+        {permissions.isGM && tokenState && permissionOpen && (
+          <Box
+            ref={sidePanelRef}
+            sx={{
+              position: "fixed",
+              top: sidePanelStyle.top ?? menuTop,
+              left: sidePanelStyle.left ?? menuLeft + menuWidth + 8,
+              width: `${sidePanelWidth}px`,
+              backgroundColor: "overlay",
+              borderRadius: "4px",
+              zIndex: 1,
+            }}
+            p={2}
+          >
+            <Text as="label" variant="body2">
+              {t("permissions.quickTitle", {
+                name: tokenState.label || t("permissions.unnamedToken"),
+              })}
+            </Text>
+            <Text variant="caption" sx={{ display: "block", opacity: 0.7, mt: 1 }}>
+              {t("permissions.quickHint")}
+            </Text>
+            <Box mt={2}>
+              <PermissionEditor
+                idPrefix={`token-menu-${tokenState.id}`}
+                rule={permissions.itemRule(tokenState.id) ?? {}}
+                fallback={permissions.defaultRule("tokens")}
+                players={permissions.players}
+                allowInherit
+                compact
+                onChange={(patch) =>
+                  permissions.setRule("tokens", tokenState.id, patch)
+                }
+              />
+            </Box>
+          </Box>
+        )}
       </Box>
     </MapMenu>
   );

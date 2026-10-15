@@ -18,7 +18,7 @@ import {
   TokenAttributeCountOpenEventHandler,
   TokenAttributeCountTarget,
 } from "../types/Events";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Konva from "konva";
 import Token from "../components/konva/Token";
 import { KonvaEventObject } from "konva/lib/Node";
@@ -27,9 +27,11 @@ import TokenDragOverlay from "../components/token/TokenDragOverlay";
 import MapMenu from "../components/map/MapMenu";
 import { Box, Input, Text } from "theme-ui";
 import { useUserId } from "../contexts/UserIdContext";
+import { usePermissions } from "../contexts/PermissionsContext";
 import { useBlur, useKeyboard } from "../contexts/KeyboardContext";
 import shortcuts from "../shortcuts";
 import { buildNextAttributes, parseNumericExpression } from "../helpers/tokenAttributes";
+import { filterChangesByPermission, permissionAllows } from "../helpers/permissions";
 import { useTranslation } from "../i18n";
 
 type MapTokenPreviewOptions = {
@@ -64,14 +66,29 @@ function useMapTokens(
   previewOptions?: MapTokenPreviewOptions
 ) {
   const userId = useUserId();
+  const permissions = usePermissions();
   const t = useTranslation();
+
+  /**
+   * 按权限系统推导每个指示物的可操作性：
+   * - 等级低于 `view`（不可见）→ 直接不渲染
+   * - 等级低于 `move` → 不可拖动、不可选中
+   * - 等级低于 `edit` → 菜单里只能看，不能改名 / 改数值 / 删除
+   */
+  const hiddenTokens: Record<string, boolean> = {};
   const disabledTokens: Record<string, boolean> = {};
+  const readOnlyTokens: Record<string, boolean> = {};
   if (mapState && map) {
-    if (!mapState.editFlags.includes("tokens") && map.owner !== userId) {
-      for (let token of Object.values(mapState.tokens)) {
-        if (token.owner !== userId) {
-          disabledTokens[token.id] = true;
-        }
+    for (const token of Object.values(mapState.tokens)) {
+      const level = permissions.levelFor("tokens", token.id, token.owner);
+      if (!permissionAllows(level, "view")) {
+        hiddenTokens[token.id] = true;
+      }
+      if (!permissionAllows(level, "move")) {
+        disabledTokens[token.id] = true;
+      }
+      if (!permissionAllows(level, "edit")) {
+        readOnlyTokens[token.id] = true;
       }
     }
   }
@@ -93,6 +110,26 @@ function useMapTokens(
     }
   }, [tokenAttributeCountMenu]);
 
+  /**
+   * 指示物改动的最后一道闸门：
+   * - `edit` 等级原样通过
+   * - `move` 等级只留下位置字段（拖动的本质）
+   * - 其余等级整条丢弃
+   */
+  const guardedTokenStateChange = useCallback<TokenStateChangeEventHandler>(
+    (changes) => {
+      const allowed = filterChangesByPermission<Partial<TokenState>>(
+        changes,
+        (id) => permissions.levelFor("tokens", id, mapState?.tokens[id]?.owner)
+      );
+      if (Object.keys(allowed).length === 0) {
+        return;
+      }
+      onTokenStateChange(allowed);
+    },
+    [mapState, onTokenStateChange, permissions]
+  );
+
   function handleTokenMenuOpen(
     tokenStateId: string,
     tokenImage: Konva.Node,
@@ -110,6 +147,10 @@ function useMapTokens(
   const handleTokenAttributeCountOpen: TokenAttributeCountOpenEventHandler = (
     request
   ) => {
+    // 只能移动（或只能看）的玩家不能直接改数值
+    if (readOnlyTokens[request.tokenStateId]) {
+      return;
+    }
     const mapElement = document.querySelector(".map");
     if (!mapElement) {
       return;
@@ -227,11 +268,14 @@ function useMapTokens(
       let newStates: TokenState[] = [];
       for (let id of [tokenStateId, ...attachedTokenStateIds]) {
         const state = mapState?.tokens[id];
-        if (state) {
+        // 只有能编辑的指示物才允许复制
+        if (state && permissions.canEdit("tokens", id, state.owner)) {
           newStates.push({ ...state, id: uuid() });
         }
       }
-      onTokensStateCreate(newStates);
+      if (newStates.length > 0) {
+        onTokensStateCreate(newStates);
+      }
     }
     setTokenDraggingOptions({
       dragging: true,
@@ -254,7 +298,17 @@ function useMapTokens(
   }
 
   function handleTokenStateRemove(tokenStateIds: string[]) {
-    onTokenStateRemove(tokenStateIds);
+    // 拖进垃圾桶也只删除自己有编辑权的指示物，其余的静默忽略
+    const removable = tokenStateIds.filter((id) => {
+      const tokenState = mapState?.tokens[id];
+      return (
+        !!tokenState &&
+        permissions.canEdit("tokens", id, tokenState.owner)
+      );
+    });
+    if (removable.length > 0) {
+      onTokenStateRemove(removable);
+    }
     setTokenDraggingOptions(undefined);
   }
 
@@ -303,7 +357,7 @@ function useMapTokens(
         <Token
           key={tokenState.id}
           tokenState={tokenState}
-          onTokenStateChange={onTokenStateChange}
+          onTokenStateChange={guardedTokenStateChange}
           onTokenMenuOpen={handleTokenMenuOpen}
           onTokenMenuClose={handleTokenMenuClose}
           onTokenAttributeCountOpen={handleTokenAttributeCountOpen}
@@ -323,8 +377,9 @@ function useMapTokens(
           selectable={
             selectedToolId === "move" &&
             ((!(tokenState.id in disabledTokens) && !tokenState.locked) ||
-              map.owner === userId)
+              permissions.isGM)
           }
+          transformable={!(tokenState.id in readOnlyTokens)}
           fadeOnHover={
             tokenState.category !== "prop" && selectedToolId === "drawing"
           }
@@ -347,7 +402,10 @@ function useMapTokens(
   const tokens = map && mapState && (
     <Group id="tokens">
       {Object.values(mapState.tokens)
-        .filter((tokenState) => tokenState.category !== "prop")
+        .filter(
+          (tokenState) =>
+            tokenState.category !== "prop" && !(tokenState.id in hiddenTokens)
+        )
         .sort((a, b) => sortMapTokenStates(a, b, tokenDraggingOptions))
         .map(tokenFromTokenState)}
     </Group>
@@ -356,7 +414,10 @@ function useMapTokens(
   const propTokens = map && mapState && (
     <Group id="tokens">
       {Object.values(mapState.tokens)
-        .filter((tokenState) => tokenState.category === "prop")
+        .filter(
+          (tokenState) =>
+            tokenState.category === "prop" && !(tokenState.id in hiddenTokens)
+        )
         .sort((a, b) => sortMapTokenStates(a, b, tokenDraggingOptions))
         .map(tokenFromTokenState)}
     </Group>
@@ -366,7 +427,7 @@ function useMapTokens(
     <TokenMenu
       isOpen={isTokenMenuOpen}
       onRequestClose={handleTokenMenuClose}
-      onTokenStateChange={onTokenStateChange}
+      onTokenStateChange={guardedTokenStateChange}
       tokenState={
         tokenMenuOptions && mapState?.tokens[tokenMenuOptions.tokenStateId]
       }
@@ -374,6 +435,14 @@ function useMapTokens(
       tokenImage={tokenMenuOptions?.tokenImage}
       map={map}
       fogEnabled={mapState?.fogEnabled ?? true}
+      canEdit={
+        !!tokenMenuOptions &&
+        permissions.canEdit(
+          "tokens",
+          tokenMenuOptions.tokenStateId,
+          mapState?.tokens[tokenMenuOptions.tokenStateId]?.owner
+        )
+      }
     />
   );
 

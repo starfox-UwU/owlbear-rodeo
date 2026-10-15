@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Box, Flex, IconButton, Input, Text } from "theme-ui";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Box, Button, Flex, IconButton, Input, Text } from "theme-ui";
 import { useToasts } from "react-toast-notifications";
 import { v4 as uuid } from "uuid";
 
@@ -15,6 +15,13 @@ import CopyIcon from "../../icons/CopyIcon";
 import PasteIcon from "../../icons/PasteIcon";
 
 import { useUserId } from "../../contexts/UserIdContext";
+import { usePermissions } from "../../contexts/PermissionsContext";
+
+import Select from "../Select";
+import PermissionIcon from "../../icons/PermissionIcon";
+import { usePermissionLevelOptions } from "../permission/PermissionEditor";
+
+import { PermissionLevel } from "../../types/Permission";
 
 import {
   SelectionItemsChangeEventHandler,
@@ -67,8 +74,10 @@ function SelectionMenu({
 }: SelectionMenuProps) {
   const { t } = useI18n();
   const { addToast } = useToasts();
+  const levelOptions = usePermissionLevelOptions();
 
   const userId = useUserId();
+  const permissions = usePermissions();
 
   const wasOpen = usePrevious(isOpen);
 
@@ -76,9 +85,48 @@ function SelectionMenu({
 
   const [menuLeft, setMenuLeft] = useState(0);
   const [menuTop, setMenuTop] = useState(0);
+  const [permissionOpen, setPermissionOpen] = useState(false);
+  const [bulkLevel, setBulkLevel] = useState<PermissionLevel>("view");
+
+  const selectedTokenIds = useMemo(
+    () =>
+      selection
+        ? selection.items
+            .filter((item) => item.type === "token")
+            .map((item) => item.id)
+        : [],
+    [selection]
+  );
+  const selectedNoteIds = useMemo(
+    () =>
+      selection
+        ? selection.items
+            .filter((item) => item.type === "note")
+            .map((item) => item.id)
+        : [],
+    [selection]
+  );
+
+  function handleApplyBulkPermission() {
+    permissions.setRules("tokens", selectedTokenIds, { everyone: bulkLevel });
+    permissions.setRules("notes", selectedNoteIds, { everyone: bulkLevel });
+    setPermissionOpen(false);
+    onRequestClose();
+  }
+
+  function handleClearBulkPermission() {
+    permissions.clearRules([...selectedTokenIds, ...selectedNoteIds]);
+  }
 
   const selectionMenuWidth =
-    selection === null ? 48 : effectMode ? 260 : 156;
+    selection === null ? 48 : effectMode || permissionOpen ? 260 : 156;
+
+  // 每次重新打开菜单都收起权限区块，避免上一次的展开状态串味
+  useEffect(() => {
+    if (isOpen && !wasOpen) {
+      setPermissionOpen(false);
+    }
+  }, [isOpen, wasOpen]);
 
   useEffect(() => {
     const mapStage = mapStageRef.current;
@@ -366,10 +414,17 @@ function SelectionMenu({
       },
     };
     for (let item of selection.items) {
+      // 只能复制自己有编辑权的物件，避免把「可移动」变成可以刷物件
       if (item.type === "token" && clipboard.data.tokens) {
-        clipboard.data.tokens[item.id] = mapState.tokens[item.id];
+        const token = mapState.tokens[item.id];
+        if (token && permissions.canEdit("tokens", item.id, token.owner)) {
+          clipboard.data.tokens[item.id] = token;
+        }
       } else if (item.type === "note" && clipboard.data.notes) {
-        clipboard.data.notes[item.id] = mapState.notes[item.id];
+        const note = mapState.notes[item.id];
+        if (note && permissions.canEdit("notes", item.id, note.ownerId)) {
+          clipboard.data.notes[item.id] = note;
+        }
       }
     }
     if (await clipboardSupported()) {
@@ -521,6 +576,15 @@ function SelectionMenu({
               >
                 <CopyIcon />
               </IconButton>
+              {permissions.isGM && (
+                <IconButton
+                  onClick={() => setPermissionOpen((prev) => !prev)}
+                  title={t("permissions.title")}
+                  aria-label={t("permissions.title")}
+                >
+                  <PermissionIcon />
+                </IconButton>
+              )}
             </>
           ) : (
             <IconButton
@@ -532,6 +596,35 @@ function SelectionMenu({
             </IconButton>
           )}
         </Flex>
+        {permissions.isGM && selection && permissionOpen && (
+          <Box mt={2}>
+            <Text variant="body2">{t("permissions.title")}</Text>
+            <Text variant="caption" sx={{ display: "block", opacity: 0.7, mt: 1 }}>
+              {t("permissions.selectionHint")}
+            </Text>
+            <Box mt={1}>
+              <Select
+                inputId="selection-permission-level"
+                isSearchable={false}
+                options={levelOptions.player}
+                value={levelOptions.player.find(
+                  (option) => option.value === bulkLevel
+                )}
+                onChange={(option: any) =>
+                  option && setBulkLevel(option.value as PermissionLevel)
+                }
+              />
+            </Box>
+            <Flex mt={2} sx={{ gap: 2 }}>
+              <Button onClick={handleApplyBulkPermission} sx={{ flexGrow: 1 }}>
+                {t("permissions.applyToSelection")}
+              </Button>
+              <Button variant="secondary" onClick={handleClearBulkPermission}>
+                {t("permissions.clearItem")}
+              </Button>
+            </Flex>
+          </Box>
+        )}
         {effectMode && selection && (
           <Box mt={2}>
             <Text variant="body2">{t("tokens.selection.effect.heading")}</Text>

@@ -58,6 +58,11 @@ type MapTokenProps = {
   transforming: boolean;
   draggable: boolean;
   selectable: boolean;
+  /**
+   * 是否允许用变换框改大小 / 旋转。
+   * 权限等级为「可移动」时会被关掉，否则拖动之外的编辑会绕过权限。
+   */
+  transformable?: boolean;
   fadeOnHover: boolean;
   map: Map;
   mapState: MapState;
@@ -85,6 +90,7 @@ function Token({
   transforming,
   draggable,
   selectable,
+  transformable = true,
   fadeOnHover,
   map,
   mapState,
@@ -485,8 +491,10 @@ function Token({
   }
 
   const transformerActive = useMemo(
-    () => (!tokenState.locked && selected) || overrideTransformActive,
-    [tokenState, selected, overrideTransformActive]
+    () =>
+      ((!tokenState.locked && selected) || overrideTransformActive) &&
+      transformable,
+    [tokenState, selected, overrideTransformActive, transformable]
   );
 
   const transformerAttachments = useMemo(() => {

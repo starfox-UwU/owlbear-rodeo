@@ -14,6 +14,7 @@ import NetworkedMapPointer from "../../network/NetworkedMapPointer";
 
 import { useSettings } from "../../contexts/SettingsContext";
 import { useUserId } from "../../contexts/UserIdContext";
+import { usePermissions } from "../../contexts/PermissionsContext";
 
 import Action from "../../actions/Action";
 import {
@@ -111,6 +112,7 @@ function Map({
   onRedo,
 }: MapProps) {
   const userId = useUserId();
+  const permissions = usePermissions();
 
   const [selectedToolId, setSelectedToolId] = useState<MapToolId>("move");
   const { settings, setSettings } = useSettings();
@@ -160,15 +162,26 @@ function Map({
     }));
   }
 
-  const drawShapes = Object.values(mapState?.drawings || {});
+  // 权限判定为「不可见」的绘制物不进渲染，其余物件按等级决定能否擦除 / 拖动
+  const drawShapes = Object.values(mapState?.drawings || {}).filter((shape) =>
+    permissions.canView("drawings", shape.id)
+  );
   const wallShapes = Object.values(mapState?.walls || {});
   const templateShapes = Object.values(mapState?.templates || {});
   const templateTokens = Object.values(mapState?.tokens || {});
 
+  function canEditDrawing(drawingId: string) {
+    return permissions.canEdit("drawings", drawingId);
+  }
+
+  function canMoveDrawing(drawingId: string) {
+    return permissions.canMove("drawings", drawingId);
+  }
+
   function handleToolAction(action: string) {
     if (action === "eraseAll") {
       if (selectedToolId === "drawing") {
-        onMapDraw(new RemoveStatesAction(drawShapes.map((s) => s.id)));
+        handleMapShapesRemove(drawShapes.map((s) => s.id));
       } else if (selectedToolId === "fog") {
         onWallDraw(new RemoveStatesAction(wallShapes.map((s) => s.id)));
       }
@@ -198,11 +211,22 @@ function Map({
   }
 
   function handleMapShapesRemove(shapeIds: string[]) {
-    onMapDraw(new RemoveStatesAction(shapeIds));
+    // 只擦除自己有编辑权的绘制物
+    const removable = shapeIds.filter(canEditDrawing);
+    if (removable.length === 0) {
+      return;
+    }
+    onMapDraw(new RemoveStatesAction(removable));
   }
 
   function handleMapShapesEdit(shapes: Partial<Drawing>[]) {
-    onMapDraw(new EditStatesAction(shapes));
+    const editable = shapes.filter(
+      (shape) => !shape.id || canEditDrawing(shape.id)
+    );
+    if (editable.length === 0) {
+      return;
+    }
+    onMapDraw(new EditStatesAction(editable));
   }
 
   function handleWallAdd(shapes: Wall[]) {
@@ -394,6 +418,8 @@ function Map({
           onDrawingsEdit={handleMapShapesEdit}
           active={selectedToolId === "drawing"}
           toolSettings={settings.drawing}
+          canEditDrawing={canEditDrawing}
+          canMoveDrawing={canMoveDrawing}
         />
         <SpellTemplateTool
           map={map}

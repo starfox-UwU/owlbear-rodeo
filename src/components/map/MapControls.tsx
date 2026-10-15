@@ -42,6 +42,10 @@ import type { SpellTemplateToolSettings as SpellTemplateToolSettingsType } from 
 
 import { useKeyboard } from "../../contexts/KeyboardContext";
 import { useImageImport } from "../../contexts/ImageImportContext";
+import { usePermissions } from "../../contexts/PermissionsContext";
+
+import PermissionIcon from "../../icons/PermissionIcon";
+import PermissionPanel from "../permission/PermissionPanel";
 
 import shortcuts from "../../shortcuts";
 import { useUserId } from "../../contexts/UserIdContext";
@@ -95,6 +99,8 @@ function MapContols({
   const [fullScreen, setFullScreen] = useSetting("map.fullScreen");
 
   const userId = useUserId();
+  const permissions = usePermissions();
+  const [isPermissionPanelOpen, setIsPermissionPanelOpen] = useState(false);
   const imageImport = useImageImport();
   const tokenNoteSettings = toolSettings.tokenNote || {
     enabled: false,
@@ -542,6 +548,34 @@ function MapContols({
           {fullScreen ? <FullScreenExitIcon /> : <FullScreenIcon />}
         </IconButton>
       </Box>
+      {/* 物件权限：只有房主看得见入口 */}
+      {permissions.isGM && (
+        <>
+          <Box
+            sx={{
+              position: "absolute",
+              right: "4px",
+              bottom: "56px",
+              backgroundColor: "overlay",
+              borderRadius: "50%",
+            }}
+            m={2}
+          >
+            <IconButton
+              onClick={() => setIsPermissionPanelOpen(true)}
+              aria-label={t("permissions.openPanel")}
+              title={t("permissions.openPanel")}
+            >
+              <PermissionIcon />
+            </IconButton>
+          </Box>
+          <PermissionPanel
+            isOpen={isPermissionPanelOpen}
+            onRequestClose={() => setIsPermissionPanelOpen(false)}
+            mapState={mapState}
+          />
+        </>
+      )}
     </>
   );
 }

@@ -53,6 +53,10 @@ type MapDrawingProps = {
   onDrawingsEdit: DrawingsEditEventHandler;
   active: boolean;
   toolSettings: DrawingToolSettings;
+  /** 某个绘制物能否被当前玩家擦除（默认全部允许） */
+  canEditDrawing?: (drawingId: string) => boolean;
+  /** 某个绘制物能否被当前玩家拖动（默认全部允许） */
+  canMoveDrawing?: (drawingId: string) => boolean;
 };
 
 function DrawingTool({
@@ -63,6 +67,8 @@ function DrawingTool({
   onDrawingsEdit: onShapesEdit,
   active,
   toolSettings,
+  canEditDrawing,
+  canMoveDrawing,
 }: MapDrawingProps) {
   const stageScale = useDebouncedStageScale();
   const mapWidth = useMapWidth();
@@ -406,7 +412,7 @@ function DrawingTool({
   useKeyboard(handleKeyDown);
 
   function handleShapeOver(shape: Drawing, isDown: boolean) {
-    if (shouldHover && isDown) {
+    if (shouldHover && isDown && canEditDrawing?.(shape.id) !== false) {
       if (erasingDrawings.findIndex((s) => s.id === shape.id) === -1) {
         setErasingDrawings((prevShapes) => [...prevShapes, shape]);
       }
@@ -421,7 +427,8 @@ function DrawingTool({
   }
 
   function renderDrawing(shape: Drawing) {
-    const isDraggingEnabled = active && isDrag;
+    const isDraggingEnabled =
+      active && isDrag && canMoveDrawing?.(shape.id) !== false;
     function handleDragEnd(
       event: Konva.KonvaEventObject<DragEvent>
     ) {

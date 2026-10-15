@@ -689,6 +689,70 @@ const en = {
       unknown: "Something went wrong, please refresh your browser.",
     },
   },
+
+  /* ------------------------------------------------------------------ *
+   * Item permissions
+   * ------------------------------------------------------------------ */
+  permissions: {
+    title: "Item Permissions",
+    sectionHint:
+      "Decide what players may do with items. Anything without a rule of its own follows the category default.",
+    target: {
+      tokens: "Tokens",
+      notes: "Notes",
+      drawings: "Drawings",
+    },
+    level: {
+      hidden: "Hidden",
+      view: "View only",
+      move: "Can move",
+      edit: "Can fully edit",
+      owner: "Owner can edit",
+    },
+    levelHint: {
+      hidden: "Not rendered for these players at all.",
+      view: "Visible, but can't be moved or edited.",
+      move: "Can be dragged, but properties stay locked.",
+      edit: "Can be moved, edited and deleted.",
+      owner: "The item's owner gets full edit, everyone else can only view.",
+    },
+    defaultsTitle: "Category defaults",
+    defaultsHint: "Used by every item that has no rule of its own.",
+    everyone: "All players",
+    specificTitle: "Specific players",
+    specificHint: "Overrides the setting above for the players you pick.",
+    noPlayers: "No other players are in the room yet.",
+    inheritCategory: "Follow category default",
+    inheritItem: "Follow item setting",
+    inherits: "Follows {{value}}",
+    myPermission: "Your access",
+    itemTitle: "Individual items",
+    itemHint: "Override the category default for a single item.",
+    itemSearch: "Search items",
+    itemEmpty: "Nothing in this category yet.",
+    itemNoMatch: "No item matches your search.",
+    itemCustomized: "Custom",
+    itemFollowingDefault: "Default",
+    clearItem: "Reset to default",
+    clearAllItems: "Reset every item in this category",
+    unnamedToken: "Unnamed token",
+    unnamedNote: "Untitled note",
+    unnamedDrawing: "{{type}} drawing",
+    selectionCount: "{{count}} of {{total}} selected",
+    selectAll: "Select all",
+    selectNone: "Clear selection",
+    applyToSelection: "Apply to selection",
+    selectionHint:
+      "Pick a level above, then write it onto every selected item with this button.",
+    openPanel: "Manage item permissions",
+    panelTitle: "Item Permissions",
+    gmNote: "As the room owner you always have full control of everything.",
+    quickTitle: "Permissions for \"{{name}}\"",
+    quickHint: "Leave everything on default to follow the category setting.",
+    gmOnly: "Only the room owner can change item permissions.",
+    playerFallback: "Player {{id}}",
+    viewOnlyTooltip: "You only have view access to this item.",
+  },
 } as const;
 
 export type Dictionary = DeepString<typeof en>;

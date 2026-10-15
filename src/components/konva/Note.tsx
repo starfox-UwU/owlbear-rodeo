@@ -79,6 +79,11 @@ type NoteProps = {
   openOnDoubleClick?: boolean;
   allowSingleClickEdit?: boolean;
   draggable: boolean;
+  /**
+   * 是否允许用变换框改大小 / 旋转。
+   * 权限等级为「可移动」时会关掉，否则拖动之外的编辑会绕过权限。
+   */
+  transformable?: boolean;
   onNoteDragStart?: NoteDragEventHandler;
   onNoteDragEnd?: NoteDragEventHandler;
   fadeOnHover: boolean;
@@ -97,6 +102,7 @@ function Note({
   openOnDoubleClick,
   allowSingleClickEdit,
   draggable,
+  transformable = true,
   onNoteDragStart,
   onNoteDragEnd,
   fadeOnHover,
@@ -469,7 +475,7 @@ function Note({
         )}
       </AnimatedGroup>
       <Transformer
-        active={(!note.locked && selected) || isTransforming}
+        active={((!note.locked && selected) || isTransforming) && transformable}
         nodes={noteRef.current ? [noteRef.current] : []}
         onTransformEnd={handleTransformEnd}
         onTransformStart={handleTransformStart}
