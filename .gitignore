@@ -49,3 +49,7 @@ AGENTS.md
 /specs
 /docs
 /backend/cache
+
+# 临时目录：i18n 并行翻译过程中各任务汇报的文案片段（合并进字典后即可删除）
+/i18n-keys
+/docs-i18n

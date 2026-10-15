@@ -143,6 +143,47 @@ STUN_PUBLIC_HOST=192.168.1.32      # ⭐ 客户端能访问到的地址（裸 IP
 - 后端会按 `backend/.env` → `backend/.env.local` 的顺序读取，后者覆盖前者。
   Docker 部署时也可以直接由编排平台注入环境变量（优先级低于 `.env.local`）。
 
+## 多语言（简体中文 / English）
+
+界面文案已全部接入自研的轻量 i18n 内核（`src/i18n`），**支持运行时切换语言**。
+
+### 语言入口
+
+| 位置 | 说明 |
+| --- | --- |
+| 设置（右上角齿轮）→ 语言 | 完整选项：跟随系统 / 简体中文 / English |
+| 页脚 | 中英两态快捷切换 |
+
+- 首次访问默认**跟随浏览器语言**：`zh-*` 显示中文，`en-*` 显示英文，其他语言回退中文。
+- 选择结果写入 `localStorage`（settings 的 `language` 字段，v18 起），刷新后保持。
+- 切换语言不需要刷新页面。
+
+### 新增文案
+
+1. 在 `src/resources/en/index.ts` 里加英文键（这是**基准**）。
+2. 在 `src/resources/zh/index.ts` 里加同名中文键。
+
+中文文件用 `satisfies Dictionary` 约束，**漏译、键名写错、层级不一致都会让 `yarn typecheck` 直接报错**，
+所以只要类型检查通过，就不存在漏翻的键。
+
+```tsx
+import { useI18n } from "../i18n";
+
+function Example() {
+  const { t } = useI18n();
+  return <Button>{t("common.save")}</Button>;
+}
+```
+
+- 插值用 `{{name}}`：`t("settings.storageUsed", { used: "1 MB" })`。
+- 非 React 上下文（helper / class / 网络层）用 `translate(language, key, values)`，
+  语言由调用方传入或从 settings 读取，**不要在非组件里调用 hook**。
+
+### 术语对照
+
+地图 map、指示物 token、战争迷雾 fog of war、骰子 dice、网格 grid、
+测量 measure、绘图 drawing、主持人 GM、队伍 party、图层 layer、素材 asset。
+
 ## P2P / 资产传输说明
 
 - 资产传输**优先走 P2P（WebRTC DataChannel）**。
