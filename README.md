@@ -178,6 +178,8 @@ function Example() {
 - 插值用 `{{name}}`：`t("settings.storageUsed", { used: "1 MB" })`。
 - 非 React 上下文（helper / class / 网络层）用 `translate(language, key, values)`，
   语言由调用方传入或从 settings 读取，**不要在非组件里调用 hook**。
+- 约定：界面里不要再出现写死的展示文案。纯函数（例如表达式解析器）应返回
+  **稳定错误码**，由组件层翻译，避免把某一种语言写进业务逻辑。
 
 ### 术语对照
 
