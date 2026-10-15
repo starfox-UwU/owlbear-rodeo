@@ -14,6 +14,10 @@ interface ImportMetaEnv {
   readonly VITE_MAINTENANCE?: string;
   /** Optional deploy base path, defaults to `/`. */
   readonly VITE_BASE?: string;
+  /** Vite 内置：开发模式为 true，生产构建为 false。 */
+  readonly DEV: boolean;
+  /** Vite 内置：当前模式，例如 `development` / `production`。 */
+  readonly MODE: string;
 }
 
 interface ImportMeta {

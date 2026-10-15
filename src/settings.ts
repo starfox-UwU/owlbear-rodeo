@@ -172,6 +172,12 @@ function loadVersions(settings: Settings) {
           : false,
     },
   }));
+  // v1.17.0 - Add language preference (system | zh | en)
+  settings.version(18, (prev: any) => ({
+    ...prev,
+    language:
+      typeof prev?.language === "string" ? prev.language : "system",
+  }));
 }
 
 export function getSettings() {

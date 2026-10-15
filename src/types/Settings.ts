@@ -29,6 +29,7 @@ export type SelectSettings = SelectToolSettings;
 export type AssetSettings = {
   compressionQuality: number;
 };
+export type LanguageSettings = "system" | "zh" | "en";
 export type TokenNoteSettings = {
   enabled: boolean;
   trigger: "click" | "doubleClick" | "longPress";
@@ -51,4 +52,5 @@ export type Settings = {
   select: SelectSettings;
   asset: AssetSettings;
   tokenNote: TokenNoteSettings;
+  language: LanguageSettings;
 };

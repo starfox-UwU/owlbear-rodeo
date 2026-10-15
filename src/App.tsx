@@ -15,44 +15,48 @@ import { KeyboardProvider } from "./contexts/KeyboardContext";
 import { DatabaseProvider } from "./contexts/DatabaseContext";
 import { UserIdProvider } from "./contexts/UserIdContext";
 
+import { I18nProvider } from "./i18n";
+
 import { ToastProvider } from "./components/Toast";
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <SettingsProvider>
-        <AuthProvider>
-          <KeyboardProvider>
-            <ToastProvider>
-              <Router>
-                <Switch>
-                  <Route path="/how-to">
-                    <HowTo />
-                  </Route>
-                  <Route path="/release-notes">
-                    <ReleaseNotes />
-                  </Route>
-                  <Route path="/about">
-                    <About />
-                  </Route>
-                  <Route path="/faq">
-                    <FAQ />
-                  </Route>
-                  <Route path="/game/:id">
-                    <DatabaseProvider>
-                      <UserIdProvider>
-                        <Game />
-                      </UserIdProvider>
-                    </DatabaseProvider>
-                  </Route>
-                  <Route path="/">
-                    <Home />
-                  </Route>
-                </Switch>
-              </Router>
-            </ToastProvider>
-          </KeyboardProvider>
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <KeyboardProvider>
+              <ToastProvider>
+                <Router>
+                  <Switch>
+                    <Route path="/how-to">
+                      <HowTo />
+                    </Route>
+                    <Route path="/release-notes">
+                      <ReleaseNotes />
+                    </Route>
+                    <Route path="/about">
+                      <About />
+                    </Route>
+                    <Route path="/faq">
+                      <FAQ />
+                    </Route>
+                    <Route path="/game/:id">
+                      <DatabaseProvider>
+                        <UserIdProvider>
+                          <Game />
+                        </UserIdProvider>
+                      </DatabaseProvider>
+                    </Route>
+                    <Route path="/">
+                      <Home />
+                    </Route>
+                  </Switch>
+                </Router>
+              </ToastProvider>
+            </KeyboardProvider>
+          </AuthProvider>
+        </I18nProvider>
       </SettingsProvider>
     </ThemeProvider>
   );

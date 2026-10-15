@@ -21,6 +21,10 @@ import { useDatabase } from "../contexts/DatabaseContext";
 
 import useSetting from "../hooks/useSetting";
 
+import { useI18n } from "../i18n";
+import { LANGUAGE_LABELS } from "../i18n/core";
+import type { LanguagePreference } from "../i18n/core";
+
 import ConfirmModal from "./ConfirmModal";
 import ImportExportModal from "./ImportExportModal";
 
@@ -35,6 +39,7 @@ type SettingsModalProps = {
 function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
   const { database, databaseStatus } = useDatabase();
   const userId = useUserId();
+  const { t, preference, setPreference } = useI18n();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [labelSize, setLabelSize] = useSetting<number>("map.labelSize");
   const [gridSnappingSensitivity, setGridSnappingSensitivity] =
@@ -147,41 +152,64 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
   }
 
   const [colorMode, setColorMode] = useColorMode();
+  const languageOptions = [
+    { value: "system", label: t("language.system") },
+    { value: "zh", label: LANGUAGE_LABELS.zh },
+    { value: "en", label: LANGUAGE_LABELS.en },
+  ];
   const tokenNoteTriggerOptions = [
-    { value: "click", label: "On Click" },
-    { value: "doubleClick", label: "On Double Click" },
-    { value: "longPress", label: "On Long Press" },
+    { value: "click", label: t("settings.triggerOnClick") },
+    { value: "doubleClick", label: t("settings.triggerOnDoubleClick") },
+    { value: "longPress", label: t("settings.triggerOnLongPress") },
   ];
   const tokenNoteBlurOptions = [
-    { value: "none", label: "None" },
-    { value: "low", label: "Low" },
-    { value: "high", label: "High" },
+    { value: "none", label: t("settings.blurNone") },
+    { value: "low", label: t("settings.blurLow") },
+    { value: "high", label: t("settings.blurHigh") },
   ];
   const tokenNoteFontSizeOptions = [
-    { value: "sm", label: "Small" },
-    { value: "md", label: "Medium" },
-    { value: "lg", label: "Large" },
+    { value: "sm", label: t("settings.fontSizeSmall") },
+    { value: "md", label: t("settings.fontSizeMedium") },
+    { value: "lg", label: t("settings.fontSizeLarge") },
   ];
   const tokenNoteFontOptions = [
-    { value: "default", label: "System" },
-    { value: "handwritten", label: "Handwritten" },
-    { value: "rune", label: "Runic" },
+    { value: "default", label: t("settings.fontSystem") },
+    { value: "handwritten", label: t("settings.fontHandwritten") },
+    { value: "rune", label: t("settings.fontRunic") },
   ];
   const tokenNotePermissionOptions = [
-    { value: "write", label: "Write" },
-    { value: "read", label: "Read Only" },
-    { value: "none", label: "Hidden" },
+    { value: "write", label: t("settings.permissionWrite") },
+    { value: "read", label: t("settings.permissionReadOnly") },
+    { value: "none", label: t("settings.permissionHidden") },
   ];
 
   return (
     <>
       <Modal isOpen={isOpen} onRequestClose={onRequestClose}>
         <Flex sx={{ flexDirection: "column" }}>
-          <Label py={2}>Settings</Label>
+          <Label py={2}>{t("settings.title")}</Label>
           <Divider bg="text" />
-          <Label py={2}>Accessibility:</Label>
           <Label py={2}>
-            <span style={{ marginRight: "4px" }}>Light Theme</span>
+            {t("language.label")}
+            <Box sx={{ width: "240px" }}>
+              <Select
+                inputId="language-select"
+                options={languageOptions}
+                value={languageOptions.find(
+                  (option) => option.value === preference
+                )}
+                onChange={(option: any) =>
+                  setPreference((option?.value as LanguagePreference) || "system")
+                }
+              />
+            </Box>
+          </Label>
+          <Divider bg="text" />
+          <Label py={2}>{t("settings.accessibility")}</Label>
+          <Label py={2}>
+            <span style={{ marginRight: "4px" }}>
+              {t("settings.lightTheme")}
+            </span>
             <Checkbox
               checked={colorMode === "light"}
               onChange={(e) =>
@@ -190,14 +218,16 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
             />
           </Label>
           <Label py={2}>
-            <span style={{ marginRight: "4px" }}>Show Fog Guides</span>
+            <span style={{ marginRight: "4px" }}>
+              {t("settings.showFogGuides")}
+            </span>
             <Checkbox
               checked={showFogGuides}
               onChange={(e) => setShowFogGuides(e.target.checked)}
             />
           </Label>
           <Label py={2}>
-            Fog Edit Opacity
+            {t("settings.fogEditOpacity")}
             <Slider
               step={0.05}
               min={0}
@@ -210,7 +240,7 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
             />
           </Label>
           <Label py={2}>
-            Token Label Size
+            {t("settings.tokenLabelSize")}
             <Slider
               step={0.5}
               min={1}
@@ -223,7 +253,7 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
             />
           </Label>
           <Label py={2}>
-            Grid Snapping Sensitivity
+            {t("settings.gridSnappingSensitivity")}
             <Slider
               step={0.05}
               min={0}
@@ -238,7 +268,7 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
             />
           </Label>
           <Label py={2}>
-            Image Compression
+            {t("settings.imageCompression")}
             <Slider
               step={0.05}
               min={0.1}
@@ -253,16 +283,18 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
             />
           </Label>
           <Divider bg="text" />
-          <Label py={2}>Token Notes:</Label>
+          <Label py={2}>{t("settings.tokenNotes")}</Label>
           <Label py={2}>
-            <span style={{ marginRight: "4px" }}>Enable Token Notes</span>
+            <span style={{ marginRight: "4px" }}>
+              {t("settings.enableTokenNotes")}
+            </span>
             <Checkbox
               checked={tokenNoteEnabled}
               onChange={(e) => setTokenNoteEnabled(e.target.checked)}
             />
           </Label>
           <Label py={2}>
-            Trigger
+            {t("settings.trigger")}
             <Box sx={{ width: "240px" }}>
               <Select
                 options={tokenNoteTriggerOptions}
@@ -277,7 +309,7 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
           </Label>
           {tokenNoteTrigger === "longPress" && (
             <Label py={2}>
-              Long Press Duration
+              {t("settings.longPressDuration")}
               <Slider
                 step={50}
                 min={200}
@@ -293,7 +325,7 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
             </Label>
           )}
           <Label py={2}>
-            Blur
+            {t("settings.blur")}
             <Box sx={{ width: "240px" }}>
               <Select
                 options={tokenNoteBlurOptions}
@@ -307,7 +339,7 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
             </Box>
           </Label>
           <Label py={2}>
-            Font Size
+            {t("settings.fontSize")}
             <Box sx={{ width: "240px" }}>
               <Select
                 options={tokenNoteFontSizeOptions}
@@ -321,7 +353,7 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
             </Box>
           </Label>
           <Label py={2}>
-            Default Font
+            {t("settings.defaultFont")}
             <Box sx={{ width: "240px" }}>
               <Select
                 options={tokenNoteFontOptions}
@@ -335,7 +367,7 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
             </Box>
           </Label>
           <Label py={2}>
-            Default Permission
+            {t("settings.defaultPermission")}
             <Box sx={{ width: "240px" }}>
               <Select
                 options={tokenNotePermissionOptions}
@@ -355,7 +387,7 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
               onClick={handleClearCache}
               disabled={!database}
             >
-              Clear Cache
+              {t("settings.clearCache")}
             </Button>
           </Flex>
           <Flex py={2}>
@@ -364,7 +396,7 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
               onClick={() => setIsDeleteModalOpen(true)}
               disabled={!database}
             >
-              Erase All Content and Reset
+              {t("settings.eraseAll")}
             </Button>
           </Flex>
           <Flex py={2}>
@@ -373,20 +405,21 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
               onClick={() => setIsImportExportModalOpen(true)}
               disabled={databaseStatus !== "loaded"}
             >
-              Import / Export Data
+              {t("settings.importExport")}
             </Button>
           </Flex>
           {storageEstimate! && (
             <Flex sx={{ justifyContent: "center" }}>
               <Text variant="caption">
-                Storage Used: {prettyBytes(storageEstimate.usage as number)} of{" "}
-                {prettyBytes(storageEstimate.quota as number)} (
-                {Math.round(
-                  ((storageEstimate.usage as number) /
-                    Math.max(storageEstimate.quota as number, 1)) *
-                    100
-                )}
-                %)
+                {t("settings.storageUsed", {
+                  used: prettyBytes(storageEstimate.usage as number),
+                  quota: prettyBytes(storageEstimate.quota as number),
+                  percent: Math.round(
+                    ((storageEstimate.usage as number) /
+                      Math.max(storageEstimate.quota as number, 1)) *
+                      100
+                  ),
+                })}
               </Text>
             </Flex>
           )}
@@ -397,9 +430,9 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
         isOpen={isDeleteModalOpen}
         onRequestClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleEraseAllData}
-        label="Erase All Content?"
-        description="This will remove all data including saved maps and tokens."
-        confirmText="Erase"
+        label={t("settings.eraseConfirmTitle")}
+        description={t("settings.eraseConfirmBody")}
+        confirmText={t("settings.eraseConfirmButton")}
       />
       <ImportExportModal
         isOpen={isImportExportModalOpen}
