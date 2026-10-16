@@ -10,8 +10,6 @@ services:
       ALLOW_ORIGIN: ".*"
       # 浏览器通过这个地址拉取后端资源；从别的设备访问时也要改成宿主机局域网 IP
       ASSET_PUBLIC_URL: "${ASSET_PUBLIC_URL:-http://localhost:9000}"
-      # 自建 STUN 的对外地址，跨设备 P2P 传图需要，留空则只用 backend/ice.json
-      STUN_PUBLIC_HOST: "${STUN_PUBLIC_HOST:-}"
   frontend:
     build:
       context: ./

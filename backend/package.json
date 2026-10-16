@@ -1,7 +1,7 @@
 {
   "name": "owlbear-broker",
   "version": "2.0.0",
-  "description": "Owlbear Rodeo Legacy broker (Express + Socket.IO + STUN)",
+  "description": "Owlbear Rodeo Legacy broker (Express + Socket.IO, server-centric relay)",
   "private": true,
   "type": "module",
   "main": "./build/index.js",
@@ -27,8 +27,7 @@
     "helmet": "^8.3.0",
     "lodash.get": "^4.4.2",
     "socket.io": "^4.8.4",
-    "socket.io-msgpack-parser": "^3.0.2",
-    "stun": "^2.1.0"
+    "socket.io-msgpack-parser": "^3.0.2"
   },
   "dependenciesMeta": {
     "bcrypt": {

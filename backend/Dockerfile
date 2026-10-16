@@ -36,7 +36,6 @@ ENV ASSET_CACHE_DIR=/home/node/app/cache/assets
 WORKDIR /home/node/app
 
 COPY --chown=node:node package.json yarn.lock .yarnrc.yml ./
-COPY --chown=node:node ice.json ./
 COPY --chown=node:node --from=builder /home/node/app/build ./build
 COPY --chown=node:node --from=install /home/node/app/node_modules ./node_modules
 
