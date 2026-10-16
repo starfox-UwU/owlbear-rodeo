@@ -98,7 +98,8 @@ const zh = {
     imageCompression: "图片压缩",
     tokenNotes: "指示物笔记：",
     tokenDisplay: "指示物状态展示",
-    tokenDisplayHint: "配置状态标记 / 属性条 / 属性值的默认展示方式，单个指示物可自行覆盖。",
+    tokenDisplayHint:
+      "配置颜色标记 / 属性条 / 属性值的默认展示方式。放进「悬停状态栏」的条目不会占用指示物画面，鼠标悬停时才弹出；单个指示物可自行覆盖。",
     enableTokenNotes: "启用指示物笔记",
     trigger: "触发方式",
     triggerOnClick: "单击",
@@ -478,6 +479,7 @@ const zh = {
         left: "左侧内侧",
         right: "右侧内侧",
         inside: "正中间",
+        panel: "悬停状态栏",
       },
       trigger: {
         always: "始终",

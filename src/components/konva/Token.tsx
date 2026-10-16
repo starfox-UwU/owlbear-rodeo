@@ -25,7 +25,6 @@ import TokenOutline from "./TokenOutline";
 
 import { Intersection, getScaledOutline } from "../../helpers/token";
 import { parseDisplayKey } from "../../helpers/tokenDisplay";
-import { DisplayLayoutItem } from "../../helpers/tokenDisplayLayout";
 import Vector2 from "../../helpers/Vector2";
 
 import { tokenSources } from "../../tokens";
@@ -557,9 +556,9 @@ function Token({
     });
   }
 
-  /** 点击展示元素（属性条 / 数值徽章等）时打开快捷改数值菜单 */
-  function handleDisplayItemClick(item: DisplayLayoutItem, node: Konva.Node) {
-    const parsed = parseDisplayKey(item.key);
+  /** 点击展示元素（属性条 / 数值徽章 / 悬停状态栏行）时打开快捷改数值菜单 */
+  function handleDisplayItemClick(key: string, node: Konva.Node) {
+    const parsed = parseDisplayKey(key);
     if (!parsed) {
       return;
     }

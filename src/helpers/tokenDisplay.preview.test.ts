@@ -60,42 +60,45 @@ function scenario(
   name: string,
   width: number,
   height: number,
-  config?: TokenDisplayConfig
+  options?: { config?: TokenDisplayConfig; hovered?: boolean }
 ) {
   const sources = collectDisplaySources(
     { statuses: [...tokenState.statuses], attributes },
     { isMapOwner: true, isTokenOwner: true }
   );
-  return {
-    name,
+  const layout = computeDisplayLayout({
+    sources,
+    config: options?.config,
     width,
     height,
-    items: computeDisplayLayout({
-      sources,
-      config,
-      width,
-      height,
-      hovered: false,
-      selected: false,
-    }),
-  };
+    hovered: options?.hovered ?? false,
+    selected: false,
+  });
+  return { name, width, height, ...layout };
 }
 
 function customConfig() {
   let config = createDisplayConfig("u");
   config = setKindDefault(config, "bar", { anchor: "top" }, "u");
-  config = setKindDefault(config, "value", { style: "chip", anchor: "right" }, "u");
   config = setKindDefault(config, "status", { style: "badge", anchor: "ring" }, "u");
+  // 从状态栏挪回指示物上时，显示时机要跟着改成「始终」
+  config = setKindDefault(
+    config,
+    "value",
+    { style: "chip", anchor: "right", trigger: "always" },
+    "u"
+  );
   config = setItemStyle(config, "bar:mp", "bar", { style: "ring" }, "u");
   return config;
 }
 
 describe("状态展示排版体检", () => {
   const scenarios = [
-    scenario("default-100x100", 100, 100),
-    scenario("custom-100x100", 100, 100, customConfig()),
-    scenario("wide-200x100", 200, 100),
-    scenario("small-40x40", 40, 40),
+    scenario("default-idle", 100, 100),
+    scenario("default-hover", 100, 100, { hovered: true }),
+    scenario("custom-100x100", 100, 100, { config: customConfig() }),
+    scenario("wide-200x100", 200, 100, { hovered: true }),
+    scenario("small-40x40", 40, 40, { hovered: true }),
   ];
 
   it("所有元素都是有限数值", () => {
@@ -127,11 +130,26 @@ describe("状态展示排版体检", () => {
     }
   });
 
-  it("小指示物上元素仍居中且不越界太多", () => {
-    const small = scenarios[3];
+  it("小指示物上环与徽章仍居中", () => {
+    const small = scenarios[4];
     for (const item of small.items) {
       if (item.style === "ring" || item.style === "badge") {
         expect(item.x).toBeCloseTo(20, 5);
+      }
+    }
+  });
+
+  it("悬停状态栏的行都落在面板内", () => {
+    for (const entry of scenarios) {
+      if (!entry.panel) {
+        continue;
+      }
+      const panel = entry.panel;
+      for (const row of panel.rows) {
+        expect(row.y, `${entry.name} ${row.key}`).toBeGreaterThanOrEqual(panel.y);
+        expect(row.y + row.height).toBeLessThanOrEqual(panel.y + panel.height);
+        expect(row.valueX).toBeLessThanOrEqual(panel.x + panel.width);
+        expect(row.labelWidth).toBeGreaterThanOrEqual(0);
       }
     }
   });

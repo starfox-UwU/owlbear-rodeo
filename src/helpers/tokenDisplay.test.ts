@@ -83,7 +83,9 @@ describe("resolveDisplayStyle", () => {
 
     const value = resolveDisplayStyle(undefined, undefined, "value", "value:1");
     expect(value.style).toBe("badge");
-    expect(value.anchor).toBe("ring");
+    // 属性值默认收进悬停状态栏
+    expect(value.anchor).toBe("panel");
+    expect(value.trigger).toBe("hover");
   });
 
   it("按 全局 → 本指示物 → 单项 的顺序覆盖", () => {
@@ -254,7 +256,7 @@ describe("computeDisplayLayout", () => {
       { visible: false },
       USER
     );
-    const items = computeDisplayLayout({
+    const { items, panel } = computeDisplayLayout({
       ...baseOptions,
       sources: collectDisplaySources(
         { statuses: [], attributes: { bars: [makeBar()], values: [] } },
@@ -263,6 +265,7 @@ describe("computeDisplayLayout", () => {
       config,
     });
     expect(items).toHaveLength(0);
+    expect(panel).toBeNull();
   });
 
   it("悬停 / 选中触发条件生效", () => {
@@ -270,23 +273,26 @@ describe("computeDisplayLayout", () => {
       createDisplayConfig(USER),
       "value:value-1",
       "value",
-      { trigger: "hover" },
+      { anchor: "ring", trigger: "hover" },
       USER
     );
     const sources = collectDisplaySources(
       { statuses: [], attributes: { bars: [], values: [makeValue()] } },
       { isMapOwner: true, isTokenOwner: true }
     );
-    expect(computeDisplayLayout({ ...baseOptions, sources, config })).toHaveLength(0);
+    expect(
+      computeDisplayLayout({ ...baseOptions, sources, config }).items
+    ).toHaveLength(0);
     expect(
       computeDisplayLayout({ ...baseOptions, sources, config, hovered: true })
+        .items
     ).toHaveLength(1);
 
     const selectedConfig = setItemStyle(
       createDisplayConfig(USER),
       "value:value-1",
       "value",
-      { trigger: "selected" },
+      { anchor: "ring", trigger: "selected" },
       USER
     );
     expect(
@@ -295,7 +301,7 @@ describe("computeDisplayLayout", () => {
         sources,
         config: selectedConfig,
         hovered: true,
-      })
+      }).items
     ).toHaveLength(0);
     expect(
       computeDisplayLayout({
@@ -303,18 +309,19 @@ describe("computeDisplayLayout", () => {
         sources,
         config: selectedConfig,
         selected: true,
-      })
+      }).items
     ).toHaveLength(1);
   });
 
   it("属性条默认贴在指示物内侧底部并居中", () => {
-    const items = computeDisplayLayout({
+    const { items, panel } = computeDisplayLayout({
       ...baseOptions,
       sources: collectDisplaySources(
         { statuses: [], attributes: { bars: [makeBar()], values: [] } },
         { isMapOwner: true, isTokenOwner: true }
       ),
     });
+    expect(panel).toBeNull();
     expect(items).toHaveLength(1);
     const bar = items[0];
     expect(bar.style).toBe("bar");
@@ -323,8 +330,8 @@ describe("computeDisplayLayout", () => {
     expect(bar.y).toBeGreaterThan(50);
   });
 
-  it("颜色标记默认画在指示物内侧的同心环上", () => {
-    const items = computeDisplayLayout({
+  it("颜色标记默认画在指示物边缘的同心环上", () => {
+    const { items } = computeDisplayLayout({
       ...baseOptions,
       sources: collectDisplaySources(
         { statuses: ["red", "blue", "green"], attributes: { bars: [], values: [] } },
@@ -336,13 +343,32 @@ describe("computeDisplayLayout", () => {
     expect(first.style).toBe("ring");
     expect(first.x).toBeCloseTo(50);
     expect(first.y).toBeCloseTo(50);
+    // 环带压在边缘上，最外圈接近 token 半径
+    expect(first.radiusX).toBeGreaterThan(45);
+    expect(first.radiusX).toBeLessThanOrEqual(50);
     expect(first.radius).toBeGreaterThan(second.radius);
     expect(second.radius).toBeGreaterThan(third.radius);
   });
 
-  it("数值默认均匀分布在指示物外侧的环上", () => {
-    const items = computeDisplayLayout({
+  it("数值指定环上锚点时均匀分布在指示物外侧", () => {
+    let config = createDisplayConfig(USER);
+    config = setItemStyle(
+      config,
+      "value:a",
+      "value",
+      { anchor: "ring", trigger: "always" },
+      USER
+    );
+    config = setItemStyle(
+      config,
+      "value:b",
+      "value",
+      { anchor: "ring", trigger: "always" },
+      USER
+    );
+    const { items } = computeDisplayLayout({
       ...baseOptions,
+      config,
       sources: collectDisplaySources(
         {
           statuses: [],
@@ -355,9 +381,7 @@ describe("computeDisplayLayout", () => {
       ),
     });
     expect(items).toHaveLength(2);
-    const distances = items.map((item) =>
-      Math.hypot(item.x - 50, item.y - 50)
-    );
+    const distances = items.map((item) => Math.hypot(item.x - 50, item.y - 50));
     distances.forEach((distance) => expect(distance).toBeGreaterThan(50));
     expect(items[0].y).not.toBeCloseTo(items[1].y);
   });
@@ -376,9 +400,90 @@ describe("computeDisplayLayout", () => {
       },
       { isMapOwner: true, isTokenOwner: true }
     );
-    const items = computeDisplayLayout({ ...baseOptions, sources, config });
+    const { items } = computeDisplayLayout({ ...baseOptions, sources, config });
     expect(items[0].key).toBe("bar:b");
     // 底部内侧是从下往上叠：先排的更贴底
     expect(items[0].y).toBeGreaterThan(items[1].y);
+  });
+});
+
+describe("悬停状态栏", () => {
+  const baseOptions = {
+    width: 100,
+    height: 100,
+    hovered: true,
+    selected: false,
+  };
+
+  const sources = collectDisplaySources(
+    {
+      statuses: [],
+      attributes: {
+        bars: [makeBar()],
+        values: [makeValue({ id: "ac" }), makeValue({ id: "pp", label: "PP", value: 12 })],
+      },
+    },
+    { isMapOwner: true, isTokenOwner: true }
+  );
+
+  it("数值默认不占用指示物画面，只在状态栏里", () => {
+    const { items, panel } = computeDisplayLayout({ ...baseOptions, sources });
+    expect(items.map((item) => item.key)).toEqual(["bar:bar-1"]);
+    expect(panel).not.toBeNull();
+    expect(panel?.rows.map((row) => row.key)).toEqual([
+      "value:ac",
+      "value:pp",
+    ]);
+  });
+
+  it("不悬停时状态栏整个消失", () => {
+    const { panel } = computeDisplayLayout({
+      ...baseOptions,
+      sources,
+      hovered: false,
+    });
+    expect(panel).toBeNull();
+  });
+
+  it("指示物在地图右半边时状态栏朝左弹", () => {
+    const right = computeDisplayLayout({ ...baseOptions, sources, panelSide: "right" });
+    const left = computeDisplayLayout({ ...baseOptions, sources, panelSide: "left" });
+    expect(right.panel!.x).toBeGreaterThan(100);
+    expect(left.panel!.x).toBeLessThan(0);
+  });
+
+  it("状态栏行按 token 高度居中，且行内元素落在面板里", () => {
+    const { panel } = computeDisplayLayout({ ...baseOptions, sources });
+    const layout = panel!;
+    expect(layout.y + layout.height / 2).toBeCloseTo(50, 4);
+    for (const row of layout.rows) {
+      expect(row.dotX).toBeGreaterThan(layout.x);
+      expect(row.valueX).toBeLessThanOrEqual(layout.x + layout.width);
+      expect(row.labelWidth).toBeGreaterThanOrEqual(0);
+      expect(row.y).toBeGreaterThanOrEqual(layout.y);
+      expect(row.y + row.height).toBeLessThanOrEqual(layout.y + layout.height);
+    }
+  });
+
+  it("属性条也可以放进状态栏", () => {
+    const config = setKindDefault(
+      createDisplayConfig(USER),
+      "bar",
+      { anchor: "panel" },
+      USER
+    );
+    const { items, panel } = computeDisplayLayout({
+      ...baseOptions,
+      sources,
+      config,
+    });
+    expect(items).toHaveLength(0);
+    expect(panel?.rows.map((row) => row.key)).toEqual([
+      "bar:bar-1",
+      "value:ac",
+      "value:pp",
+    ]);
+    // 条形行带进度比例，方便画底衬
+    expect(panel?.rows[0].ratio).toBeCloseTo(0.4);
   });
 });

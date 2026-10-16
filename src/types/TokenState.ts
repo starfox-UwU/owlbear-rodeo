@@ -55,7 +55,7 @@ export type TokenDisplayKind = "status" | "bar" | "value";
 /** 展示样式。`ring` 对属性条是进度环，对标记 / 数值是纯色环 */
 export type TokenDisplayStyle = "ring" | "bar" | "badge" | "chip" | "text";
 
-/** 展示锚点，`auto` 交给样式自己决定 */
+/** 展示锚点，`auto` 交给样式自己决定，`panel` 表示放进悬停状态栏 */
 export type TokenDisplayAnchor =
   | "auto"
   | "ring"
@@ -63,7 +63,8 @@ export type TokenDisplayAnchor =
   | "bottom"
   | "left"
   | "right"
-  | "inside";
+  | "inside"
+  | "panel";
 
 /** 什么时候显示 */
 export type TokenDisplayTrigger = "always" | "hover" | "selected";

@@ -187,6 +187,11 @@ function loadVersions(settings: Settings) {
       ...(prev?.tokenDisplay ?? {}),
     },
   }));
+  // v1.19.0 - 状态展示改版：属性值默认收进悬停状态栏，刷新一次默认值
+  settings.version(20, (prev: any) => ({
+    ...prev,
+    tokenDisplay: { ...BUILTIN_DISPLAY_DEFAULTS },
+  }));
 }
 
 export function getSettings() {

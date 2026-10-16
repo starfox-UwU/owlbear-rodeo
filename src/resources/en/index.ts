@@ -100,7 +100,7 @@ const en = {
     tokenNotes: "Token Notes:",
     tokenDisplay: "Token status display",
     tokenDisplayHint:
-      "Set how colour markers, attribute bars and values are shown by default. Individual tokens can override this.",
+      "Set how colour markers, attribute bars and values are shown by default. Items in the hover panel stay off the token art and only pop up on hover. Individual tokens can override this.",
     enableTokenNotes: "Enable Token Notes",
     trigger: "Trigger",
     triggerOnClick: "On Click",
@@ -481,6 +481,7 @@ const en = {
         left: "Inside left",
         right: "Inside right",
         inside: "Centre",
+        panel: "Hover panel",
       },
       trigger: {
         always: "Always",

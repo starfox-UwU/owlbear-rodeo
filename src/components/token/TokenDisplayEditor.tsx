@@ -97,6 +97,7 @@ function TokenDisplayEditor({
     left: t("tokens.display.anchor.left"),
     right: t("tokens.display.anchor.right"),
     inside: t("tokens.display.anchor.inside"),
+    panel: t("tokens.display.anchor.panel"),
   };
   const triggerLabels: Record<TokenDisplayTrigger, string> = {
     always: t("tokens.display.trigger.always"),
@@ -121,6 +122,34 @@ function TokenDisplayEditor({
     return { style: nextStyle };
   }
 
+  /**
+   * 把条目从状态栏挪回指示物上时，顺手把「悬停时」改成「始终」，
+   * 否则用户会觉得「挪出来还是看不见」。反过来不自动改，保留显式选择。
+   */
+  function patchForAnchor(
+    current: ResolvedTokenDisplayStyle,
+    nextAnchor: TokenDisplayAnchor
+  ): Partial<TokenDisplayItemStyle> {
+    const patch: Partial<TokenDisplayItemStyle> = { anchor: nextAnchor };
+    if (current.anchor === "panel" && nextAnchor !== "panel" && current.trigger === "hover") {
+      patch.trigger = "always";
+    }
+    return patch;
+  }
+
+  function normalizePatch(
+    current: ResolvedTokenDisplayStyle,
+    patch: Partial<TokenDisplayItemStyle>
+  ) {
+    if (patch.style !== undefined) {
+      return patchForStyle(current, patch.style);
+    }
+    if (patch.anchor !== undefined) {
+      return patchForAnchor(current, patch.anchor);
+    }
+    return patch;
+  }
+
   function updateKindDefault(
     kind: TokenDisplayKind,
     current: ResolvedTokenDisplayStyle,
@@ -129,11 +158,7 @@ function TokenDisplayEditor({
     if (!canEdit) {
       return;
     }
-    const nextPatch =
-      patch.style !== undefined
-        ? patchForStyle(current, patch.style)
-        : patch;
-    onChange(setKindDefault(config, kind, nextPatch, userId));
+    onChange(setKindDefault(config, kind, normalizePatch(current, patch), userId));
   }
 
   function updateItem(
@@ -144,11 +169,9 @@ function TokenDisplayEditor({
     if (!canEdit) {
       return;
     }
-    const nextPatch =
-      patch.style !== undefined
-        ? patchForStyle(current, patch.style)
-        : patch;
-    onChange(setItemStyle(config, item.key, item.kind, nextPatch, userId));
+    onChange(
+      setItemStyle(config, item.key, item.kind, normalizePatch(current, patch), userId)
+    );
   }
 
   function renderControls(
@@ -180,20 +203,24 @@ function TokenDisplayEditor({
       (option) => option.value === current.trigger
     );
 
+    const inPanel = current.anchor === "panel";
+
     return (
       <>
-        <Grid columns="1fr 1fr" gap={2}>
-          <Box>
-            <Text sx={labelSx}>{t("tokens.display.styleLabel")}</Text>
-            <Select
-              options={styleOptions}
-              value={currentStyle}
-              isDisabled={!canEdit}
-              isSearchable={false}
-              onChange={((option: Option<TokenDisplayStyle>) =>
-                option && onPatch({ style: option.value })) as any}
-            />
-          </Box>
+        <Grid columns={inPanel ? "1fr" : "1fr 1fr"} gap={2}>
+          {inPanel ? null : (
+            <Box>
+              <Text sx={labelSx}>{t("tokens.display.styleLabel")}</Text>
+              <Select
+                options={styleOptions}
+                value={currentStyle}
+                isDisabled={!canEdit}
+                isSearchable={false}
+                onChange={((option: Option<TokenDisplayStyle>) =>
+                  option && onPatch({ style: option.value })) as any}
+              />
+            </Box>
+          )}
           <Box>
             <Text sx={labelSx}>{t("tokens.display.anchorLabel")}</Text>
             <Select

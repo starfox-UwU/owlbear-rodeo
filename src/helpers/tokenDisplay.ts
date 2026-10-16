@@ -31,6 +31,7 @@ export const DISPLAY_ANCHORS: TokenDisplayAnchor[] = [
   "left",
   "right",
   "inside",
+  "panel",
 ];
 
 export const DISPLAY_TRIGGERS: TokenDisplayTrigger[] = [
@@ -46,17 +47,24 @@ export const DISPLAY_STYLES_BY_KIND: Record<TokenDisplayKind, TokenDisplayStyle[
   value: ["ring", "badge", "chip", "text"],
 };
 
-/** 每种样式可用的锚点 */
+/**
+ * 每种样式可用的锚点。
+ * `panel`（悬停状态栏）对所有样式都可用 —— 放进状态栏后统一按行渲染，
+ * 此时样式只作为「在指示物上长什么样」的记忆值保留。
+ */
 export const DISPLAY_ANCHORS_BY_STYLE: Record<TokenDisplayStyle, TokenDisplayAnchor[]> = {
-  ring: ["auto", "ring"],
-  bar: ["auto", "top", "bottom", "inside"],
-  chip: ["auto", "top", "bottom", "left", "right", "inside"],
-  badge: ["auto", "ring", "top", "bottom", "left", "right", "inside"],
-  text: ["auto", "top", "bottom", "left", "right", "inside"],
+  ring: ["auto", "ring", "panel"],
+  bar: ["auto", "top", "bottom", "inside", "panel"],
+  chip: ["auto", "top", "bottom", "left", "right", "inside", "panel"],
+  badge: ["auto", "ring", "top", "bottom", "left", "right", "inside", "panel"],
+  text: ["auto", "top", "bottom", "left", "right", "inside", "panel"],
 };
 
 /** 样式缺省锚点 */
-export const DEFAULT_ANCHOR_BY_STYLE: Record<TokenDisplayStyle, Exclude<TokenDisplayAnchor, "auto">> = {
+export const DEFAULT_ANCHOR_BY_STYLE: Record<
+  TokenDisplayStyle,
+  Exclude<TokenDisplayAnchor, "auto">
+> = {
   ring: "ring",
   bar: "bottom",
   chip: "bottom",
@@ -64,6 +72,10 @@ export const DEFAULT_ANCHOR_BY_STYLE: Record<TokenDisplayStyle, Exclude<TokenDis
   text: "bottom",
 };
 
+/**
+ * 内置默认：重要的留在指示物上，次要的收进悬停状态栏。
+ * 颜色标记 = 贴边圆环，属性条 = 底部内侧进度条，属性值 = 悬停状态栏。
+ */
 export const BUILTIN_DISPLAY_DEFAULTS: TokenDisplayKindDefaults = {
   status: {
     visible: true,
@@ -71,7 +83,7 @@ export const BUILTIN_DISPLAY_DEFAULTS: TokenDisplayKindDefaults = {
     anchor: "auto",
     order: 0,
     scale: 1,
-    opacity: 0.85,
+    opacity: 0.9,
     trigger: "always",
   },
   bar: {
@@ -86,11 +98,11 @@ export const BUILTIN_DISPLAY_DEFAULTS: TokenDisplayKindDefaults = {
   value: {
     visible: true,
     style: "badge",
-    anchor: "auto",
+    anchor: "panel",
     order: 0,
     scale: 1,
     opacity: 1,
-    trigger: "always",
+    trigger: "hover",
   },
 };
 
