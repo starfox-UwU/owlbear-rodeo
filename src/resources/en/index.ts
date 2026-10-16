@@ -669,7 +669,6 @@ const en = {
     },
     assetTransfer: {
       ownerNotFound: "Unable to find owner for asset",
-      imageServiceMissing: "Image service is not configured, unable to fall back to download",
       downloadFailed: "Image download failed, please try again later",
       transferFailed: "Asset transfer failed, the owner could not find the file",
     },

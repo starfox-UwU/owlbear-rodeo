@@ -6,7 +6,7 @@
 
 This could be because it’s taking a while to upload. Ensure that your players can see a loading bar at the top of the site. Owlbear Rodeo will do its best to load a lower quality map, before continuing to load in higher quality. See 'How big can my maps be?' in our faqs.
 
-If your players do not see a loading bar at the top of their screen ensure that you don't have an extension that is blocking WebRTC connections. Some VPN extensions can cause this.
+If your players do not see a loading bar at the top of their screen, make sure they can reach the same game server you are using. Maps and tokens are uploaded to that server once and then downloaded by everyone else.
 
 ### Why do some of my tokens have a question mark on them?
 

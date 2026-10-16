@@ -667,7 +667,6 @@ const zh = {
     },
     assetTransfer: {
       ownerNotFound: "无法找到该素材的所有者",
-      imageServiceMissing: "图片服务未配置，无法回退下载",
       downloadFailed: "图片下载失败，请稍后重试",
       transferFailed: "素材传输失败，所有者未找到文件",
     },

@@ -6,7 +6,6 @@ import shortid from "shortid";
 import { deflate, inflate } from "pako";
 
 import { omit } from "../helpers/shared";
-import AssetTransport from "./AssetTransport";
 import {
   STREAM_CHUNK_EVENT,
   STREAM_CHUNK_TTL_MS,
@@ -98,7 +97,6 @@ class Session extends EventEmitter {
   private _gameId: string;
   private _password: string;
   private peers: Record<string, SessionPeer>;
-  private assetTransport: AssetTransport;
   private streamDebugEnabled: boolean;
 
   constructor() {
@@ -109,17 +107,6 @@ class Session extends EventEmitter {
     this._password = "";
     this.peers = {};
     this.streamDebugEnabled = false;
-    this.assetTransport = new AssetTransport({
-      getLocalId: () => this.socket?.id,
-      sendSignal: (event, payload) => {
-        this.socket?.emit(event, payload);
-      },
-      onPeerData: event => this.emit("peerData", event),
-      onPeerDataProgress: event => this.emit("peerDataProgress", event),
-      log: (message, payload) => {
-        console.info(message, payload);
-      },
-    });
     this.installStreamDebugConsole();
   }
 
@@ -156,7 +143,6 @@ class Session extends EventEmitter {
     this._incomingChunks = {};
     this._incomingStreamChunks = {};
     this.peers = {};
-    this.assetTransport.dispose();
   }
 
   joinGame(gameId: string, password: string) {
@@ -203,52 +189,31 @@ class Session extends EventEmitter {
     }
   }
 
+  /**
+   * 发送素材相关的点对点消息。
+   *
+   * 服务器中心架构下不再尝试 WebRTC 直连（打洞）：所有素材消息一律经由
+   * 服务器（socket.io relay_chunk）转发，大块素材数据则建议先上传到服务器
+   * 的 `/assets` 接口，再只转发 URL。
+   *
+   * 返回 `true` 表示消息已交给服务器；`false` 表示当前没有可用的连接。
+   */
   async sendAssetTo(
     sessionId: string,
     eventId: string,
     data: PeerData,
-    chunkId?: string,
-    options?: { allowRelayFallback?: boolean; timeoutMs?: number }
-  ) {
-    if (!sessionId) {
+    chunkId?: string
+  ): Promise<boolean> {
+    if (!sessionId || !this.socket?.connected) {
       return false;
     }
-    const allowRelayFallback = options?.allowRelayFallback !== false;
-    if (!this.assetTransport.isAvailable()) {
-      this.sendTo(sessionId, eventId, data, chunkId);
-      console.info("ASSET_SEND_MODE_RELAY_NO_P2P", {
-        sessionId,
-        eventId,
-        chunkId,
-        allowRelayFallback,
-      });
-      return false;
-    }
-    console.info("ASSET_SEND_TRY_P2P", { sessionId, eventId, chunkId });
-    const sentViaP2P = await this.assetTransport.send(
-      sessionId,
-      eventId,
-      data,
-      chunkId,
-      { timeoutMs: options?.timeoutMs }
-    );
-    if (sentViaP2P) {
-      console.info("ASSET_SEND_MODE_P2P", { sessionId, eventId, chunkId });
-      return true;
-    }
-
-    if (allowRelayFallback) {
-      this.sendTo(sessionId, eventId, data, chunkId);
-      console.info("ASSET_SEND_MODE_RELAY", { sessionId, eventId, chunkId });
-      return false;
-    }
-
-    console.info("ASSET_SEND_P2P_FAILED_NO_RELAY", {
+    this.sendTo(sessionId, eventId, data, chunkId);
+    console.info("ASSET_SEND_MODE_SERVER_RELAY", {
       sessionId,
       eventId,
       chunkId,
     });
-    return sentViaP2P;
+    return true;
   }
 
   sendStream(topic: string, data: any, options?: StreamSendOptions) {
@@ -310,9 +275,6 @@ class Session extends EventEmitter {
     this.socket.on("relay_chunk", this.handleRelayChunk);
     this.socket.on(STREAM_EVENT, this.handleStreamEnvelope);
     this.socket.on(STREAM_CHUNK_EVENT, this.handleStreamEnvelope);
-    this.socket.on("webrtc_offer", this.handleWebRtcOffer);
-    this.socket.on("webrtc_answer", this.handleWebRtcAnswer);
-    this.socket.on("webrtc_ice", this.handleWebRtcIce);
   }
 
   private handlePlayerJoined = (id: string) => {
@@ -324,7 +286,6 @@ class Session extends EventEmitter {
     if (id in this.peers) {
       this.peers = omit(this.peers, [id]);
     }
-    this.assetTransport.removePeer(id);
     this.emit("playerLeft", id);
     this.cleanupIncomingChunks(id);
     this.cleanupIncomingStreamChunks(id);
@@ -352,7 +313,6 @@ class Session extends EventEmitter {
     this._incomingChunks = {};
     this._incomingStreamChunks = {};
     this.peers = {};
-    this.assetTransport.dispose();
   };
 
   private handleSocketReconnect = () => {
@@ -556,18 +516,6 @@ class Session extends EventEmitter {
       },
     };
   }
-
-  private handleWebRtcOffer = (payload: any) => {
-    this.assetTransport.handleOffer(payload);
-  };
-
-  private handleWebRtcAnswer = (payload: any) => {
-    this.assetTransport.handleAnswer(payload);
-  };
-
-  private handleWebRtcIce = (payload: any) => {
-    this.assetTransport.handleIce(payload);
-  };
 
   private mergeChunks(buffers: (Uint8Array | undefined)[]) {
     const totalLength = buffers.reduce((acc, buf) => {

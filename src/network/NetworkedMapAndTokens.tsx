@@ -59,6 +59,21 @@ import {
   RemoveStatesAction,
 } from "../actions";
 
+/**
+ * 素材发布结果：
+ * - `url`   ：素材已经在服务器上，转发 URL 让对端用 HTTP 拉取
+ * - `asset` ：服务器没有可用的资源服务或上传失败，只能中继原始字节
+ * - `fail`  ：确认无素材可发
+ */
+type PublishedAsset =
+  | { type: "url"; url: string; size?: number; originalName?: string }
+  | { type: "asset"; asset: Asset }
+  | { type: "fail" };
+
+/** 服务器/素材所有者长时间没有响应时的重试间隔与最大次数 */
+const ASSET_REQUEST_TIMEOUT_MS = 8000;
+const ASSET_REQUEST_MAX_ATTEMPTS = 3;
+
 function normalizeMapState(state: MapState | null): MapState | null {
   if (!state) {
     return state;
@@ -169,6 +184,152 @@ function NetworkedMapAndTokens({
     {}
   );
   const assetDownloadFailuresRef = useRef<Record<string, number>>({});
+  const assetRequestAttemptsRef = useRef<Record<string, number>>({});
+  // 注意：本文件里 `Map` 是地图组件，所以要显式用 `globalThis.Map`
+  const publishAssetPromisesRef = useRef(
+    new globalThis.Map<string, Promise<PublishedAsset>>()
+  );
+
+  /** 解除请求锁与计时器（不改变进度条） */
+  function releaseAssetRequest(assetId: string) {
+    requestingAssetsRef.current.delete(assetId);
+    delete assetRequestAttemptsRef.current[assetId];
+    const pendingTimeout = pendingAssetTimeoutsRef.current[assetId];
+    if (pendingTimeout) {
+      clearTimeout(pendingTimeout);
+      delete pendingAssetTimeoutsRef.current[assetId];
+    }
+  }
+
+  /** 一次素材请求彻底结束：解锁并把进度条推到 100% */
+  function finishAssetRequest(assetId: string) {
+    releaseAssetRequest(assetId);
+    assetProgressUpdate({ id: assetId, total: 1, count: 1 });
+  }
+
+  /** 等待对端响应期间的兜底：超时仍无结果就放弃本次请求 */
+  function armAssetResponseTimeout(assetId: string) {
+    const existingTimeout = pendingAssetTimeoutsRef.current[assetId];
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+    pendingAssetTimeoutsRef.current[assetId] = setTimeout(() => {
+      if (!requestingAssetsRef.current.has(assetId)) {
+        return;
+      }
+      finishAssetRequest(assetId);
+      addToast(t("misc.assetTransfer.transferFailed"));
+    }, ASSET_REQUEST_TIMEOUT_MS);
+  }
+
+  /**
+   * 把素材发布到服务器（HTTP 资源接口）。
+   *
+   * 同一素材的并发发布会共享同一个 Promise，避免多个请求者触发重复上传；
+   * 没有配置资源服务或上传失败时返回 `{ type: "asset" }`，由服务器中继原始字节兜底。
+   */
+  async function publishAsset(
+    asset: Asset,
+    options?: { force?: boolean }
+  ): Promise<PublishedAsset> {
+    if (!assetApiBase) {
+      return { type: "asset", asset };
+    }
+    if (!options?.force && asset.remoteUrl) {
+      return {
+        type: "url",
+        url: asset.remoteUrl,
+        size: asset.size,
+        originalName: asset.originalName,
+      };
+    }
+
+    const inFlight = publishAssetPromisesRef.current.get(asset.id);
+    if (inFlight) {
+      return inFlight;
+    }
+
+    const promise = (async (): Promise<PublishedAsset> => {
+      try {
+        const response = await uploadAsset(asset);
+        const url = response.url;
+        if (!url) {
+          return { type: "asset", asset };
+        }
+        await putAsset({
+          ...asset,
+          remoteUrl: url,
+          size: response.size ?? asset.size,
+          originalName: response.originalName ?? asset.originalName,
+          source: asset.source ?? "uploaded",
+        });
+        return {
+          type: "url",
+          url,
+          size: response.size ?? asset.size,
+          originalName: response.originalName ?? asset.originalName,
+        };
+      } catch (error) {
+        console.error("ASSET_UPLOAD_TO_SERVER_FAILED", error);
+        return { type: "asset", asset };
+      }
+    })();
+
+    publishAssetPromisesRef.current.set(asset.id, promise);
+    try {
+      return await promise;
+    } finally {
+      publishAssetPromisesRef.current.delete(asset.id);
+    }
+  }
+
+  /**
+   * 通过服务器向素材所有者请求素材。
+   *
+   * 所有消息都经服务器（socket.io relay_chunk）转发，不做 WebRTC 打洞；
+   * 大文件由所有者上传到服务器的 `/assets` 接口，再把 URL 转回来。
+   * 长时间没有响应按 `ASSET_REQUEST_MAX_ATTEMPTS` 重试，超限后放弃并提示。
+   */
+  async function requestAssetFromServer(
+    targetSessionId: string,
+    assetId: string
+  ) {
+    const queued = await session.sendAssetTo(targetSessionId, "assetRequest", {
+      id: assetId,
+      gameId,
+    });
+    if (!queued) {
+      // 服务器还没连上，先解锁，等下一次 party_state 广播后重试
+      releaseAssetRequest(assetId);
+      return;
+    }
+
+    const scheduleRetry = () => {
+      const existingTimeout = pendingAssetTimeoutsRef.current[assetId];
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+      pendingAssetTimeoutsRef.current[assetId] = setTimeout(() => {
+        if (!requestingAssetsRef.current.has(assetId)) {
+          return;
+        }
+        const attempts = (assetRequestAttemptsRef.current[assetId] ?? 0) + 1;
+        assetRequestAttemptsRef.current[assetId] = attempts;
+        if (attempts >= ASSET_REQUEST_MAX_ATTEMPTS) {
+          finishAssetRequest(assetId);
+          addToast(t("misc.assetTransfer.transferFailed"));
+          return;
+        }
+        void session.sendAssetTo(targetSessionId, "assetRequest", {
+          id: assetId,
+          gameId,
+        });
+        scheduleRetry();
+      }, ASSET_REQUEST_TIMEOUT_MS);
+    };
+
+    scheduleRetry();
+  }
 
   useEffect(() => {
     if (!assetManifest || !userId) {
@@ -214,60 +375,7 @@ function NetworkedMapAndTokens({
           requestingAssetsRef.current.delete(asset.id);
         } else if (targetSessionId) {
           assetLoadStart(asset.id);
-          const sentViaP2P = await session.sendAssetTo(
-            targetSessionId,
-            "assetRequest",
-            {
-              id: asset.id,
-              gameId,
-            },
-            undefined,
-            { allowRelayFallback: false }
-          );
-          if (!sentViaP2P) {
-            if (!assetApiBase) {
-              addToast(t("misc.assetTransfer.imageServiceMissing"));
-              requestingAssetsRef.current.delete(asset.id);
-              assetProgressUpdate({ id: asset.id, total: 1, count: 1 });
-              continue;
-            }
-            void session.sendAssetTo(
-              targetSessionId,
-              "assetP2pFailed",
-              {
-                id: asset.id,
-                gameId,
-              },
-              asset.id,
-              { allowRelayFallback: true }
-            );
-            continue;
-          }
-          const existingTimeout = pendingAssetTimeoutsRef.current[asset.id];
-          if (existingTimeout) {
-            clearTimeout(existingTimeout);
-          }
-          pendingAssetTimeoutsRef.current[asset.id] = setTimeout(() => {
-            if (!requestingAssetsRef.current.has(asset.id)) {
-              return;
-            }
-            if (!assetApiBase) {
-              addToast(t("misc.assetTransfer.imageServiceMissing"));
-              requestingAssetsRef.current.delete(asset.id);
-              assetProgressUpdate({ id: asset.id, total: 1, count: 1 });
-              return;
-            }
-            void session.sendAssetTo(
-              targetSessionId,
-              "assetP2pFailed",
-              {
-                id: asset.id,
-                gameId,
-              },
-              asset.id,
-              { allowRelayFallback: true }
-            );
-          }, 8000);
+          await requestAssetFromServer(targetSessionId, asset.id);
         } else {
           // 无法立即请求，解除锁定以便后续重试
           requestingAssetsRef.current.delete(asset.id);
@@ -286,7 +394,6 @@ function NetworkedMapAndTokens({
     getAsset,
     assetLoadStart,
     assetProgressUpdate,
-    assetApiBase,
     gameId,
   ]);
 
@@ -655,134 +762,126 @@ function NetworkedMapAndTokens({
   }
 
   useEffect(() => {
-    async function handlePeerData({ peer, id, data }: PeerDataEvent) {
-      const peerId = peer?.id;
-      if (id === "assetRequest") {
-        const requestedGameId =
-          typeof data?.gameId === "string" ? data.gameId : gameId;
-        if (requestedGameId !== gameId) {
-          if (typeof data?.id === "string") {
-            if (peerId) {
-              await session.sendAssetTo(
-                peerId,
-                "assetResponseFail",
-                data.id,
-                data.id,
-                { allowRelayFallback: true }
-              );
-            }
-          }
-          return;
-        }
-
-        const asset = await getAsset(data.id);
-        if (!asset) {
-          if (peerId) {
-            await session.sendAssetTo(
-              peerId,
-              "assetResponseFail",
-              data?.id,
-              data?.id,
-              { allowRelayFallback: true }
-            );
-          }
-          return;
-        }
-
-        if (peerId) {
-          const sentViaP2P = await session.sendAssetTo(
-            peerId,
-            "assetResponseSuccess",
-            asset,
-            asset.id,
-            { allowRelayFallback: false }
-          );
-          if (sentViaP2P) {
-            return;
-          }
-        }
+    /** 把素材以「URL」或「原始字节」的形式经服务器发给请求方 */
+    async function sendAssetToPeer(
+      targetSessionId: string,
+      asset: Asset,
+      published: PublishedAsset
+    ) {
+      if (published.type === "fail") {
+        await session.sendAssetTo(
+          targetSessionId,
+          "assetResponseFail",
+          asset.id,
+          asset.id
+        );
         return;
       }
-
-      if (id === "assetP2pFailed") {
-        if (!peerId) {
-          return;
-        }
-        const requestedGameId =
-          typeof data?.gameId === "string" ? data.gameId : gameId;
-        if (requestedGameId !== gameId) {
-          return;
-        }
-        const asset = await getAsset(data.id);
-        if (!asset) {
-          await session.sendAssetTo(
-            peerId,
-            "assetResponseFail",
-            data?.id,
-            data?.id,
-            { allowRelayFallback: true }
-          );
-          return;
-        }
-        if (data?.reason === "download_failed") {
-          await session.sendAssetTo(
-            peerId,
-            "assetResponseSuccess",
-            asset,
-            asset.id,
-            { allowRelayFallback: true }
-          );
-          return;
-        }
-
-        let remoteUrl = asset.remoteUrl;
-        if (!remoteUrl) {
-          try {
-            const response = await uploadAsset(asset);
-            remoteUrl = response.url;
-            await putAsset({
-              ...asset,
-              remoteUrl,
-              size: response.size ?? asset.size,
-              originalName: response.originalName ?? asset.originalName,
-              source: asset.source ?? "uploaded",
-            });
-          } catch (error) {
-            console.error("ASSET_UPLOAD_ON_DEMAND_FAILED", error);
-            await session.sendAssetTo(
-              peerId,
-              "assetResponseSuccess",
-              asset,
-              asset.id,
-              { allowRelayFallback: true }
-            );
-            return;
-          }
-        }
-
+      if (published.type === "url") {
         await session.sendAssetTo(
-          peerId,
+          targetSessionId,
           "assetResponseUrl",
           {
             id: asset.id,
-            url: remoteUrl,
+            url: published.url,
             mime: asset.mime,
             width: asset.width,
             height: asset.height,
             owner: asset.owner,
-            size: asset.size,
-            originalName: asset.originalName,
+            size: published.size ?? asset.size,
+            originalName: published.originalName ?? asset.originalName,
           },
-          asset.id,
-          { allowRelayFallback: true }
+          asset.id
         );
+        return;
+      }
+      await session.sendAssetTo(
+        targetSessionId,
+        "assetResponseSuccess",
+        published.asset,
+        asset.id
+      );
+    }
+
+    async function handlePeerData({ peer, id, data }: PeerDataEvent) {
+      const peerId = peer?.id;
+      const assetId =
+        typeof data === "string"
+          ? data
+          : typeof data?.id === "string"
+          ? data.id
+          : undefined;
+      const requestedGameId =
+        typeof data?.gameId === "string" ? data.gameId : gameId;
+
+      // 请求方 -> 所有者：请把这个素材发布到服务器
+      if (id === "assetRequest") {
+        if (!peerId || !assetId) {
+          return;
+        }
+        if (requestedGameId !== gameId) {
+          await session.sendAssetTo(
+            peerId,
+            "assetResponseFail",
+            assetId,
+            assetId
+          );
+          return;
+        }
+
+        const asset = await getAsset(assetId);
+        if (!asset) {
+          await session.sendAssetTo(
+            peerId,
+            "assetResponseFail",
+            assetId,
+            assetId
+          );
+          return;
+        }
+
+        const published = await publishAsset(asset);
+        await sendAssetToPeer(peerId, asset, published);
+        return;
+      }
+
+      // 请求方 -> 所有者：服务器上的 URL 拉取失败
+      if (id === "assetUrlFailed") {
+        if (!peerId || !assetId || requestedGameId !== gameId) {
+          return;
+        }
+
+        const asset = await getAsset(assetId);
+        if (!asset) {
+          await session.sendAssetTo(
+            peerId,
+            "assetResponseFail",
+            assetId,
+            assetId
+          );
+          return;
+        }
+
+        if (data?.reason === "download_failed" || !assetApiBase) {
+          // 对端完全拉不到资源服务：直接中继原始字节
+          await session.sendAssetTo(
+            peerId,
+            "assetResponseSuccess",
+            asset,
+            asset.id
+          );
+          return;
+        }
+
+        // URL 失效（例如服务端缓存已过期）：强制重新上传一次
+        const published = await publishAsset(asset, { force: true });
+        await sendAssetToPeer(peerId, asset, published);
         return;
       }
 
       if (id === "assetResponseUrl") {
-        const assetId = data?.id;
         const url = data?.url;
-        if (typeof assetId !== "string" || typeof url !== "string") {
+        if (!assetId || typeof url !== "string") {
           return;
         }
 
@@ -802,7 +901,7 @@ function NetworkedMapAndTokens({
           };
           await putAsset(assetFromServer);
           delete assetDownloadFailuresRef.current[assetId];
-          assetProgressUpdate({ id: assetId, total: 1, count: 1 });
+          finishAssetRequest(assetId);
         } catch (error) {
           const status = (error as Error & { status?: number })?.status;
           const isNetworkError =
@@ -814,31 +913,26 @@ function NetworkedMapAndTokens({
             (error instanceof Error &&
               error.message === "asset_download_failed_404");
           if ((isMissing || isNetworkError) && peerId) {
+            // 保持请求锁，等所有者重新上传或改用服务器中继原始字节
             const previousFailures = assetDownloadFailuresRef.current[assetId] ?? 0;
             const failureCount = previousFailures + 1;
             assetDownloadFailuresRef.current[assetId] = failureCount;
             const forceRelay = failureCount >= 2 || isNetworkError;
+            armAssetResponseTimeout(assetId);
             await session.sendAssetTo(
               peerId,
-              "assetP2pFailed",
+              "assetUrlFailed",
               {
                 id: assetId,
                 gameId,
                 reason: forceRelay ? "download_failed" : "not_found",
               },
-              assetId,
-              { allowRelayFallback: true }
+              assetId
             );
           } else {
             console.error("ASSET_DOWNLOAD_FAILED", error);
             addToast(t("misc.assetTransfer.downloadFailed"));
-          }
-        } finally {
-          requestingAssetsRef.current.delete(assetId);
-          const pendingTimeout = pendingAssetTimeoutsRef.current[assetId];
-          if (pendingTimeout) {
-            clearTimeout(pendingTimeout);
-            delete pendingAssetTimeoutsRef.current[assetId];
+            finishAssetRequest(assetId);
           }
         }
         return;
@@ -846,28 +940,21 @@ function NetworkedMapAndTokens({
 
       if (id === "assetResponseSuccess") {
         const asset = data;
-        await putAsset(asset);
-        delete assetDownloadFailuresRef.current[asset.id];
-        requestingAssetsRef.current.delete(asset.id);
-        const pendingTimeout = pendingAssetTimeoutsRef.current[asset.id];
-        if (pendingTimeout) {
-          clearTimeout(pendingTimeout);
-          delete pendingAssetTimeoutsRef.current[asset.id];
+        if (asset?.id) {
+          await putAsset(asset);
+          delete assetDownloadFailuresRef.current[asset.id];
+          finishAssetRequest(asset.id);
         }
         return;
       }
 
       if (id === "assetResponseFail") {
-        const assetId = data;
-        delete assetDownloadFailuresRef.current[assetId];
-        requestingAssetsRef.current.delete(assetId);
-        assetProgressUpdate({ id: assetId, total: 1, count: 1 });
-        addToast(t("misc.assetTransfer.transferFailed"));
-        const pendingTimeout = pendingAssetTimeoutsRef.current[assetId];
-        if (pendingTimeout) {
-          clearTimeout(pendingTimeout);
-          delete pendingAssetTimeoutsRef.current[assetId];
+        if (!assetId) {
+          return;
         }
+        delete assetDownloadFailuresRef.current[assetId];
+        finishAssetRequest(assetId);
+        addToast(t("misc.assetTransfer.transferFailed"));
       }
     }
 
