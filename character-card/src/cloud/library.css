@@ -1,0 +1,147 @@
+/* Cloud library shell. Palette tokens are defined in src/ui/appearance.css and set inline by src/platform/appearance.ts; every colour carries the same fallback so the page looks identical before and after that chunk lands. Rules that appearance.css also writes use the same tokens (never fixed colours) so the cascade order cannot change the result. */
+:root{font-family:system-ui,"Microsoft YaHei",sans-serif;font-size:13px;line-height:1.5;color:var(--ui-ink,#343532);background:var(--ui-background,#d1d1d1);--cloud-danger:#a8261a;--cloud-danger-soft:#f3dcd8;--cloud-ok:#2e6b3a;--cloud-ok-soft:#dcebdf;--cloud-warn:#6b5305;--cloud-warn-soft:#f3ead0}
+:root[data-suite-night=true]{--cloud-danger:#ffa198;--cloud-danger-soft:#4a2622;--cloud-ok:#9ad6a6;--cloud-ok-soft:#1f3a27;--cloud-warn:#f2dc92;--cloud-warn-soft:#3d3519}
+*{box-sizing:border-box}body{margin:0}
+.cloud-library{height:100dvh;display:flex;flex-direction:column;overflow:hidden;font:13px/1.5 system-ui,"Microsoft YaHei",sans-serif;color:var(--ui-ink,#343532);background:var(--ui-background,#d1d1d1)}
+.cloud-library a{color:var(--ui-accent,#50525b)}
+.cloud-library a:focus-visible{outline:2px solid var(--ui-selected,#50525b);outline-offset:2px}
+.cloud-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.cloud-library code{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+/* StyleBox buttons: ::after paints the cut-corner outline over the (transparent) border box, ::before paints the fill one notch smaller; the border carries the same colour so tools that read it see the boundary. The three separate :not() clauses lift the specificity above suiteTheme.css's night rule for buttons, and appearance.css forces the same tokens with !important, so the look holds in every cascade. */
+.cloud-library button:not(.cloud-id-box button):not(.player-viewer button):not(.cloud-gallery-open),.cloud-library .cloud-button{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:30px;margin:0;padding:4px 10px;font:inherit;font-size:12px;line-height:1.3;text-decoration:none;white-space:nowrap;cursor:pointer;color:var(--ui-buttonInk,#303239);background:transparent;border:2px solid var(--ui-buttonLine,#6f6f6f);border-radius:0;box-shadow:none;clip-path:polygon(5px 0,calc(100% - 5px) 0,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0 calc(100% - 5px),0 5px)}
+.cloud-library button:not(.cloud-id-box button):not(.player-viewer button):not(.cloud-gallery-open)::after,.cloud-library .cloud-button::after{content:'';position:absolute;inset:-2px;z-index:-2;pointer-events:none;background:var(--ui-buttonLine,#6f6f6f)}
+.cloud-library button:not(.cloud-id-box button):not(.player-viewer button):not(.cloud-gallery-open)::before,.cloud-library .cloud-button::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--ui-button,#f7f7f5);clip-path:polygon(4px 0,calc(100% - 4px) 0,100% 4px,100% calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 4px),0 4px)}
+.cloud-library button:hover:not(:disabled):not(.player-viewer button):not(.cloud-gallery-open),.cloud-library .cloud-button:hover{filter:brightness(.96)}
+.cloud-library button:focus-visible,.cloud-library .cloud-button:focus-visible{outline:2px solid var(--ui-selected,#50525b);outline-offset:-5px}
+.cloud-library button:disabled{opacity:.55;cursor:default}
+.cloud-library button .ui-icon,.cloud-library .cloud-button .ui-icon{flex:none}
+/* Emphasis and destructive buttons outrank the forced token rules of appearance.css by specificity. */
+/* Filled buttons also carry the fill as their own background so the boundary and text contrast can be read off the element. */
+.cloud-library button.cloud-primary.cloud-primary:not(.cloud-id-box button):not(.player-viewer button){color:var(--ui-selectedInk,#fff)!important;background:var(--ui-selected,#50525b)}
+.cloud-library button.cloud-primary.cloud-primary::before{background:var(--ui-selected,#50525b)!important}
+.cloud-library button.cloud-danger.cloud-danger,.cloud-library button.cloud-sync-retry.cloud-sync-retry{color:var(--cloud-danger)!important;border-color:var(--cloud-danger)}
+.cloud-library button.cloud-danger.cloud-danger::after,.cloud-library button.cloud-sync-retry.cloud-sync-retry::after{background:var(--cloud-danger)}
+
+/* Header: brand, search, account. */
+.cloud-header{display:flex;align-items:center;gap:12px;height:48px;min-height:48px;padding:0 16px;background:var(--ui-heading,#e5e5e5);color:var(--ui-ink,#343532);border-bottom:2px solid var(--ui-line,#a5a5a5)}
+.cloud-brand{display:flex;gap:8px;align-items:center;flex-shrink:0;text-decoration:none;color:var(--ui-ink,#343532)!important}
+.cloud-header img{width:28px;height:28px;object-fit:contain;image-rendering:pixelated;flex-shrink:0}
+.cloud-header h1{font-size:15px;font-weight:700;letter-spacing:.5px;margin:0;white-space:nowrap}
+.cloud-search{flex:1;min-width:0;max-width:520px;margin:0 auto;display:flex;align-items:center;gap:6px;height:32px;padding:0 6px 0 8px;background:var(--ui-surface,#f5f5f3);border:2px solid var(--ui-buttonLine,#6f6f6f)}
+.cloud-search:focus-within{border-color:var(--ui-selected,#50525b);outline:2px solid var(--ui-selected,#50525b);outline-offset:1px}
+.cloud-search-icon{color:var(--ui-muted,#666);flex:none}
+.cloud-library .cloud-search input{flex:1;min-width:0;width:auto;height:100%;margin:0;padding:0;border:0!important;border-radius:0;background:transparent!important;font:inherit;color:var(--ui-ink,#343532)!important;outline:none}
+.cloud-search input::placeholder{color:var(--ui-muted,#666);opacity:1}
+.cloud-search input::-webkit-search-cancel-button{display:none}
+.cloud-library .cloud-search-clear{min-height:22px;height:22px;width:22px;padding:0;border-width:1px}
+.cloud-header-tools{display:flex;align-items:center;gap:8px;flex-shrink:0;min-width:0}
+.cloud-header-links{display:flex;align-items:center;gap:2px}
+.cloud-header-links a,.cloud-sidebar-links a{display:inline-flex;align-items:center;gap:4px;min-height:30px;padding:0 8px;font-size:12px;text-decoration:none;color:var(--ui-ink,#343532)!important}
+.cloud-header-links a:hover,.cloud-sidebar-links a:hover{text-decoration:underline}
+.cloud-library .cloud-menu-toggle,.cloud-library .cloud-sidebar-head,.cloud-library .cloud-sidebar-links,.cloud-library .cloud-sidebar-shade{display:none!important}
+
+/* Sidebar: views with counts, refresh, quota and the visibility notice. */
+.cloud-workspace{flex:1;min-height:0;display:grid;grid-template-columns:204px minmax(0,1fr)}
+.cloud-sidebar{display:flex;flex-direction:column;gap:12px;padding:12px;overflow:auto;background:var(--ui-surface,#f5f5f3);color:var(--ui-ink,#343532);border-right:2px solid var(--ui-line,#a5a5a5);font-size:12px}
+.cloud-sidebar nav{display:flex;flex-direction:column;gap:4px}
+.cloud-library .cloud-sidebar nav button{width:100%;justify-content:flex-start;gap:8px;min-height:36px;padding:6px 10px;font-size:13px;text-align:left}
+.cloud-nav-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cloud-nav-count{flex:none;min-width:22px;padding:2px 6px;font-size:11px;line-height:1.2;text-align:center;font-variant-numeric:tabular-nums;border-radius:10px;background:var(--ui-heading,#e5e5e5);color:var(--ui-muted,#666)}
+.cloud-library .cloud-sidebar nav button[aria-current=page]:not(.cloud-id-box button):not(.player-viewer button){color:var(--ui-selectedInk,#fff)!important;background:var(--ui-selected,#50525b)}
+.cloud-library .cloud-sidebar nav button[aria-current=page]::before{background:var(--ui-selected,#50525b)!important}
+.cloud-sidebar nav [aria-current=page] .cloud-nav-count{background:var(--ui-selectedInk,#fff);color:var(--ui-selected,#50525b)}
+.cloud-sidebar-actions{display:flex;flex-direction:column;gap:6px}
+.cloud-library .cloud-sidebar-actions button{width:100%}
+.cloud-sidebar-status{padding-top:12px;border-top:2px solid var(--ui-line,#a5a5a5)}
+.cloud-sidebar .cloud-status-label{margin:0 0 2px;font-size:12px;color:var(--ui-muted,#666)}
+.cloud-status-count{display:block;font-size:22px;line-height:1.2;font-variant-numeric:tabular-nums}
+.cloud-status-meter{height:6px;margin:6px 0 8px;background:var(--ui-heading,#e5e5e5);border:1px solid var(--ui-line,#a5a5a5);overflow:hidden}
+.cloud-status-meter span{display:block;height:100%;background:var(--ui-selected,#50525b)}
+.cloud-sidebar .cloud-status-hint{margin:0;font-size:11px;line-height:1.5;color:var(--ui-muted,#666)}
+.cloud-sidebar-warning{margin-top:12px;padding-top:10px;border-top:1px solid var(--ui-line,#a5a5a5)}
+.cloud-sidebar-warning h2{display:flex;align-items:flex-start;gap:5px;margin:0 0 4px;font-size:12px;line-height:1.4;color:var(--ui-ink,#343532)}
+.cloud-sidebar-warning h2 strong{font-size:inherit}
+.cloud-sidebar-warning h2 .ui-icon{margin-top:2px}
+.cloud-sidebar .cloud-sidebar-warning p{margin:0;font-size:11px;line-height:1.6;color:var(--ui-muted,#666)}
+
+/* Content column and cut-corner frames. */
+.cloud-main{min-width:0;overflow:auto;display:flex;flex-direction:column;gap:16px;padding:16px 20px 48px;scrollbar-gutter:stable}
+.cloud-library.has-gallery .cloud-main{overflow:hidden;min-height:0;padding-bottom:40px}
+.cloud-frame{display:flex;flex-direction:column;flex-shrink:0;margin:0;padding:3px;background:var(--ui-line,#a5a5a5);clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px)}
+.cloud-frame-head{display:flex;align-items:center;gap:10px;min-height:36px;padding:4px 14px;background:var(--ui-band,#747474);color:var(--ui-bandInk,#fff);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%,0 10px)}
+.cloud-frame-head h2,.cloud-frame-head h1{display:flex;align-items:center;gap:6px;margin:0;font-size:14px;font-weight:700;min-width:0}
+.cloud-frame-count{margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cloud-content{background:var(--ui-surface,#f5f5f3);color:var(--ui-ink,#343532);padding:14px 16px;font-size:13px;line-height:1.6;clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px))}
+.cloud-content p{margin:0 0 8px}
+.cloud-content>:last-child{margin-bottom:0}
+.cloud-frame-lead{display:flex;align-items:flex-start;gap:6px;font-size:12px;color:var(--ui-muted,#666)}
+.cloud-frame-lead .ui-icon{flex:none;margin-top:3px}
+.cloud-prose{line-height:1.7}
+.cloud-steps{margin:0 0 12px;padding:0;list-style:none;counter-reset:step;display:flex;flex-direction:column;gap:10px}
+.cloud-steps li{position:relative;padding-left:32px;display:flex;flex-direction:column;gap:2px}
+.cloud-steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:1px;width:22px;height:22px;display:grid;place-items:center;font-size:12px;font-weight:700;border-radius:50%;background:var(--ui-selected,#50525b);color:var(--ui-selectedInk,#fff)}
+.cloud-inline{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.cloud-inline label{flex:1;min-width:0}
+.cloud-load-more{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;padding:8px;font-size:12px;color:var(--ui-muted,#666);background:var(--ui-surface,#f5f5f3)}
+.cloud-message{display:flex;align-items:flex-start;gap:8px;margin:0;padding:10px 12px;flex-shrink:0;font-size:13px;line-height:1.5;white-space:pre-wrap;color:var(--ui-ink,#343532);background:var(--ui-heading,#e5e5e5);border:2px solid var(--ui-accent,#50525b)}
+.cloud-message .ui-icon{flex:none;margin-top:2px}
+
+/* Card rows: name, class line, recency, chips and icon actions. */
+.cloud-card-list{list-style:none;margin:0;padding:0}
+.cloud-card-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--ui-line,#a5a5a5)}
+.cloud-card-row:first-child{border-top:0;padding-top:2px}
+.cloud-card-list:first-child .cloud-card-row:first-child{padding-top:0}
+.cloud-card-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;overflow-wrap:anywhere}
+.cloud-card-info strong{font-size:14px;line-height:1.3}
+.cloud-card-info small{font-size:12px;line-height:1.4;color:var(--ui-muted,#666)}
+.cloud-card-info code{font-size:12px;letter-spacing:1px}
+.cloud-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.cloud-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;font-size:11px;line-height:1;border:1px solid var(--ui-line,#a5a5a5);border-radius:2px;color:var(--ui-muted,#666);background:var(--ui-heading,#e5e5e5)}
+.cloud-chip.is-cloud{color:var(--cloud-ok);background:var(--cloud-ok-soft);border-color:transparent}
+.cloud-chip.is-readonly{color:var(--cloud-danger);background:var(--cloud-danger-soft);border-color:transparent}
+.cloud-card-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px;flex-shrink:0;max-width:60%}
+.cloud-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:28px 16px;text-align:center;color:var(--ui-muted,#666)}
+.cloud-empty .ui-icon{color:var(--ui-muted,#666);margin-bottom:4px}
+.cloud-empty p{margin:0;font-size:12px}
+.cloud-empty strong{font-size:14px;color:var(--ui-ink,#343532)}
+.cloud-empty button,.cloud-empty .cloud-button{margin-top:8px}
+.cloud-muted{margin:0;font-size:12px;color:var(--ui-muted,#666)}
+/* Plugin pairing page. */
+.cloud-plugin-frame{max-width:640px}
+.cloud-pairing{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+.cloud-pairing-label{font-size:12px;color:var(--ui-muted,#666)}
+.cloud-pairing-code{font-size:24px;letter-spacing:5px;font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
+.cloud-plugin-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--ui-line,#a5a5a5)}
+
+/* Non-modal manage dialog: the shell comes from .cloud-modal (qqLogin.css); this one dims the page itself. */
+.cloud-library dialog.cloud-dialog{z-index:20;box-shadow:0 0 0 100vmax #0007,0 12px 40px #0005}
+
+/* Source footer pinned to the corner. */
+.cloud-library .cloud-source-footer{position:fixed;right:0;bottom:0;z-index:15;margin:0;padding:5px 12px;font-size:11px;line-height:1.6;background:var(--ui-heading,#e5e5e5);color:var(--ui-muted,#666);border-top:1px solid var(--ui-line,#a5a5a5);border-left:1px solid var(--ui-line,#a5a5a5)}
+
+@media(max-width:700px){
+ .cloud-header{height:auto;min-height:48px;flex-wrap:wrap;gap:8px;padding:6px 10px}
+ .cloud-library .cloud-menu-toggle{display:inline-flex!important;order:0;width:36px;min-height:36px;padding:0}
+ .cloud-brand{order:1;flex:1}
+ .cloud-header h1{font-size:14px}
+ .cloud-header-tools{order:2}
+ .cloud-header-links{display:none}
+ .cloud-search{order:3;flex-basis:100%;max-width:none;margin:0}
+ .cloud-workspace{grid-template-columns:minmax(0,1fr)}
+ .cloud-sidebar{position:fixed;left:0;top:0;bottom:0;z-index:1000;width:min(280px,84vw);height:100dvh;padding:12px;border-right-width:2px;box-shadow:6px 0 24px #0004;transform:translateX(-105%);transition:transform .25s ease}
+ .cloud-library.sidebar-open .cloud-sidebar{transform:translateX(0)}
+ .cloud-library .cloud-sidebar-head{display:flex!important;align-items:center;justify-content:space-between;font-size:14px}
+ .cloud-library .cloud-sidebar-close{width:32px;min-height:32px;padding:0}
+ .cloud-sidebar-shade{position:fixed;inset:0;z-index:999;background:#0006}
+ .cloud-library.sidebar-open .cloud-sidebar-shade{display:block!important}
+ .cloud-library .cloud-sidebar-links{display:flex!important;flex-direction:column;gap:2px;margin-top:auto;padding-top:10px;border-top:1px solid var(--ui-line,#a5a5a5)}
+ .cloud-main{gap:12px;padding:12px 10px 44px;scrollbar-gutter:auto}
+ .cloud-library.has-gallery .cloud-main{padding-bottom:36px}
+ .cloud-content{padding:12px}
+ .cloud-frame-head{padding:4px 12px}
+ .cloud-card-row{flex-wrap:wrap;gap:8px}
+ .cloud-card-actions{width:100%;max-width:none;justify-content:flex-start}
+ .cloud-library .cloud-source-footer{max-width:calc(100vw - 20px);font-size:10px;padding:4px 10px}
+}
+@media(prefers-reduced-motion:reduce){.cloud-sidebar{transition:none}}

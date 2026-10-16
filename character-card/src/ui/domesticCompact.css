@@ -1,0 +1,49 @@
+/* Shared compact chrome across standalone and Suite. Paper contents and fit math stay unchanged. */
+.compact-layout .brand-logo{image-rendering:auto;object-fit:contain;flex-shrink:0;aspect-ratio:1;display:block}
+.app-shell.compact-layout .save-status{display:none}
+.compact-layout .pane-toolbar{height:28px;min-height:28px;padding:0 10px;gap:8px}
+.compact-layout .pane-toolbar>div:first-child{flex:1;min-width:0;gap:6px}
+.compact-layout .pane-toolbar .eyebrow{display:none}
+.compact-layout .pane-toolbar .character-tabs{flex:1;min-width:0;gap:3px;scrollbar-width:none}
+.compact-layout .pane-toolbar .character-tabs::-webkit-scrollbar{display:none}
+.compact-layout .pane-toolbar .character-tabs button{max-width:220px;padding:1px 8px;font-size:12px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.compact-layout .toolbar-actions{flex:none;gap:3px}
+.compact-layout .toolbar-actions button{height:24px;padding:1px 5px;font-size:20px}
+.compact-layout .toolbar-actions .adjust-shortcut,.compact-layout .toolbar-actions .automation-toggle{font-size:11px}
+.compact-layout .toolbar-actions .edit-mode-toggle{font-size:11px;display:inline-flex;gap:4px;align-items:center;line-height:1;flex-shrink:0;letter-spacing:0}
+.compact-layout .toolbar-actions>button:not([aria-label]):not(.edit-mode-toggle){font-size:11px}
+.compact-layout .paper-size{font-size:10px;white-space:nowrap}
+@media screen and (min-width:701px){
+ .compact-layout .app-header{height:36px;min-height:36px;padding:0 12px;gap:10px}
+ .compact-layout .brand{gap:7px}
+ .compact-layout .brand-logo{width:26px;height:26px}
+ .compact-layout .brand strong{font-size:14px;letter-spacing:1px}
+ .compact-layout .header-tools{gap:6px}
+ .compact-layout .header-tools button{padding:2px 9px;font-size:12px;line-height:22px}
+}
+
+/* Keep the same reading/list nodes when the workspace divider changes pane width. */
+.compact-layout .wiki-layout{display:flex;flex:1;flex-direction:column;min-width:0;min-height:0}
+.compact-layout .wiki-layout.wiki-columns{display:grid;grid-template-columns:var(--catalog-width,42.857143%) 9px minmax(0,1fr);grid-template-rows:auto auto auto auto auto auto auto minmax(0,1fr);overflow:hidden}
+.wiki-columns>.wiki-header{grid-column:1;grid-row:1;padding:0 12px}
+.wiki-columns>.global-search{grid-column:1;grid-row:2;min-width:0}
+.wiki-columns>.category-tabs{grid-column:1;grid-row:3;padding:0 8px}
+.wiki-columns>.wiki-choice-notice{grid-column:1;grid-row:4;min-width:0}
+.wiki-columns>.wiki-filters{grid-column:1;grid-row:5;padding:5px 12px}
+.wiki-columns>.catalog-status{grid-column:1;grid-row:6;padding:0 12px 4px}
+.wiki-columns>.load-errors{grid-column:1;grid-row:7;max-height:150px;overflow:auto}
+.wiki-columns>.library-body{display:contents}
+.wiki-columns .catalog-shell{grid-column:1;grid-row:8;min-width:0;min-height:0}
+.wiki-columns .library-body>.entry-detail,.wiki-columns .library-body>.reading-placeholder,.wiki-columns .library-body>.custom-entry-editor{grid-column:3;grid-row:1/-1;min-width:0;min-height:0}
+/* Custom reading reserves a separate action row; the expanded form owns the reader area. */
+.wiki-columns .library-body:has(>.custom-entry-editor.is-collapsed)>.custom-entry-editor{grid-row:1}
+.wiki-columns .library-body:has(>.custom-entry-editor.is-collapsed)>.entry-detail{grid-row:2/-1}
+.wiki-columns .library-body:has(>.custom-entry-editor:not(.is-collapsed))>.entry-detail{display:none}
+.wiki-columns .wiki-splitter{grid-column:2;grid-row:1/-1;width:9px;height:auto;cursor:col-resize}
+.wiki-columns .wiki-splitter:before{inset:0 auto 0 4px;border-top:0;border-left:1px solid var(--suite-line,#c4c8ce)}
+.wiki-columns .wiki-splitter span{width:3px;height:36px}
+.wiki-columns .wiki-splitter:hover span,.wiki-columns .wiki-splitter:focus-visible span{width:3px;height:55px}
+body.wiki-resizing-columns,body.wiki-resizing-columns *{cursor:col-resize!important}
+
+.compact-layout .character-tabs.workbench-cards{flex:none;height:24px;min-height:24px;max-height:24px;padding:1px 10px;gap:3px}
+.compact-layout .character-tabs.workbench-cards>button{min-height:20px;max-height:20px;padding:1px 8px;font-size:11px;line-height:16px}

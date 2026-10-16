@@ -1,0 +1,63 @@
+/* The native backdrop is below the entire dialog top layer. Keep the decorative
+   viewport marquee inside that layer, then paint the opaque reading panel above it.
+   A document-level z-index cannot escape a showModal() dialog's backdrop. */
+.announcement{width:min(760px,calc(100vw - 32px));height:min(88dvh,780px);max-height:88dvh;padding:0;border:0;background:transparent;box-shadow:none;overflow:visible;overscroll-behavior:contain;color:#4a5140}
+.announcement::backdrop{backdrop-filter:none;background:#2c302d45}
+.announcement>.supporter-marquee{z-index:0}
+/* 高度固定：展开答案只让正文区出现滚动条，弹窗本身不跟着长高。 */
+.announcement-panel{position:relative;z-index:1;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;border:1px solid #b7bfaa;border-radius:5px;background:#fafaf6;box-shadow:0 15px 70px #171e2240}
+.announcement-head{flex-shrink:0;padding:17px 26px 0;background:#f4f5ed;border-bottom:1px solid #d8ddcd}
+.announcement-head h2{font-size:19px;font-weight:500;letter-spacing:1px;margin:0 0 6px;color:#414b3d}
+.announcement-version{font-size:13px;line-height:1.4;font-weight:650;letter-spacing:.3px;color:#414b3d;margin:4px 0 0;overflow-wrap:anywhere}.announcement-version small{font-size:11px;font-weight:400;color:#5f6b4e}
+.announcement-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y pinch-zoom;scrollbar-gutter:stable;padding:18px 26px 10px;font-size:12.5px;line-height:1.6}
+.announcement-body p{margin:0 0 8px}
+.announcement-body h3{font-size:13px;color:#4e5a3e;margin:16px 0 7px}
+.announcement-issues{margin:8px 0;padding:8px 0;border-top:1px solid #d8ddcd;border-bottom:1px solid #d8ddcd}.announcement-issues>summary{font-size:14px;font-weight:650;cursor:pointer;color:#414b3d}
+.announcement-issues hr{border:0;border-top:1px solid #d8ddcd;margin:10px 0}
+.announcement-section h4{font-size:15px;font-weight:600;color:#414b3d;margin:8px 0 4px}
+.announcement-section ul{list-style:none;margin:0;padding:0}
+.announcement-issues li{position:relative;padding-left:16px;margin:3px 0;line-height:1.55}
+.announcement-issues li::before{content:'◆';position:absolute;left:0;top:6px;font-size:9px;color:#7d8d66}
+.announcement-faq{margin:15px 0 10px;padding-top:12px;border-top:1px solid #e2e6d8;font-size:12px}
+.announcement-faq>summary{font-weight:600;color:#4e5a3e}
+.announcement-faq details{margin-top:8px;padding:9px 12px;border:1px solid #e2e6d8;border-radius:0;background:#f6f7f0}
+.announcement-faq details>summary{color:#5f6b4e}
+.announcement-faq details>p{margin:8px 0 2px;color:#7d876d;line-height:1.9}
+.announcement-foot{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:12px 26px;background:#f4f5ed;border-top:1px solid #d8ddcd}
+.announcement-foot label{display:flex;align-items:center;gap:7px;font-size:11.5px;color:#6f7a5f}
+.announcement-foot button{min-width:102px;padding:7px 18px}
+
+@media(max-width:520px){
+ .announcement{width:calc(100vw - 20px)}
+ .announcement-head{padding:14px 16px 0}
+ .announcement-head h2{font-size:16px}
+ .announcement-body{padding:14px 16px 8px;font-size:12px}
+ .announcement-foot{padding:11px 16px}
+ .announcement-faq details{padding:8px 10px}
+}
+.announcement-owner{border-bottom:1px solid #bbb;padding-bottom:16px;margin-bottom:16px}.announcement-owner img{display:block;max-width:100%;height:auto;margin:10px 0}.announcement-owner li{margin:12px 0}
+.announcement-owner>summary{color:#ae2727;font-weight:700;cursor:pointer}
+.announcement-history{margin:10px 0;padding-top:12px;border-top:1px solid #d8ddcd}.announcement-history>summary{font-size:13px;font-weight:600;color:#4e5a3e;cursor:pointer}
+.spell-learners{margin-top:18px;padding-top:12px;border-top:1px solid #aaa}
+
+.announcement-feedback>a{display:inline-block;margin-right:16px;overflow-wrap:anywhere}
+
+.announcement-changelog{font-size:12px;line-height:1.35}
+.announcement-log-day{margin:0 0 4px;padding:4px 7px;background:#f0f0f0;border:1px solid #dedede;border-radius:2px}
+.announcement-changelog .announcement-log-day>h3{font-size:13px;margin:4px 0 2px;color:#414b3d}
+.announcement-changelog .announcement-section h4{font-size:12px;margin:2px 0 1px}
+.announcement-changelog hr{border:0;border-top:1px solid #dedede;margin:2.5px 0}
+.announcement-changelog li{position:relative;padding-left:11px;margin:.75px 0;line-height:1.35}
+.announcement-changelog li::before{content:'◆';position:absolute;left:0;top:4px;font-size:7px;color:#7b8272}
+
+.announcement-cloud-poster{background:#ddd;border:3px solid #50525b;padding:20px 16px;margin:0 0 16px;text-align:center;color:#393b43}.announcement-cloud-poster strong{display:block;font-size:clamp(23px,3.5vw,35px);font-weight:900;line-height:1.4}.announcement-cloud-poster small{display:block;font-size:12px;margin-top:10px}
+
+.announcement-credit{font-size:11px;color:#6f7a5f;margin-left:auto}.announcement-credit a{color:inherit}
+
+/* Announcement chrome follows the palette tokens like every other dialog. */
+.announcement-head{background:var(--ui-heading,#f4f5ed);border-bottom-color:var(--ui-line,#d8ddcd)}
+.announcement-foot{background:var(--ui-heading,#f4f5ed);border-top-color:var(--ui-line,#d8ddcd)}
+.announcement-foot label,.announcement-credit{color:var(--ui-muted,#6f7a5f)}
+.announcement-tabs button{color:var(--ui-muted,#6f7a5f)}
+.announcement-tabs button[aria-selected=true]{color:var(--ui-ink,#343532);border-bottom-color:var(--ui-selected,#50525b)}
+.announcement-foot button.primary{background:var(--ui-selected,#50525b)!important;color:var(--ui-selectedInk,#fff)!important;border-color:var(--ui-selected,#50525b)!important;border-radius:6px}

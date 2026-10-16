@@ -1,0 +1,19 @@
+/* Cloud save control (list rows, character book) and the save confirmation dialog. The dialog shell is .cloud-modal from qqLogin.css. */
+.cloud-save-control{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;font-size:12px}
+.cloud-id-box{display:inline-flex;align-items:center;max-width:100%;min-height:28px;color:var(--ui-ink,#343532);background:var(--ui-heading,#e5e5e5);border:1px solid var(--ui-buttonLine,#6f6f6f)}
+.cloud-id-box code{padding:0 8px;font-size:12px;letter-spacing:1px;user-select:all;overflow-wrap:anywhere}
+.cloud-id-box button{min-height:26px;margin:0!important;padding:3px 8px!important;font:inherit;font-size:11px!important;border:1px solid var(--ui-buttonLine,#6f6f6f)!important;border-radius:0!important;clip-path:none!important;cursor:pointer;color:var(--ui-buttonInk,#303239)!important;background:var(--ui-button,#f7f7f5)!important}
+.cloud-sync-status{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;color:var(--ui-muted,#666)}
+.cloud-sync-retry{color:var(--cloud-danger)!important}
+.cloud-save-book{max-width:260px}
+.cloud-save-book small{flex-basis:100%;white-space:normal}
+.cloud-save-book small[role=alert]{color:var(--cloud-danger)}
+.cloud-save-details{margin:10px 0 0;font-size:12px;line-height:1.6;color:var(--ui-muted,#666)}
+.cloud-upload-warning{margin-top:12px;padding:10px 12px;line-height:1.6;color:var(--cloud-warn);background:var(--cloud-warn-soft);border-left:4px solid var(--cloud-warn)}
+.cloud-upload-warning p{margin:0 0 4px}
+.cloud-upload-warning p:last-child{margin-bottom:0}
+.cloud-upload-warning strong{color:var(--cloud-danger);font-weight:900;font-size:1.1em}
+.cloud-save-consent{display:flex;gap:8px;align-items:flex-start;margin:14px 0 2px;font-size:13px;line-height:1.5;cursor:pointer}
+.cloud-save-consent input{flex-shrink:0;width:16px;height:16px;margin:2px 0 0;accent-color:var(--ui-selected,#50525b)}
+.cloud-save-actions{justify-content:flex-end}
+@media(max-width:600px){.cloud-save-control{font-size:11px}.cloud-id-box code{letter-spacing:.5px;padding:0 6px}}

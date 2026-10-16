@@ -1,0 +1,77 @@
+import {test,expect} from '@playwright/test';
+import {raw,ready,workspace,dragWiki} from './automationChoiceFixture';
+
+test('230 expanded automation choices have clear collapse, fast navigation and focus return',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));await ready(page);await page.getByRole('tab',{name:'特性',exact:true}).click();
+ const feature=page.locator('[data-feature-id="feature-0"]');await expect(feature).not.toHaveClass(/is-expanded/);await page.getByRole('button',{name:'展开全部职业特性',exact:true}).click();await expect(feature).toHaveClass(/is-expanded/);await expect(feature.getByRole('button',{name:'选择测试圣职 0/1',exact:true})).toBeVisible();
+ await feature.getByRole('button',{name:'折叠测试圣职',exact:true}).click();await expect(feature).not.toHaveClass(/is-expanded/);await expect(feature.locator('.feature-prose')).toHaveCount(0);await feature.locator('.feature-caption').click();
+ const navigation=page.getByRole('navigation',{name:'职业选择项'});await expect(navigation.getByRole('button')).toHaveCount(3);await workspace(page,'测试圣职').getByRole('button',{name:'保护者',exact:true}).click();await expect(workspace(page,'测试圣职').getByRole('status').first()).toContainText('已完成');
+ await navigation.getByRole('button',{name:'起始装备 0/1',exact:true}).click();await workspace(page,'起始装备').getByRole('button',{name:'方案 A',exact:true}).click();await navigation.getByRole('button',{name:'测试圣职 1/1',exact:true}).click();await navigation.getByRole('button',{name:'起始装备 0/1',exact:true}).click();await expect(workspace(page,'起始装备').getByRole('button',{name:'方案 A',exact:true})).toHaveAttribute('aria-pressed','false');
+ await workspace(page,'起始装备').getByRole('button',{name:'取消并返回',exact:true}).click();await expect(page.locator('.choice-workspace')).toHaveCount(0);await expect(page.getByRole('button',{name:'起始装备 0/1',exact:true})).toBeFocused();await expect(feature).toContainText('测试圣职：保护者');await page.screenshot({path:'evidence/automation230-feature-controls.png'});
+ await feature.locator('.feature-caption').click();await expect(feature).toHaveClass(/is-expanded/);await feature.getByRole('button',{name:'调整测试圣职 1/1',exact:true}).click();await workspace(page,'测试圣职').getByRole('button',{name:/^(?:✓\s*)?奇术使$/}).click();await page.keyboard.press('Escape');await expect(page.locator('.choice-workspace')).toHaveCount(0);await expect(feature).toContainText('测试圣职：奇术使');await expect(feature.locator('.feature-caption')).toBeFocused();expect(errors).toEqual([]);
+});
+
+test('230 repeated drag, duplicate swap and rapid removal keep one saved allocation without drag clones',async({page})=>{
+ await ready(page);await page.getByRole('tab',{name:'特性',exact:true}).click();await page.getByRole('button',{name:'起始熟练项 0/2',exact:true}).click();await dragWiki(page,'运动',0);
+ await page.evaluate(()=>{const original=window.structuredClone;Object.assign(window,{choiceCloneCount:0});window.structuredClone=((...args:Parameters<typeof structuredClone>)=>{(window as any).choiceCloneCount++;return original(...args);}) as typeof structuredClone;});
+ await dragWiki(page,'运动',0);expect(await page.evaluate(()=>(window as any).choiceCloneCount)).toBe(0);await expect(page.locator('.choice-slot-entry')).toHaveCount(1);
+ await dragWiki(page,'察觉',1);await dragWiki(page,'运动',1);await expect(page.locator('.choice-slot').nth(0)).toContainText('察觉');await expect(page.locator('.choice-slot').nth(1)).toContainText('运动');
+ await workspace(page,'起始熟练项').getByRole('button',{name:'移除察觉',exact:true}).click();await dragWiki(page,'历史',0);await workspace(page,'起始熟练项').getByRole('button',{name:'移除历史',exact:true}).click();await dragWiki(page,'历史',0);await workspace(page,'起始熟练项').getByRole('button',{name:'完成并返回',exact:true}).click();await expect(page.getByRole('button',{name:'起始熟练项 2/2',exact:true})).toBeVisible();await expect(page.locator('.save-status')).toContainText('已保存到本机');
+ await page.reload({waitUntil:'domcontentloaded'});await page.getByRole('tab',{name:'特性',exact:true}).click();await page.getByRole('button',{name:'起始熟练项 2/2',exact:true}).click();await expect(page.locator('.choice-slot').nth(0)).toContainText('历史');await expect(page.locator('.choice-slot').nth(1)).toContainText('运动');await page.screenshot({path:'evidence/automation230-choice-saved.png'});
+});
+
+test('230 Escape cancels an active drag before closing, outside drops and switching leave no ghosts',async({page})=>{
+ await ready(page);await page.getByRole('tab',{name:'特性',exact:true}).click();await page.getByRole('button',{name:'起始熟练项 0/2',exact:true}).click();
+ const row=page.locator('.catalog-row').filter({hasText:'运动'}).first();const box=await row.boundingBox();await page.mouse.move(box!.x+30,box!.y+box!.height/2);await page.mouse.down();await page.mouse.move(box!.x+60,box!.y+box!.height/2,{steps:4});await expect(page.locator('.pointer-ghost')).toHaveCount(1);await page.keyboard.press('Escape');await page.mouse.up();await expect(page.locator('.pointer-ghost')).toHaveCount(0);await expect(workspace(page,'起始熟练项')).toBeVisible();await expect(page.locator('.choice-slot-entry')).toHaveCount(0);
+ const again=await row.boundingBox();await page.mouse.move(again!.x+30,again!.y+again!.height/2);await page.mouse.down();await page.mouse.move(again!.x+60,again!.y+again!.height/2,{steps:3});await page.mouse.move(4,4,{steps:16});await page.mouse.up();await expect(page.locator('.pointer-ghost')).toHaveCount(0);await expect(page.locator('.choice-slot-entry')).toHaveCount(0);
+ await page.getByRole('navigation',{name:'职业选择项'}).getByRole('button',{name:'起始装备 0/1',exact:true}).click();await page.getByRole('navigation',{name:'职业选择项'}).getByRole('button',{name:'起始熟练项 0/2',exact:true}).click();await dragWiki(page,'运动',0);await page.keyboard.press('Escape');await expect(page.locator('.choice-workspace')).toHaveCount(0);await expect(page.locator('.pointer-ghost')).toHaveCount(0);await expect(page.getByRole('button',{name:'起始熟练项 1/2',exact:true})).toBeVisible();
+});
+
+test('230 delayed Wiki candidates preserve saved choices and the narrow workspace remains usable',async({page})=>{
+ await page.setViewportSize({width:390,height:844});let release!:()=>void;const gate=new Promise<void>(resolve=>release=resolve);
+ try{await ready(page,raw,{skillsGate:gate,savedSkills:['athletics','']});await page.getByRole('tab',{name:'特性',exact:true}).click();const beforePaper=await page.locator('.paper').boundingBox();const preference=await page.evaluate(()=>localStorage.getItem('dnd-card-sheet-display'));await page.getByRole('button',{name:'起始熟练项 1/2',exact:true}).click();
+ await expect(workspace(page,'起始熟练项')).toContainText('候选资料尚未加载');await expect(page.locator('.choice-slot').first()).toContainText('运动');await workspace(page,'起始熟练项').getByRole('button',{name:'收起选择',exact:true}).click();await expect(page.getByRole('button',{name:'起始熟练项 1/2',exact:true})).toBeVisible();release();
+ await page.getByRole('button',{name:'起始熟练项 1/2',exact:true}).click();await workspace(page,'起始熟练项').getByRole('button',{name:'打开候选资料',exact:true}).click();await expect(page.locator('.catalog-row')).toHaveCount(3);await dragWiki(page,'察觉',1);await page.getByRole('button',{name:'查看选择',exact:true}).click();await expect(page.locator('.choice-loading')).toHaveCount(0);await expect(workspace(page,'起始熟练项').getByRole('button',{name:'收起选择',exact:true})).toBeVisible();
+ const exportSize=await page.locator('.paper').evaluate(el=>{el.classList.add('sheet-export');try{const style=getComputedStyle(el);return {width:parseFloat(style.width),height:parseFloat(style.height)};}finally{el.classList.remove('sheet-export');}});expect(exportSize.width).toBe(680);expect(Math.abs(exportSize.width/exportSize.height-210/297)).toBeLessThan(.005);
+ const overflow=await workspace(page,'起始熟练项').evaluate(el=>[...el.querySelectorAll<HTMLElement>('button')].some(button=>{const a=el.getBoundingClientRect(),b=button.getBoundingClientRect();return b.x<a.x-1||b.right>a.right+1;}));expect(overflow).toBe(false);await page.screenshot({path:'evidence/automation230-slow-narrow.png'});await workspace(page,'起始熟练项').getByRole('button',{name:'完成并返回',exact:true}).click();await expect(page.getByRole('button',{name:'起始熟练项 2/2',exact:true})).toBeVisible();await expect.poll(async()=>{const after=await page.locator('.paper').boundingBox();return Math.abs(after!.width/after!.height-210/297);}).toBeLessThan(.005);expect(await page.evaluate(()=>localStorage.getItem('dnd-card-sheet-display'))).toBe(preference);const afterPaper=await page.locator('.paper').boundingBox();expect(Math.abs(beforePaper!.width-afterPaper!.width)).toBeLessThan(1);
+ }finally{release();}
+});
+
+test('230 large Wiki catalog keeps pointer movement free of character clones',async({page},testInfo)=>{
+ const data=structuredClone(raw) as Record<string,any[]>;data.spell=Array.from({length:2000},(_,i)=>({name:`原创载荷法术${i}`,ENG_name:`Authored Load Spell ${i}`,source:'XPHB',level:1,entries:['原创性能回归条目。']}));await ready(page,data);await page.getByRole('tab',{name:'特性',exact:true}).click();await page.getByRole('button',{name:'起始熟练项 0/2',exact:true}).click();await expect(page.locator('.catalog-row')).toHaveCount(3);
+ await page.evaluate(()=>{
+  const original=window.structuredClone,start=performance.now();
+  const meter={clones:0,setupClones:0,pointerClones:0,phase:'setup' as 'setup'|'pointer',longTasks:[] as number[],calls:[] as Array<Record<string,unknown>>,pointerEvents:[] as Array<{type:string;at:number}>,pointer:{type:'not-started',at:0}};
+  Object.assign(window,{choicePointerMeter:meter});
+  // The catalog's last passive reconciliation can finish after this meter is
+  // installed but before input starts. Keep those clones, without attributing
+  // them to pointer work. Capture over/out/enter/leave too: hover handlers run
+  // before pointermove and belong to the measured phase, not fixture setup.
+  for(const type of ['pointerover','pointerout','pointerenter','pointerleave','pointerdown','pointermove','pointerup','pointercancel'])document.addEventListener(type,event=>{if(!event.isTrusted)return;meter.phase='pointer';meter.pointer={type,at:performance.now()-start};meter.pointerEvents.push({...meter.pointer});},true);
+  window.structuredClone=((...args:Parameters<typeof structuredClone>)=>{
+   const value=args[0] as any,kind=value?.characters?'workspace':value?.selections&&value?.runtime?'character':value?.kind&&value?.raw?'entry':Array.isArray(value)?'array':value===null?'null':typeof value;
+   meter.clones++;if(meter.phase==='setup')meter.setupClones++;else meter.pointerClones++;meter.calls.push({at:performance.now()-start,phase:meter.phase,kind,id:typeof value?.id==='string'?value.id:undefined,keys:value&&typeof value==='object'?Object.keys(value).slice(0,24):[],selections:value?.selections?.length,characters:value?.characters?.length,arrayLength:Array.isArray(value)?value.length:undefined,pointer:{...meter.pointer},saveStatus:document.querySelector('.save-status')?.textContent,loading:!!document.querySelector('.wiki-header button[disabled]'),stack:new Error('structuredClone attribution').stack});
+   return original(...args);
+  }) as typeof structuredClone;
+  if(PerformanceObserver.supportedEntryTypes.includes('longtask'))new PerformanceObserver(list=>meter.longTasks.push(...list.getEntries().map(e=>e.duration))).observe({type:'longtask'});
+ });
+ const row=page.locator('.catalog-row').filter({hasText:'运动'}).first(),box=await row.boundingBox();await page.mouse.move(box!.x+30,box!.y+box!.height/2);await page.mouse.down();await page.mouse.move(box!.x+40,box!.y+box!.height/2,{steps:3});for(let i=0;i<12;i++){const target=await page.locator('.choice-slot').nth(i%2).boundingBox();await page.mouse.move(target!.x+target!.width/2,target!.y+target!.height/2,{steps:2});}
+ const meter=await page.evaluate(()=>(window as any).choicePointerMeter);await testInfo.attach('pointer-performance.json',{body:JSON.stringify({catalogFixtureEntries:2000,movementSamples:12,...meter},null,2),contentType:'application/json'});expect(meter.pointerEvents.some((event:{type:string})=>event.type==='pointerdown')).toBe(true);expect(meter.pointerEvents.filter((event:{type:string})=>event.type==='pointermove').length).toBeGreaterThanOrEqual(12);expect(meter.pointerClones).toBe(0);expect(meter.clones).toBe(meter.setupClones+meter.pointerClones);await page.keyboard.press('Escape');await page.mouse.up();await expect(page.locator('.choice-slot-entry')).toHaveCount(0);await expect(page.locator('.pointer-ghost')).toHaveCount(0);expect(await page.evaluate(()=>(window as any).choicePointerMeter.pointerClones)).toBe(0);
+});
+
+for(const choice of [{label:'起始熟练项',count:2},{label:'起始装备',count:1}])test(`source completion during a pointer press preserves the first ${choice.label} activation`,async({page})=>{
+ let release!:()=>void;const gate=new Promise<void>(resolve=>release=resolve);
+ try{
+  await ready(page,raw,{skillsGate:gate});await expect(page.getByRole('switch',{name:'编辑模式',exact:true})).toHaveAttribute('aria-checked','true');await page.getByRole('tab',{name:'特性',exact:true}).click();
+  const chip=page.getByRole('button',{name:`${choice.label} 0/${choice.count}`,exact:true}),banner=page.locator('.class-compatibility-banner');
+  await expect(chip).toBeVisible();await expect(banner).toHaveCount(0);await chip.scrollIntoViewIfNeeded();const before=await chip.boundingBox();expect(before).not.toBeNull();
+  await page.mouse.move(before!.x+before!.width/2,before!.y+before!.height/2);await page.mouse.down();
+  // Finish the real source queue while the physical button is held. A late
+  // warning must not move the target between pointerdown and pointerup.
+  release();await expect(page.getByRole('button',{name:'更新资料',exact:true})).toBeEnabled();await expect(banner).toHaveCount(0);
+  const held=await chip.boundingBox();expect(held).not.toBeNull();for(const key of ['x','y','width','height'] as const)expect(Math.abs(held![key]-before![key])).toBeLessThan(.5);
+  await page.mouse.up();await expect(workspace(page,choice.label)).toBeVisible();await expect(banner).toBeVisible();
+  if(choice.label==='起始熟练项')await expect(page.locator('.catalog-row')).toHaveCount(3);else await expect(workspace(page,choice.label).getByRole('button',{name:'方案 A',exact:true})).toBeVisible();
+  await page.keyboard.press('Escape');await expect(page.locator('.choice-workspace')).toHaveCount(0);await expect(chip).toBeFocused();
+ }finally{release();await page.mouse.up();}
+});

@@ -16,6 +16,8 @@ import TokenBarToken from "./TokenBarToken";
 import TokenBarTokenGroup from "./TokenBarTokenGroup";
 import SelectTokensButton from "./SelectTokensButton";
 
+import CharacterTokenButtons from "../../character/CharacterTokenButtons";
+
 import Draggable from "../drag/Draggable";
 
 import useSetting from "../../hooks/useSetting";
@@ -202,6 +204,7 @@ function TokenBar({ onMapTokensStateCreate }: TokenBarProps) {
           }}
         >
           <SelectTokensButton onMapTokensStateCreate={onMapTokensStateCreate} />
+          <CharacterTokenButtons onMapTokensStateCreate={onMapTokensStateCreate} />
         </Flex>
         {createPortal(
           <DragOverlay dropAnimation={null}>

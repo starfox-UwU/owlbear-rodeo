@@ -4,6 +4,7 @@ import SimpleBar from "simplebar-react";
 
 import Modal from "../components/Modal";
 import TokenSettings from "../components/token/TokenSettings";
+import TokenImageEditor from "../components/token/TokenImageEditor";
 import TokenPreview from "../components/token/TokenPreview";
 
 import { isEmpty } from "../helpers/shared";
@@ -110,6 +111,7 @@ function EditTokenModal({
           }}
         >
           <TokenPreview token={selectedTokenWithChanges} />
+          <TokenImageEditor token={token} onUpdateToken={onUpdateToken} />
           <TokenSettings
             token={selectedTokenWithChanges}
             onSettingsChange={handleTokenSettingsChange}

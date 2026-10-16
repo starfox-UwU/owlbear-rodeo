@@ -1,0 +1,40 @@
+import './platform/warmTools';
+// 宿主（自建 VTT）嵌入时的数据桥接：单机直接打开时只挂载 window.__DND_CARD_BRIDGE__。
+import { installHostBridge } from './platform/hostBridge';
+installHostBridge();
+import {EntryMenuProvider} from './ui/EntrySharing';
+import {cloudFeaturesEnabled} from './cloud/availability';
+import {installCloudSuspension} from './cloud/suspension';
+import {CloudSuspended} from './cloud/CloudSuspended';
+import './cloud/suspended.css';
+import {UiLanguageProvider} from './ui/UiLanguage';
+import './platform/tone';
+import { createRoot } from 'react-dom/client';
+import { SourceProvider } from './ui/SourceName';
+import {lazy,Suspense} from 'react';
+import {StartupBoundary,StartupReady} from './ui/StartupBoundary';
+window.dispatchEvent(new CustomEvent('dnd-card-stage',{detail:'正在加载角色卡界面'}));
+installCloudSuspension(globalThis,location.href);
+const cloudLink=!cloudFeaturesEnabled&&['cloud','qqRoom','cloudDraft','pluginAuth'].some(key=>new URLSearchParams(location.search).has(key));
+const viewer=new URLSearchParams(location.search).get('legacyViewer')==='1';
+// Keep dynamic imports in separate lazy callbacks so the production bundler
+// attaches each entry's own CSS dependencies (including the standalone reader).
+const App=viewer?lazy(()=>import('./ui/PlayerViewer')):lazy(()=>import('./ui/App'));
+import './ui/style.css';
+import './ui/characterTabs.css';
+import './ui/workspace.css';
+import './ui/overview.css';
+import './ui/library.css';
+import './ui/cardAtmosphere.css';
+const app=cloudLink?<StartupReady><CloudSuspended/></StartupReady>:<Suspense fallback={null}>{viewer?<StartupReady><App/></StartupReady>:<App/>}</Suspense>;
+createRoot(document.getElementById('root')!).render(<StartupBoundary><UiLanguageProvider><SourceProvider>{viewer?app:<EntryMenuProvider>{app}</EntryMenuProvider>}</SourceProvider></UiLanguageProvider></StartupBoundary>);
+import './ui/libraryRefine.css';
+
+import './ui/characterPages.css';
+import './ui/suiteTheme.css';
+import './ui/responsive176.css';
+
+import './ui/refinement183.css';
+import './ui/domesticCompact.css';
+import './ui/screenLayout.css';
+import './ui/uiRefresh.css';

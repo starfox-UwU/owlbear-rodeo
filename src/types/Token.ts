@@ -18,6 +18,11 @@ export type BaseToken = {
   created: number;
   lastModified: number;
   outline: Outline;
+  /**
+   * 由角色卡生成时记录来源角色 id，用于「重新同步数值 / 重新同步头像」。
+   * 手动创建的 Token 不带这个字段。
+   */
+  characterId?: string;
 };
 
 export type DefaultToken = BaseToken & {

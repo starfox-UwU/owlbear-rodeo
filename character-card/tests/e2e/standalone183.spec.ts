@@ -1,0 +1,50 @@
+import {test,expect} from '@playwright/test';
+import {mockSource,suppressAnnouncement} from './fixtures';
+
+test('standalone has no room transport, survives offline reload and rolls without a host',async({page,context,baseURL})=>{
+ const errors:string[]=[],forbidden:string[]=[],sockets:string[]=[],sessionReads:string[]=[];
+ page.on('pageerror',e=>errors.push(e.message));page.on('websocket',s=>sockets.push(s.url()));
+ // Cloud and QQ discovery are suspended; offline/local editing sends no account or room requests.
+ page.on('request',r=>{const url=new URL(r.url()),session=url.origin===new URL(baseURL!).origin&&url.pathname==='/api/session'&&r.method()==='GET';if(session)sessionReads.push(r.url());else if(/owlbear|obr\.dnd|\/relay|\/characters\/|\/api\//i.test(r.url()))forbidden.push(r.url());});
+ await mockSource(page);await suppressAnnouncement(page);await page.goto('/#suite=ignored&bridge=http%3A%2F%2F127.0.0.1%3A5194');
+ await expect(page.locator('.brand')).toContainText('DND 角色卡');
+ await expect(page.getByRole('button',{name:'更新资料',exact:true})).toBeEnabled();
+ await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+ await page.getByRole('switch',{name:'编辑模式'}).click();
+ await page.getByRole('textbox',{name:'角色姓名',exact:true}).fill('单机冒险者');
+ await page.getByRole('button',{name:'武器与攻击',exact:true}).click();
+ await page.getByRole('button',{name:'＋ 新建手填攻击',exact:true}).click();await page.getByLabel('名字',{exact:true}).fill('训练剑');await page.getByLabel('命中加值',{exact:true}).fill('+4');await page.getByLabel('伤害',{exact:true}).fill('1d6+2');await page.getByRole('button',{name:'添加',exact:true}).click();await page.getByRole('button',{name:'关闭弹窗'}).click();
+ await page.getByRole('button',{name:'打开快捷栏编辑器',exact:true}).click();const dashboard=page.getByRole('dialog',{name:'仪表盘',exact:true});await dashboard.locator('[data-template-id="pips"]').click();await dashboard.locator('.resource-widget[data-selected="true"] .resource-widget-face').dblclick();
+ await expect(dashboard.locator('.resource-editor-form')).toBeVisible();await dashboard.getByRole('textbox',{name:'资源名称',exact:true}).fill('活力');await dashboard.getByRole('spinbutton',{name:'资源上限',exact:true}).fill('3');await dashboard.getByRole('button',{name:'保存',exact:true}).click();await dashboard.getByRole('button',{name:'保存布局',exact:true}).click();await dashboard.getByRole('button',{name:'关闭弹窗',exact:true}).click();await page.getByRole('switch',{name:'编辑模式'}).click();
+ const resource=page.getByRole('region',{name:'资源模块快捷栏'}),face=resource.getByRole('button',{name:/^活力：.*打开资源操作$/});
+ const savedResource=()=>page.evaluate(async()=>{const db=await new Promise<IDBDatabase>((resolve,reject)=>{const req=indexedDB.open('dnd-card-standalone');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});return new Promise<number|undefined>(resolve=>{const req=db.transaction('documents').objectStore('documents').get('workspace');req.onsuccess=()=>{const w=req.result,card=w.characters.find((c:any)=>c.id===w.activeId);db.close();resolve((Object.values(card.runtime.resources) as any[]).find(r=>r.name==='活力')?.current);};});});
+ await expect(resource.locator('[data-resource-name="活力"]')).toHaveAttribute('data-resource-current','3');await face.click();const controls=page.getByRole('dialog',{name:'活力资源操作',exact:true});
+ await controls.getByRole('button',{name:'活力 3',exact:true}).click();await expect(resource.locator('[data-resource-name="活力"]')).toHaveAttribute('data-resource-current','2');await expect.poll(savedResource).toBe(2);
+ await controls.getByRole('button',{name:'活力 3',exact:true}).click();await expect(resource.locator('[data-resource-name="活力"]')).toHaveAttribute('data-resource-current','3');await expect.poll(savedResource).toBe(3);await controls.getByRole('button',{name:'关闭资源操作',exact:true}).click();
+ await expect(page.locator('.save-status')).toContainText('已保存到本机');
+ await expect.poll(()=>page.evaluate(async()=>{const db=await new Promise<IDBDatabase>((resolve,reject)=>{const req=indexedDB.open('dnd-card-standalone');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});return new Promise<string>(resolve=>{const req=db.transaction('documents').objectStore('documents').get('workspace');req.onsuccess=()=>{const w=req.result;db.close();resolve(w.characters.find((c:any)=>c.id===w.activeId).name);};});})).toBe('单机冒险者');
+ // Deferred tools are cached when used, independently of the first-card shell.
+ // Load this tool online before verifying that the same tool reopens offline.
+ await page.getByRole('button',{name:'导入 / 导出',exact:true}).click();
+ await expect(page.getByText('完整 JSON 备份 · 网站与枭熊通用')).toBeVisible();
+ await page.getByRole('button',{name:'关闭弹窗'}).click();
+ await context.setOffline(true);await page.reload();await expect.poll(()=>page.locator('.brand-logo').evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
+ await expect(page.getByRole('textbox',{name:'角色姓名',exact:true})).toHaveValue('单机冒险者');
+ await expect(page.locator('.quick-weapon').filter({hasText:'训练剑'})).toBeVisible();await expect(resource.locator('[data-resource-name="活力"]')).toHaveAttribute('data-resource-current','3');await expect.poll(savedResource).toBe(3);
+ await expect(page.getByRole('switch',{name:'编辑模式'})).toHaveAttribute('aria-checked','false');
+ // A cached sheet is visible before the deferred editing runtime is ready.
+ // This existing disabled control is the actual readiness gate for edits.
+ await expect(page.getByRole('switch',{name:'编辑模式'})).toBeEnabled({timeout:20000});
+ await page.locator('.quick-weapon').filter({hasText:'训练剑'}).getByRole('button',{name:'+4',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'本地投骰'})).toBeVisible();await page.getByRole('button',{name:'投骰',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'本地投骰'}).getByRole('status')).toContainText('1d20');await page.getByRole('button',{name:'关闭',exact:true}).click();
+ const hp=page.getByRole('textbox',{name:'当前生命值',exact:true});await hp.fill('17');await hp.press('Tab');
+ await expect(page.getByRole('textbox',{name:'当前生命值',exact:true})).toHaveValue('17');
+ await expect.poll(()=>page.evaluate(async()=>{const db=await new Promise<IDBDatabase>((resolve,reject)=>{const req=indexedDB.open('dnd-card-standalone');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});return new Promise<number>(resolve=>{const req=db.transaction('documents').objectStore('documents').get('workspace');req.onsuccess=()=>{const w=req.result;db.close();resolve(w.characters.find((c:any)=>c.id===w.activeId).runtime.hp);};});})).toBe(17);
+ await page.reload();await expect(hp).toHaveValue('17');
+ await page.getByRole('button',{name:'导入 / 导出',exact:true}).click();await expect(page.getByRole('button',{name:'导入枭熊 JSON'})).toHaveCount(0);await expect(page.getByText('完整 JSON 备份 · 网站与枭熊通用')).toBeVisible();await page.getByRole('button',{name:'关闭弹窗'}).click();
+ await page.locator('.catalog-row').first().click();await expect(page.locator('.entry-detail')).toContainText('测试法师');
+ await page.screenshot({path:test.info().outputPath('standalone-desktop.png')});
+ await page.setViewportSize({width:420,height:900});await page.getByRole('button',{name:'功能页',exact:true}).click();await page.screenshot({path:test.info().outputPath('standalone-mobile.png')});
+ expect(sessionReads).toEqual([]);expect(forbidden).toEqual([]);expect(sockets).toEqual([]);expect(errors).toEqual([]);
+});

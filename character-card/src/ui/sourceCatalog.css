@@ -1,0 +1,9 @@
+.source-groups{display:grid;gap:8px;max-height:52vh;overflow:auto;padding:2px}
+.source-group{border:2px solid #555;background:#eee;min-width:0}
+.source-group>summary{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;background:#555;color:white;list-style:none}
+.source-group>summary:before{content:'▸'}.source-group[open]>summary:before{content:'▾'}
+.source-group>summary label{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:12px}
+.source-group .source-books{display:flex;flex-direction:column;max-height:none;overflow:visible;padding:0;gap:0;width:100%;margin:0;border:0;background:#eee;scrollbar-gutter:auto}
+.source-group .source-book{border:0;border-bottom:1px solid #aaa;border-radius:0;background:transparent}
+.source-group-note{margin:8px;font-size:12px}
+@media(max-width:560px){.source-group>summary{gap:5px;font-size:13px}.source-group>summary label{font-size:11px}.source-group .source-counts{display:none}}

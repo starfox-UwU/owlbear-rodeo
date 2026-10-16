@@ -98,7 +98,34 @@ yarn dev          # 等价于 yarn start
 | `yarn check:broker` | **连不上后端时先跑这个**：检查地址来源、TCP 端口、socket.io 握手 |
 | `yarn test` | Vitest 单次运行 |
 | `yarn test:watch` | Vitest 监听模式 |
+| `yarn card:build` | 强制重建角色卡子应用并输出到 `public/card` |
+| `yarn card:verify` | 用 Playwright 校验「宿主 ⇄ 角色卡」postMessage 桥接 |
 | `npx vite-bundle-visualizer` | 查看产物体积构成（替代原 `yarn analyze`） |
+
+`yarn dev` / `yarn build` 会通过 `predev` / `prebuild` 钩子自动构建角色卡：
+产物已是最新时直接跳过，构建失败时只在开发模式下告警（生产构建会中断）。
+
+## 角色卡（DND Card Web 集成）
+
+本项目把 [DND-card-web](https://github.com/FullPeople/DND-card-web) 的整套 5e 车卡与规则资料
+工作区并入了仓库，作为 `character-card/` 子应用，并与本项目的 Token 系统打通：
+
+| 能力 | 入口 |
+| --- | --- |
+| **车卡**（属性、职业、法术、背包、规则 Wiki、导入/导出备份） | 首页「**角色卡**」按钮，或独立路由 `/card` |
+| **游戏内改卡** | 房间左侧 Token 栏的「角色卡」图标，全屏浮层打开 |
+| **多选角色自动生成 Token** | 房间左侧 Token 栏的「从角色卡生成 Token」图标 |
+| 图像替换 / 重新同步头像与数值 | Token 编辑弹窗里的「Token 图像」一栏 |
+
+生成的 Token 会带上 HP 条（当前/上限/临时）、AC、先攻、速度、熟练、被动察觉、法术 DC 与攻击、
+六项属性调整值、生命骰、激励等数值，游玩时点开 Token 即可就地修改；
+Token 上记录来源角色 id，之后可以「重新同步数值」把车卡结果再写回来。
+
+角色卡是 React 19 + Vite 的独立应用，与本项目（React 17）不能共用依赖，
+因此采用 **子应用 + iframe 嵌入 + `postMessage` 桥接** 的集成方式，两侧只有一份消息协议耦合。
+规则资料（上万条）全部由子应用按需懒加载并缓存在浏览器里，不进入本项目的构建产物。
+
+完整设计、协议与验证方法见 [CHARACTER-CARD.md](./CHARACTER-CARD.md)。
 
 ## 环境变量
 

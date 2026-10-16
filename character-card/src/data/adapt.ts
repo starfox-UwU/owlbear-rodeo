@@ -1,0 +1,64 @@
+import { ABILITIES, type Raw } from '../core/model';
+import {proficiencyText,startingProficiencyEntries} from '../core/proficiencyText';
+
+/** Inheritance is resolved only for documented simple subrace fields. Complex
+ * copy operations remain explicit, rather than guessing at mechanical changes. */
+export function inheritSubrace(raw: Raw, races: Raw[]): Raw {
+  const parent = races.find(r => [r.name, r.ENG_name].includes(raw.raceName) && r.source === (raw.raceSource || 'PHB'));
+  if (!parent) return { ...raw, _unresolvedParent: true };
+  const merged: Raw = { ...parent, ...raw, _parentName: parent.name, _parentSource: parent.source, _subraceName: raw.name };
+  merged.name = raw.name ? `${parent.name}（${raw.name}）` : parent.name;
+  merged.ENG_name = raw.name ? `${parent.ENG_name || parent.name} (${raw.ENG_name || raw.name})` : parent.ENG_name || parent.name;
+  const parentEntries = structuredClone(parent.entries || []);
+  for (const entry of raw.entries || []) {
+    const overwrite = typeof entry === 'object' && entry?.data?.overwrite;
+    const index = overwrite ? parentEntries.findIndex((e: Raw) => e.name === overwrite || e.ENG_name === overwrite) : -1;
+    if (index >= 0) parentEntries[index] = entry; else parentEntries.push(entry);
+  }
+  merged.entries = parentEntries;
+  if (raw.overwrite?.ability) merged.ability = raw.ability;
+  else if (parent.ability?.length === 1 && raw.ability?.length === 1) {
+    const a = { ...parent.ability[0], ...raw.ability[0] };
+    for (const key of ABILITIES) if (typeof parent.ability[0][key] === 'number' || typeof raw.ability[0][key] === 'number') a[key] = (parent.ability[0][key] || 0) + (raw.ability[0][key] || 0);
+    merged.ability = [a];
+  } else if (raw.ability && parent.ability) merged._unresolvedParent = true;
+  for (const key of ['skillProficiencies', 'toolProficiencies', 'languageProficiencies', 'weaponProficiencies', 'armorProficiencies', 'additionalSpells']) {
+    if (!raw.overwrite?.[key]) merged[key] = [...(parent[key] || []), ...(raw[key] || [])];
+  }
+  return merged;
+}
+
+export function readableEntries(raw: Raw, category: string): unknown[] {
+  const entries = [...(Array.isArray(raw.entries) ? raw.entries : [])];
+  const starting:unknown[]=[];
+  if (Array.isArray(raw.additionalEntries)) entries.push(...raw.additionalEntries);
+  if (category === 'itemGroup' && raw.items?.length) entries.push({ type: 'list', items: raw.items.map((ref: string) => `{@item ${ref}}`) });
+  if (category === 'table') entries.push({ ...raw, type: 'table' });
+  if (category === 'tableGroup') entries.push(...(raw.tables || []));
+  if (category === 'psionic') entries.push(...(raw.modes || []));
+  if (category === 'class' || category === 'subclass') {
+    const proficiencies=startingProficiencyEntries(raw);
+    if(proficiencies.length)starting.push({type:'entries',name:'起始熟练项',_startingSection:true,_trainingSection:true,entries:proficiencies});
+    const refs = raw.classFeatures || raw.subclassFeatures || [];
+    if (refs.length) entries.push({ type: 'entries', name: '等级特性', entries: [{ type: 'list', items: refs.map((v: any) => {
+      const ref = typeof v === 'string' ? v : v.classFeature || v.subclassFeature;
+      return { type: category === 'class' ? 'refClassFeature' : 'refSubclassFeature', [category === 'class' ? 'classFeature' : 'subclassFeature']: ref };
+    }) }] });
+  }
+  const equipment = raw.startingEquipment;
+  // Backgrounds use an array; reading its .entries first selects the built-in
+  // iterator function, not the class equipment prose field with the same name.
+  const blocks = Array.isArray(equipment) ? equipment : [equipment?.entries, equipment?.default, equipment?.defaultData].find(Array.isArray);
+  if (blocks) {
+    const book=raw.edition==='one'||raw.source==='XPHB'?'XPHB':'PHB';
+    const describe = (v: any): string => typeof v === 'string' ? (v.includes('|')&&!v.includes('{@')?`{@item ${v}}`:v) : v?.item ? `{@item ${v.item}}${v.quantity ? ` ×${v.quantity}` : ''}` : v?.special ? `${v.special}${v.quantity ? ` ×${v.quantity}` : ''}` : v?.value!=null ? `${v.value / 100} gp` : v?.equipmentType ? `选择装备：${proficiencyText(v.equipmentType,book)}${v.quantity?` ×${v.quantity}`:''}` : '';
+    const body=blocks.map((block: any) => typeof block === 'string' || block?.type ? block : Object.entries(block||{}).map(([key, list]) => `${key === '_' ? '固定' : `方案 ${key}`}：${Array.isArray(list) ? list.map(describe).filter(Boolean).join('、') : ''}`).join('\n'));
+    if(equipment?.goldAlternative)body.push(`或选择起始金币：${equipment.goldAlternative}。`);
+    if(equipment?.additionalFromBackground)body.push('此外获得背景提供的起始装备。');
+    starting.push({ type: 'entries', name: '起始装备', _startingSection:true, entries:body });
+  }
+  if (category === 'monster') for (const [key,label] of Object.entries({trait:'特性',spellcasting:'施法',action:'动作',bonus:'附赠动作',reaction:'反应',legendary:'传奇动作',mythic:'神话动作',variant:'变体'})) if (raw[key]?.length) entries.push({type:'entries',name:label,entries:raw[key]});
+  if (category === 'monster' && raw._legendaryGroup) for(const [key,label] of Object.entries({lairActions:'巢穴动作',regionalEffects:'区域效应',mythicEncounter:'神话遭遇'})) if(raw._legendaryGroup[key])entries.push({type:'entries',name:label,entries:raw._legendaryGroup[key]});
+  if (raw.entriesHigherLevel) entries.push(...raw.entriesHigherLevel);
+  return [...starting,...entries];
+}

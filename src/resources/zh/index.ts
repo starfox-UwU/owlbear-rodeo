@@ -749,6 +749,51 @@ const zh = {
     playerFallback: "玩家 {{id}}",
     viewOnlyTooltip: "你对这个物件只有查看权限。",
   },
+
+  /* ------------------------------------------------------------------ *
+   * 角色卡（DND Card Web 集成）
+   * ------------------------------------------------------------------ */
+  character: {
+    title: "角色卡",
+    frameTitle: "角色卡工作区",
+    count: "共 {{count}} 个角色",
+    loading: "加载中…",
+    loadingList: "正在读取角色卡…",
+    loadFailed: "无法读取角色卡：{{message}}",
+    emptyList: "还没有角色。先在角色卡里创建角色，再回来生成 Token。",
+    openCard: "打开角色卡",
+    reopen: "显示角色卡",
+    backHome: "返回首页",
+    routeHint:
+      "角色卡会在这里全屏打开。先创建或修改角色，游玩时就能直接用它生成 Token。",
+    homeEntry: "角色卡",
+    homeEntryHint: "先车卡，再一键变成 Token",
+    generateTitle: "从角色卡生成 Token",
+    generateHint:
+      "勾选要生成 Token 的角色。每个 Token 都会带上占位头像（或角色卡自己的头像）、HP 条和常用战斗数值，生成后仍可随时修改。",
+    generateButton: "生成 {{count}} 个 Token",
+    generating: "生成中…",
+    generateSuccess: "已在 Token 库中生成 {{count}} 个 Token。",
+    generateSuccessMap: "已生成 {{count}} 个 Token 并放到地图上。",
+    selectedCount: "已选 {{count}}/{{total}}",
+    hpAcSummary: "HP {{hp}} · AC {{ac}}",
+    placeOnMap: "同时放到当前地图上",
+    importCharacters: "导入角色文件",
+    importSuccess: "已新增 {{added}} 个、更新 {{updated}} 个角色。",
+    imageLabel: "Token 图像",
+    uploadImage: "上传图像",
+    syncPortrait: "使用角色头像",
+    syncValues: "重新同步数值",
+    valuesSynced: "已按角色卡重新同步 Token 数值。",
+    noPortrait: "这个角色还没有设置头像。",
+    missingCharacter: "关联的角色已经不存在了。",
+    imageUpdated: "Token 图像已更新。",
+    imageFailed: "无法读取这张图片。",
+    imageHint: "随时可以上传替换图像。",
+    imageHintLinked:
+      "这个 Token 来自角色卡：可以替换图像，也可以重新同步头像和数值。",
+    imageHintDefault: "这个 Token 使用内置图像，无法替换。",
+  },
 } satisfies Dictionary;
 
 export default zh;

@@ -1,0 +1,65 @@
+import type { Page } from '@playwright/test';
+import { ANNOUNCEMENT_KEY, APP_VERSION, announcementVersionFor } from '../../src/platform/announcement';
+// Authored fixtures: no copied publisher rules or personal character data.
+const core = (source: string) => ({ name: '测试法师', ENG_name: 'Test Mage', source, hd: { faces: 6 }, proficiency: ['int', 'wis'], startingProficiencies: { skills: [{ choose: { from: ['arcana', 'history', 'insight'], count: 2 } }] }, classFeatures: [`初始特性|测试法师|${source}|1`], cantripProgression: [1, 1, 1], classTableGroups: [{ rowsSpellProgression: [[2], [3], [4, 2]] }] });
+const classes = { class: [core('PHB'), core('XPHB')], subclass: ['PHB', 'XPHB'].map(source => ({ name: '测试学派', shortName: '测试学派', source, className: '测试法师', classSource: source, subclassFeatures: [], entries: ['自制测试子职。'] })), classFeature: ['PHB', 'XPHB'].map(source => ({ name: '初始特性', ENG_name: 'First Feature', source, className: '测试法师', classSource: source, level: 1, entries: ['这是一条为软件验收创作的测试规则。可以查阅 {@spell 微光术|XPHB}。', ...Array.from({ length: 28 }, (_, i) => `记录片段 ${i + 1}：供长正文、关键词提示与区域滚动验收使用。`)] })) };
+const data: Record<string, unknown> = {
+  'bestiary/index.json': {CUSTOM:'bestiary-empty-fixture.json'}, 'bestiary/bestiary-empty-fixture.json': {},
+  'class/index.json': { test: 'class-test.json' }, 'class/class-test.json': classes,
+  'spells/index.json': { XPHB: 'spells-test.json' },
+  'spells/spells-test.json': { spell: [{ name: '微光术', ENG_name: 'Test Glow', source: 'XPHB', level: 0, entries: ['为测试而创作的一点微光。'] }] },
+  'generated/gendata-spell-source-lookup.json': { xphb: { 微光术: { class: { XPHB: { 测试法师: true } } } } },
+  'races.json': { race: [{ name: '测试旅人', ENG_name: 'Test Traveller', source: 'XPHB', speed: 30, entries: ['自制测试种族。'] }] },
+  'backgrounds.json': { background: [{ name: '抄书员', ENG_name: 'Test Scribe', source: 'XPHB', skillProficiencies: [{ history: true }], ability: [{ choose: { weighted: { from: ['int', 'wis', 'cha'], weights: [2, 1] } } }], feats: [{ '旅行笔记|xphb': true }], entries: ['用于验证背景的选择要求。'] }] },
+  'feats.json': { feat: [{ name: '旅行笔记', ENG_name: 'Travel Notes', source: 'XPHB', entries: ['记录旅途。'] }] },
+  'items-base.json': { baseitem: [{ name: '测试皮甲', ENG_name: 'Test Armor', source: 'XPHB', ac: 11, type: 'LA', entries: ['测试护甲。'] }] },
+  'items.json': {}, 'optionalfeatures.json': {}, 'conditionsdiseases.json': {},
+};
+export async function mockSource(page: Page,options:{suiteAnnouncement?:boolean;firstSetup?:boolean;displayMode?:'a4'|'screen'|'default'}={}) {
+  // Existing flows retain their A4 contract; responsive flows opt into screen mode.
+  if(options.displayMode!=='default')await page.context().addInitScript(mode=>{if(!localStorage.getItem('dnd-card-sheet-display'))localStorage.setItem('dnd-card-sheet-display',mode);},options.displayMode||'a4');
+  if(!options.firstSetup){
+    await page.context().addInitScript(()=>{try{localStorage.setItem('dnd-card:rules-setup:v1','done');}catch{}});
+    await page.evaluate(()=>{try{localStorage.setItem('dnd-card:rules-setup:v1','done');}catch{}}).catch(()=>{});
+  }
+  // Unrelated room-flow tests start after the version notice has been accepted.
+  // Dedicated announcement tests opt out and exercise the real mandatory dialog.
+  if(!options.suiteAnnouncement){
+    await page.context().addInitScript(([key,version])=>{try{localStorage.setItem(key+':suite',version);}catch{}},[ANNOUNCEMENT_KEY,announcementVersionFor('suite')]);
+    await page.evaluate(([key,version])=>{try{localStorage.setItem(key+':suite',version);}catch{}},[ANNOUNCEMENT_KEY,announcementVersionFor('suite')]).catch(()=>{});
+  }
+  await page.route('https://homebrew.kiwee.top/**',route=>route.fulfill({json:{},headers:{'access-control-allow-origin':'*'}}));
+  await page.route('https://5e.kiwee.top/data/**', async route => {
+    const key = new URL(route.request().url()).pathname.replace('/data/', '');
+    await route.fulfill({ json: data[key] || {}, headers: { 'access-control-allow-origin': '*', etag: 'fixture-1' } });
+  });
+  // Popup fixtures can attach after navigation has already read its notice key.
+  // Wait for the actual App mount before acknowledging an already-open notice.
+  if(!options.suiteAnnouncement&&page.url().includes('#suite=')){
+    await page.locator('.app-shell').waitFor();
+    const confirm=page.locator('.announcement-foot .primary');
+    if(await confirm.count())await confirm.click();
+  }
+}
+// 单机构建的公告会挡住其他用例的首屏操作；需要时在 goto 之前按当前版本预置确认记录。
+export async function suppressAnnouncement(page: Page, version = APP_VERSION) {
+  await page.addInitScript(([key, version]) => { try { localStorage.setItem(key, version); } catch { /* 存储不可用时公告每次都会出现，用例需自行确认。 */ } }, [ANNOUNCEMENT_KEY, version] as const);
+}
+export async function fillFromDetail(page: Page) {
+  const kind = await page.locator('.entry-detail').getAttribute('data-entry-kind');
+  const preferred: Record<string, string> = { class: '.identity-class', subclass: '.identity-subclass', race: '.identity-race', background: '.identity-background', spell: '.overview-spells', condition: '.portrait-cell', feat: '.heritage-features', feature: '.class-features', rule: '.class-features', item: '.quickbar-cell' };
+  const target = page.locator(preferred[kind || ''] || '.class-features');
+  if (await target.isVisible()) await page.locator('.detail-title').dragTo(target);
+  else {
+    const zones = page.locator('.paper [data-drop-kind]');
+    for (let i = 0; i < await zones.count(); i++) if (await zones.nth(i).isVisible() && (await zones.nth(i).getAttribute('data-drop-kind'))?.split(',').includes(kind || '')) { await page.locator('.detail-title').dragTo(zones.nth(i)); return; }
+    throw new Error(`No visible drop region for ${kind}`);
+  }
+}
+
+// Source books now live in user-expandable groups; exercise the visible control.
+export async function expandSourceBook(page:Page,source:string){
+ const book=page.locator('.source-book').filter({has:page.locator(`button[aria-label="设置来源 ${source}"]`)});
+ if(!await book.isVisible())await page.locator('.source-group').filter({has:book}).locator(':scope > summary').click();
+ await book.waitFor({state:'visible'});
+}

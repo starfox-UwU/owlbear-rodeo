@@ -752,6 +752,52 @@ const en = {
     playerFallback: "Player {{id}}",
     viewOnlyTooltip: "You only have view access to this item.",
   },
+
+  /* ------------------------------------------------------------------ *
+   * Character cards (DND Card Web integration)
+   * ------------------------------------------------------------------ */
+  character: {
+    title: "Character Card",
+    frameTitle: "Character card workspace",
+    count: "{{count}} characters",
+    loading: "Loading…",
+    loadingList: "Reading character cards…",
+    loadFailed: "Could not read the character card: {{message}}",
+    emptyList:
+      "There are no characters yet. Create one in the character card, then come back to generate tokens.",
+    openCard: "Open character card",
+    reopen: "Show character card",
+    backHome: "Back to home",
+    routeHint:
+      "The character card opens here in full screen. Create or edit characters, then generate tokens from them while playing.",
+    homeEntry: "Character Card",
+    homeEntryHint: "Build a character, then turn it into a token",
+    generateTitle: "Create tokens from character cards",
+    generateHint:
+      "Pick the characters to turn into tokens. Each token gets a placeholder portrait (or the card's own portrait) plus HP and combat values, and stays editable afterwards.",
+    generateButton: "Create {{count}} tokens",
+    generating: "Creating…",
+    generateSuccess: "Created {{count}} tokens in the token library.",
+    generateSuccessMap: "Created {{count}} tokens and placed them on the map.",
+    selectedCount: "{{count}}/{{total}} selected",
+    hpAcSummary: "HP {{hp}} · AC {{ac}}",
+    placeOnMap: "Also place them on the current map",
+    importCharacters: "Import character file",
+    importSuccess: "Imported {{added}} new and updated {{updated}} characters.",
+    imageLabel: "Token image",
+    uploadImage: "Upload image",
+    syncPortrait: "Use card portrait",
+    syncValues: "Re-sync values",
+    valuesSynced: "Token values re-synced from the character card.",
+    noPortrait: "This character has no portrait yet.",
+    missingCharacter: "The linked character no longer exists.",
+    imageUpdated: "Token image updated.",
+    imageFailed: "Could not read that image.",
+    imageHint: "Upload a replacement image at any time.",
+    imageHintLinked:
+      "This token comes from a character card. Replace the image, or re-sync the portrait and values.",
+    imageHintDefault: "This token uses a built-in image and cannot be replaced.",
+  },
 } as const;
 
 export type Dictionary = DeepString<typeof en>;

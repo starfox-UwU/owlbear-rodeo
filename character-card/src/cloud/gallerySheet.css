@@ -1,0 +1,14 @@
+/* How a full character sheet sits inside a gallery paper and the fullscreen viewer. The gallery chrome itself lives in galleryPresentation.css. */
+.cloud-gallery-paper>.player-viewer{height:100%;background:transparent}
+.cloud-gallery-paper .player-viewer .sheet-viewport{padding:0!important;background:transparent;display:flex;align-items:center;justify-content:center}
+.cloud-gallery-paper .sheet-pages{height:calc(100% - 25px);display:flex;flex-direction:column}
+.cloud-gallery-paper .sheet-pages>button{flex:1;min-height:0;height:auto}
+.cloud-gallery-paper .paper{box-shadow:none!important}
+.cloud-gallery-paper .paper-stack{flex-shrink:0}
+.cloud-gallery-paper .sheet-pane{border:0!important}
+.cloud-fullscreen-sheet{flex:1;min-height:0;transform-origin:center;overflow:hidden}
+.cloud-fullscreen-sheet>.player-viewer{height:100%}
+.cloud-fullscreen-sheet .sheet-pane{display:flex!important;height:auto!important;flex:1;min-height:0}
+.cloud-fullscreen-sheet .sheet-viewport{display:flex;justify-content:center;align-items:center}
+.cloud-fullscreen-sheet .player-viewer-toolbar{min-height:30px;font-size:11px}
+@media(max-width:700px){.cloud-fullscreen-sheet .player-viewer-toolbar strong,.cloud-fullscreen-sheet .player-viewer-toolbar span{display:none}}

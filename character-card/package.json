@@ -1,0 +1,50 @@
+{
+  "name": "dnd-card-web",
+  "version": "0.1.72",
+  "private": true,
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "verify:automation-progress": "node tools/verifyAutomationProgress.mjs",
+    "verify:automation-source": "node tools/checkAutomationRuleStatus.mjs",
+    "verify:automation-runtime": "node tools/checkAutomationRuntimeCoverage.mjs",
+    "test:e2e": "playwright test",
+    "check": "npm run test && npm run build",
+    "dev:sync-prototype": "vite --config prototype/vite.config.ts",
+    "build:sync-prototype": "tsc -p prototype/tsconfig.json && vite build --config prototype/vite.config.ts",
+    "test:sync-prototype": "playwright test --config prototype/playwright.config.ts",
+    "build:standalone": "tsc -b && vite build --mode standalone",
+    "build:domestic": "node tools/buildDomestic.mjs",
+    "dev:standalone": "vite --mode standalone --host 127.0.0.1 --port 5183",
+    "test:release": "playwright test --config playwright.release.config.ts",
+    "test:standalone": "playwright test --config playwright.standalone.config.ts",
+    "build:cloud": "node tools/buildCloud.mjs",
+    "build:wiki": "tsc -b && vite build --config vite.wiki.config.ts --mode standalone",
+    "test:cloud": "vitest run tests/cloud.test.ts tests/cloud-directory.test.ts tests/cloud-sync.test.ts tests/qq-login.test.ts tests/qq-permissions.test.ts",
+    "test:cloud-browser": "playwright test --config playwright.cloud.config.ts"
+  },
+  "dependencies": {
+    "html-to-image": "1.11.13",
+    "idb": "8.0.3",
+    "pinyin-pro": "3.29.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@owlbear-rodeo/sdk": "^3.1.0",
+    "@playwright/test": "1.63.0",
+    "@types/node": "26.6.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "fake-indexeddb": "6.2.5",
+    "lucide-static": "^1.55.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.0",
+    "vitest": "5.0.1"
+  }
+}

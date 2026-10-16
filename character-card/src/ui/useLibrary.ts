@@ -1,0 +1,52 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Entry, Kind } from '../core/model';
+import {useWikiPreviewTransition} from './useWikiPreviewTransition';
+import { LIBRARY_TABS, tabOf, navigationTab, type FacetSelection, type LibraryTab } from './libraryData';
+
+type TabState = { query:string; subclassesOpen?:boolean; focus?:string; edition: string; detailId?: string; filters: FacetSelection; sort: string; descending: boolean; positions: Record<string, number>; collapsed: Record<string, string[]> };
+const initial = (tab?:LibraryTab): TabState => ({ query:'', edition: 'character', filters: {}, sort: tab==='spell'?'level':'source', descending: false, positions: {}, collapsed: {} });
+const key = 'dnd-library-v2';
+function read(storageKey=key): { active: LibraryTab; globalQuery:string; tabs: Partial<Record<LibraryTab, TabState>>; conditionDefault:boolean; sortDefaults:number } {
+  try { const v = JSON.parse(localStorage.getItem(storageKey) || '{}'); const tabs: Partial<Record<LibraryTab, TabState>> = {}; for (const tab of Object.keys(LIBRARY_TABS) as LibraryTab[]) { const s = v.tabs?.[tab]; if (!s || typeof s !== 'object') continue; const next = initial(tab); if (['character', '2014', '2024', 'all'].includes(s.edition)) next.edition = s.edition; next.query=typeof s.query==='string'?s.query:'';next.subclassesOpen=s.subclassesOpen===true; if (typeof s.detailId === 'string') next.detailId = s.detailId; if (v.sortDefaults === 2 && typeof s.sort === 'string') next.sort = s.sort; next.descending = v.sortDefaults === 2 && s.descending === true;
+      if (s.filters && typeof s.filters === 'object') for (const [k, f] of Object.entries(s.filters) as [string, any][]) if (f && Array.isArray(f.include) && Array.isArray(f.exclude)) next.filters[k] = { include: f.include.filter((v: unknown) => typeof v === 'string'), exclude: f.exclude.filter((v: unknown) => typeof v === 'string') };
+      if(tab==='condition' && v.sortDefaults !== 2 && next.filters.source?.include.every((id:string)=>['PHB','XPHB'].includes(id)) && !next.filters.source?.exclude.length)delete next.filters.source;
+      if (s.positions && typeof s.positions === 'object') next.positions = Object.fromEntries(Object.entries(s.positions).filter(([, v]) => typeof v === 'number' && Number.isFinite(v) && v >= 0)) as Record<string, number>;
+      if (s.collapsed && typeof s.collapsed === 'object') next.collapsed = Object.fromEntries(Object.entries(s.collapsed).filter(([, v]) => Array.isArray(v) && v.every(x => typeof x === 'string'))) as Record<string, string[]>;
+      tabs[tab] = next;
+    } return { active: Object.hasOwn(LIBRARY_TABS, v.active) ? v.active : 'class', globalQuery:typeof v.globalQuery==='string'?v.globalQuery:typeof v.tabs?.[v.active]?.query==='string'?v.tabs[v.active].query:'', tabs,conditionDefault:true,sortDefaults:2 }; } catch { return { active: 'class', globalQuery:'', tabs: {},conditionDefault:true,sortDefaults:2 }; }
+}
+export function useLibrary(entries: Entry[],selectedEntries:Entry[]=[],strictSelected=false,storageKey=key) {
+  const byId=useMemo(()=>new Map(entries.map(e=>[e.id,e])),[entries]);
+  const selectedById=useMemo(()=>new Map(selectedEntries.map(e=>[e.id,e])),[selectedEntries]);
+  const [saved, setSaved] = useState(()=>read(storageKey)), snapshots = useRef(new Map<string, Entry>());
+  const scrollSave = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [hover, setHover] = useState<{entry:Entry;focus?:string}>();
+  const visibleHover=hover&&(!strictSelected?hover:selectedById.get(hover.entry.id)||byId.get(hover.entry.id)?{...hover,entry:(selectedById.get(hover.entry.id)||byId.get(hover.entry.id))!}:undefined);
+  const kind = visibleHover ? tabOf(visibleHover.entry) : saved.active;
+  useEffect(()=>{if(strictSelected){for(const id of snapshots.current.keys())if(!selectedById.has(id)&&!byId.has(id))snapshots.current.delete(id);if(hover&&!visibleHover)setHover(undefined);}},[strictSelected,selectedById,byId,hover,visibleHover]);
+  const state=useMemo(()=>saved.tabs[kind]||initial(kind),[saved.tabs,kind]);
+  const detail = visibleHover?.entry || selectedById.get(state.detailId || '') || byId.get(state.detailId || '') || (!strictSelected?snapshots.current.get(state.detailId || ''):undefined);
+  const previewTransition = useWikiPreviewTransition(detail?.id, setHover);
+  const preview = (target: typeof hover) => {
+    const readingId = saved.tabs[saved.active]?.detailId;
+    previewTransition.request(target, target?.entry.id || readingId);
+  };
+  const clearHover = () => { previewTransition.cancel(); setHover(undefined); };
+  const [backStack,setBackStack]=useState<{tab:LibraryTab;state:TabState}[]>([]);
+  const [navigationKey,setNavigationKey]=useState(0);
+  const latest = useRef(saved); latest.current = saved;
+  const flush = () => { try { localStorage.setItem(storageKey, JSON.stringify(latest.current)); } catch { /* Reading preferences must not block character editing. */ } };
+  useEffect(() => { const timer = setTimeout(flush, 120); return () => clearTimeout(timer); }, [saved]);
+  useEffect(() => { window.addEventListener('pagehide', flush); return () => { clearTimeout(scrollSave.current); flush(); window.removeEventListener('pagehide', flush); }; }, []);
+  function patch(value: Partial<TabState>,tab?:LibraryTab) { setSaved(s => {const target=tab||s.active;return { ...s, tabs: { ...s.tabs, [target]: { ...initial(target), ...s.tabs[target], ...value } } };}); }
+  return { snapshot:()=>structuredClone(latest.current),restore:(snapshot:ReturnType<typeof read>)=>{clearHover();setSaved(structuredClone(snapshot));setNavigationKey(n=>n+1);},kind, state, patch, globalQuery:saved.globalQuery, setGlobalQuery:(globalQuery:string)=>setSaved(s=>({...s,globalQuery})), hover:visibleHover, preview, navigationKey, canGoBack:backStack.length>0,
+    back:()=>{const target=backStack.at(-1);if(!target)return;clearHover();setBackStack(s=>s.slice(0,-1));setSaved(s=>({...s,active:target.tab,tabs:{...s.tabs,[target.tab]:structuredClone(target.state)}}));setNavigationKey(n=>n+1);},
+    navigate:(entry:Entry,focus?:string,push=true,from?:LibraryTab)=>{const current=latest.current,previous=current.tabs[current.active];if(push && previous?.detailId && (previous.detailId!==entry.id || previous.focus!==focus))setBackStack(stack=>[...stack.slice(-99),{tab:current.active,state:structuredClone(previous)}]);setNavigationKey(n=>n+1);snapshots.current.set(entry.id,entry);clearHover();const next=navigationTab(entry,from);setSaved(s=>({...s,active:next,tabs:{...s.tabs,[next]:{...initial(next),...s.tabs[next],detailId:entry.id,focus,...(focus==='subclasses'?{subclassesOpen:true}:{})}}}));},
+    focus:visibleHover ? visibleHover.focus : state.focus,
+    setEdition:(edition:string)=>{if(!['character','2014','2024','all'].includes(edition))return;setSaved(s=>({...s,tabs:Object.fromEntries((Object.keys(LIBRARY_TABS) as LibraryTab[]).map(tab=>[tab,{...initial(tab),...s.tabs[tab],edition}]))}));},
+    setKind: (next: Kind | LibraryTab) => {clearHover();setSaved(s => ({ ...s, active: next === 'subclass' || next === 'feature' ? 'class' : next }));},
+    detail,
+    setDetail: (entry?: Entry) => {clearHover();if(entry){snapshots.current.set(entry.id,entry);const next=tabOf(entry);setSaved(s=>({...s,active:next,tabs:{...s.tabs,[next]:{...initial(next),...s.tabs[next],detailId:entry.id,focus:undefined}}}));}else patch({detailId:undefined,focus:undefined});},
+    savePosition: (id: string, top: number) => { if(visibleHover)return; const current = latest.current; const tab = current.tabs[current.active] || initial(current.active); tab.positions = { ...tab.positions, [id]: top }; current.tabs[current.active] = tab; clearTimeout(scrollSave.current); scrollSave.current = setTimeout(flush, 120); },
+  };
+}

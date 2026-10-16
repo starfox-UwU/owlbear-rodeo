@@ -1,0 +1,14 @@
+.character-context-menu{position:fixed;z-index:2147483000;width:190px;padding:5px;border:2px solid #555;background:#ddd;box-shadow:2px 4px 12px #0005}
+.character-context-menu button{width:100%;display:flex;align-items:center;gap:8px;padding:8px;background:#eee;color:#333;border:1px solid #888}
+.character-context-menu button:disabled{opacity:.5}
+.card-locate{display:inline-flex;align-items:center;justify-content:center;color:inherit}
+.monster-editor-document{background:var(--suite-paper,#eee);color:var(--suite-ink,#333);border-color:#555}
+.monster-editor-document .monster-editor-footer{background:var(--suite-paper,#eee)}
+.canvas-field-editor>fieldset{flex:1 1 100%;border:0;padding:0;display:flex;gap:10px;flex-wrap:wrap;min-width:0}
+.canvas-field-editor>fieldset>label{flex:1 1 180px;display:grid;gap:5px;min-width:0}
+.workbench-monsters{margin-top:2px;border-top:1px solid #888;padding:3px 0;min-height:28px}
+.workbench-monsters>strong{align-self:center;padding:0 8px;flex:none;color:var(--suite-ink,#555);font-size:12px}
+.class-navigation .class-jumps>button[aria-pressed=true],.wiki-header .wiki-header-actions>.custom-visibility[data-mode=native],.wiki-header .wiki-header-actions>.custom-visibility[data-mode=custom]{position:relative;overflow:hidden;background:#494949!important;color:#fff!important;border-color:#292929!important;box-shadow:inset 0 -3px #ddd;text-shadow:none}
+.class-navigation .class-jumps>button[aria-pressed=true]::after,.wiki-header .wiki-header-actions>.custom-visibility[data-mode=native]::after,.wiki-header .wiki-header-actions>.custom-visibility[data-mode=custom]::after{content:"";position:absolute;bottom:1px;left:-35%;height:2px;width:35%;background:#fff;pointer-events:none;animation:active-state-sweep 2.4s linear infinite}
+@keyframes active-state-sweep{from{transform:translateX(0)}to{transform:translateX(390%)}}
+@media(prefers-reduced-motion:reduce){.class-navigation .class-jumps>button[aria-pressed=true]::after,.wiki-header .wiki-header-actions>.custom-visibility[data-mode=native]::after,.wiki-header .wiki-header-actions>.custom-visibility[data-mode=custom]::after{animation:none;left:0;width:100%}}

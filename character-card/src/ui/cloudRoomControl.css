@@ -1,0 +1,38 @@
+/* Cloud card settings dialog, workbench account entry and dialog; the dialog shells come from src/cloud/qqLogin.css (.cloud-modal). The compatibility banner rules at the end are unrelated to the dialogs and are kept as they were. */
+.cloud-sync-icon{display:inline-flex;vertical-align:middle;margin-left:5px;color:inherit}
+.cloud-room-toggle{display:flex;align-items:center;gap:7px}
+.cloud-room-toggle input{width:auto}
+.cloud-room-dialog .qq-account-id:first-child{border-top:0;padding-top:8px}
+dialog.cloud-room-dialog.cloud-modal{width:min(560px,calc(100vw - 24px));font-size:14px}
+.cloud-room-dialog.cloud-modal .cloud-modal-section>h3{font-size:15px}
+.cloud-room-dialog.cloud-modal .cloud-modal-section>p,.cloud-room-dialog.cloud-modal .cloud-modal-status,.cloud-room-dialog.cloud-modal .cloud-modal-alert{font-size:14px}
+.cloud-room-name{display:block;font-size:17px;overflow-wrap:anywhere;margin:0 0 10px}
+.cloud-room-fields{margin:0;display:grid;gap:8px}
+.cloud-room-fields>div{display:grid;grid-template-columns:100px minmax(0,1fr);gap:12px;align-items:baseline}
+.cloud-room-fields dt{color:var(--ui-muted,#666)}
+.cloud-room-fields dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.cloud-room-editor-form{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:10px}
+.cloud-room-editor-form label{display:grid;gap:5px;flex:1;min-width:180px}
+.cloud-room-editor-form input{width:100%;box-sizing:border-box;padding:7px;font:inherit}
+.cloud-room-editors{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}
+.cloud-room-editors li{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cloud-room-editors code{min-width:0;overflow-wrap:anywhere}
+.cloud-room-editors button{flex:none}
+.workbench-qq-entry{display:inline-flex;padding:0!important;border:0!important;background:transparent!important;clip-path:none;box-shadow:none;flex:none;line-height:0}
+.workbench-qq-entry::before{display:none!important}
+.workbench-qq-entry img{display:block;width:170px;height:32px;object-fit:contain;filter:none}
+.workbench-qq-status{display:inline-flex;align-items:center;gap:6px;font-size:12px}
+dialog.workbench-qq-dialog{width:min(860px,calc(100vw - 24px));height:min(720px,calc(100dvh - 24px));overflow:hidden}
+.workbench-qq-dialog .cloud-modal-head{gap:12px}
+.workbench-qq-dialog .workbench-qq-id{padding:8px 14px 10px;border-top:0;border-bottom:1px solid var(--ui-line,#a5a5a5);flex-shrink:0}
+.workbench-qq-dialog .workbench-qq-body{padding:0;flex:1;min-height:0;display:flex;flex-direction:column}
+.workbench-qq-dialog .workbench-panel{flex:1;min-height:0;height:auto}
+.workbench-qq-dialog iframe{display:block;height:100%;width:100%;border:0}
+/* In the card app the host styles buttons; the outline colour stays the button line so every button keeps a visible boundary on the heading-coloured header and footer. */
+dialog.cloud-modal.cloud-modal :is(.cloud-modal-body,footer,header) button{border-color:var(--ui-buttonLine,#6f6f6f)!important}
+.app-shell dialog.cloud-modal.cloud-modal :is(.cloud-modal-body,footer) button.primary{border-color:var(--ui-buttonLine,#6f6f6f)!important}
+dialog.cloud-modal.cloud-modal :is(.cloud-modal-body,footer) button.cloud-danger{color:var(--cloud-danger)!important;border-color:var(--cloud-danger)!important}
+.app-shell dialog.cloud-modal .cloud-modal-close{border-radius:50%}
+.app-shell dialog.cloud-modal .cloud-button{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:4px 10px;font-size:12px;text-decoration:none;border:1px solid var(--ui-buttonLine,#6f6f6f);border-radius:4px;background:var(--ui-button,#f7f7f5);color:var(--ui-buttonInk,#303239)!important}
+.class-compatibility-banner{border:0;border-radius:0;box-shadow:none;padding:4px 8px;margin:2px 0 4px;gap:6px}.class-compatibility-banner p{font-size:11px;line-height:1.25}.class-compatibility-banner button{font-size:11px;line-height:1.25;padding:2px 6px}.card-permission-banner{flex:none}.cloud-card-control svg{display:block}
+@media(max-width:640px){.workbench-qq-entry img{width:120px;height:24px}}

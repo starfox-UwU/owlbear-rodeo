@@ -9,6 +9,7 @@ import JoinModal from "../modals/JoinModal";
 import GettingStartedModal from "../modals/GettingStartedModal";
 
 import HelpIcon from "../icons/HelpIcon";
+import CharacterSheetIcon from "../icons/CharacterSheetIcon";
 
 import { useAuth } from "../contexts/AuthContext";
 
@@ -20,9 +21,11 @@ import SocialPatreonIcon from "../icons/SocialPatreonIcon";
 import owlington from "../images/Owlington.png";
 
 import { useI18n } from "../i18n";
+import { useCharacterCardContext } from "../character/CharacterCardContext";
 
 function Home() {
   const { t } = useI18n();
+  const { open: openCharacterCard } = useCharacterCardContext();
   const [isStartModalOpen, setIsStartModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [isGettingStartedModalOpen, setIsGettingStartedModalOpen] =
@@ -74,6 +77,23 @@ function Home() {
         <Button m={2} onClick={() => setIsJoinModalOpen(true)}>
           {t("home.joinGame")}
         </Button>
+        <Button
+          variant="secondary"
+          m={2}
+          onClick={openCharacterCard}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+          }}
+        >
+          <CharacterSheetIcon />
+          {t("character.homeEntry")}
+        </Button>
+        <Text variant="caption" as="p" sx={{ textAlign: "center", opacity: 0.75 }}>
+          {t("character.homeEntryHint")}
+        </Text>
         <Text variant="caption" as="p" sx={{ textAlign: "center" }}>
           {t("home.legacyVersion", { version: __APP_VERSION__ })}
         </Text>

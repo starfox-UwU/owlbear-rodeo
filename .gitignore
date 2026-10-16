@@ -22,6 +22,18 @@
 /build
 /dist
 
+# 角色卡子应用（character-card）的构建产物与依赖，
+# 由 `yarn card:build`（或 predev/prebuild 钩子）生成到 public/card。
+/public/card
+/character-card/node_modules
+/character-card/dist
+/character-card/dist-standalone
+/character-card/dist-automation
+/character-card/test-results
+/character-card/playwright-report
+/character-card/.local-evidence
+/character-card/verify-host-*.png
+
 # runtime asset cache (see backend ASSET_CACHE_DIR)
 /cache
 

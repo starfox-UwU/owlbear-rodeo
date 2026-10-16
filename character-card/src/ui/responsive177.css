@@ -1,0 +1,25 @@
+/* 177: the shell stays stationary while connection state changes. */
+.workbench-bar{height:27px;min-height:27px;max-height:27px;flex:none;overflow:hidden;white-space:nowrap}
+.workbench-bar>span{flex:0 0 66px;width:66px;overflow:hidden;white-space:nowrap}
+.workbench-bar>strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.workbench-bar>label{flex:none;white-space:nowrap}
+.workbench-modes{display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:4px 10px;background:var(--suite-surface,#ededf0);flex:none;border-bottom:1px solid var(--suite-line,#ccc)}
+.workbench-modes>button{display:flex;align-items:center;justify-content:center;min-height:28px;padding:4px 10px;font-size:12px;line-height:18px}
+.workbench-modes>button.active{background:var(--suite-tone,#50525b);color:white;border-color:var(--suite-tone,#50525b)}
+.character-tabs.workbench-cards{display:flex;flex-wrap:nowrap;gap:4px;padding:3px 10px;min-height:30px;max-height:30px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;touch-action:pan-x;user-select:none;flex:none}
+.character-tabs.workbench-cards:empty{display:none}.character-tabs.workbench-cards::-webkit-scrollbar{display:none}
+.character-tabs.workbench-cards>button{display:block;flex:none;min-height:24px;padding:2px 8px;font-size:11px;line-height:18px;text-align:center;white-space:nowrap}
+.stock-board>header>.warehouse-lock{flex:none;width:24px;height:24px;min-width:24px;padding:3px;display:grid;place-items:center;margin-left:2px;background:var(--suite-tone,#50525b);color:#fff;border:0;border-radius:3px}
+.stock-board>header>.warehouse-lock[aria-pressed=true]{color:#ff6269}.warehouse-lock svg{width:16px;height:16px}.warehouse-lock:disabled{opacity:1}
+.portrait-controls>.portrait-settings-row{display:flex;flex:1;min-height:0;align-items:stretch}
+.portrait-view.has-portrait .portrait-settings-row{border-top:1px solid #fff9}
+.paper .portrait-settings-row button{flex:1;width:50%;min-width:0;font-size:11px;line-height:1;border:0!important}
+.paper .portrait-settings-row button+button{border-left:1px solid #fff9!important}
+.portrait-view:not(.has-portrait) .portrait-settings-row button{font-size:25px}
+.portrait-view.portrait-moving .portrait-settings-row,.portrait-view.portrait-moving .portrait-settings-row button{border-color:transparent!important}
+.portrait-confirm-shade{position:fixed;inset:0;z-index:2147482010;background:#20212a66;display:grid;place-items:center}
+.portrait-confirm{width:min(290px,92vw);padding:18px;background:var(--suite-paper,#fafafa);color:var(--suite-ink,#303039);border:1px solid var(--suite-line,#aaa);box-shadow:0 10px 35px #0004;border-radius:5px;font-size:14px}
+.portrait-confirm>div{display:flex;justify-content:end;gap:8px;margin-top:20px}
+
+/* Below 560 CSS pixels, use document flow instead of scaling an A4 photograph. */
+@media(max-width:700px){.workbench-modes{padding:3px 6px}.workbench-modes>button{min-height:27px;padding:3px 9px;font-size:11px}.character-tabs.workbench-cards{padding:2px 6px!important}.character-tabs.workbench-cards>button{min-height:24px;font-size:11px;padding:2px 7px}.public-stock .stock-collection{grid-template-columns:repeat(2,minmax(0,1fr))}.public-stock>header{gap:4px}.public-stock>header h3{font-size:12px}.public-stock>header small{font-size:10px}}
