@@ -3,6 +3,11 @@
 本文档记录本次从 **Node 18 / Yarn 1 (classic) / CRA 4 (react-scripts + webpack 4)** 迁移到
 **Node 24 LTS / Yarn 4 (Berry) / Vite 8** 的完整改动、原因与验证结果。
 
+> ⚠️ 本文档是**历史记录**。文中的 `ice.json`、`STUN_*`、`/iceservers`、WebRTC 信令转发
+> 等描述反映的是**当时的状态**；这些能力已在后续的
+> [第 10 节：服务器中心化改造](#10-服务器中心化改造后续) 中整体移除，当前架构请以
+> [README.md](./README.md) 为准。
+
 ---
 
 ## 1. 迁移前后对照
@@ -519,3 +524,44 @@ stun server started at 127.0.0.1:3479
 4. **后端 122 个 lint 历史报错**：建议单独一次提交按项目实际风格收敛规则或修复代码。
 5. **代码分割**：Babylon.js（3.2 MB）与 TensorFlow.js 目前仍打进主图，
    可考虑用 `manualChunks` / 动态 `import()` 进一步优化首屏体积。
+
+---
+
+## 10. 服务器中心化改造（后续）
+
+目标：把架构从「WebRTC 打洞 + 失败兜底」改成**以服务器为中心**，客户端之间不再直连。
+
+### 10.1 改了什么
+
+| 位置 | 改动 |
+| --- | --- |
+| `src/network/AssetTransport.ts` | **删除**（RTCPeerConnection / DataChannel / ICE / `/iceservers` 拉取全部移除） |
+| `src/network/Session.ts` | 移除 `webrtc_offer` / `webrtc_answer` / `webrtc_ice` 监听；`sendAssetTo` 改为纯服务器中继，返回「是否已交给服务器」 |
+| `src/network/NetworkedMapAndTokens.tsx` | 素材流程改为「所有者上传到服务器 → 回传 URL → 请求方 HTTP 下载」，失败时退回 Socket.IO 中继原始字节；请求超时改为 3 次有限重试 |
+| `backend/src/services/StunServer.ts` | **删除**（内置 STUN 服务） |
+| `backend/src/entities/IceServer.ts`、`controllers/IceServerController.ts`、`ice.json`、`types/stun.d.ts` | **删除**（`/iceservers` 接口与配置） |
+| `backend/src/entities/Global.ts` | 不再 `fs.readFile` 读取 `ice.json` |
+| `backend/src/entities/GameServer.ts` | 移除 `forwardWebRtcSignal` 及三个 `webrtc_*` 事件转发 |
+| `backend/package.json`、根 `package.json` | 移除 `stun` 依赖（`yarn.lock` 同步更新） |
+| `backend/Dockerfile` | 不再 `COPY ice.json` |
+| `docker-compose.yml`、`backend/.env.example` | 移除 `STUN_PUBLIC_HOST` / `STUN_*` |
+
+### 10.2 关键设计
+
+- **没有打洞**：不存在 `RTCPeerConnection`，也没有任何 UDP 依赖，只要客户端能访问后端即可。
+- **服务器保存对局状态**，实时数据（地图 / 指示物 / 指针 / 扩展消息）本来就由 Socket.IO 转发，不受影响。
+- **素材两条通道，都在服务器侧**：
+  1. `assetRequest` → 所有者 `POST /assets/upload` → `assetResponseUrl` → 请求方 HTTP 下载；
+  2. 资源服务不可用 / 上传失败 / 下载失败且判定为网络问题时，改用服务器中继原始字节
+     （`assetResponseSuccess`）。消息 id `assetP2pFailed` 相应改名为 `assetUrlFailed`。
+- **请求锁与重试**：`requestingAssetsRef` 在等待期间保持锁定，避免同一素材被反复请求；
+  `ASSET_REQUEST_TIMEOUT_MS`（8s）× `ASSET_REQUEST_MAX_ATTEMPTS`（3 次）后放弃并提示，
+  不再出现进度条永久卡住的情况。
+
+### 10.3 对已有部署的破坏性变更
+
+1. `STUN_ENABLED` / `STUN_PORT` / `STUN_BIND_HOST` / `STUN_PUBLIC_HOST` 全部**失效**，
+   可以从平台环境变量里删掉；`backend/ice.json` 已不存在，无需再挂载。
+2. 容器**不再需要暴露任何 UDP 端口**，只需 TCP `PORT`（默认 9000）。
+3. `ASSET_PUBLIC_URL` 与素材缓存目录变成关键配置：它决定跨设备能否下载到素材。
+4. 后端不需要重新挂载 `ice.json`，旧镜像若仍 `COPY ice.json` 会构建失败——请同步更新 Dockerfile。

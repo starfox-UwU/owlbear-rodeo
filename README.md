@@ -129,17 +129,17 @@ yarn dev          # 等价于 yarn start
 
 ```
 PORT=9000
-STUN_ENABLED=true
-STUN_PORT=3478
-STUN_BIND_HOST=0.0.0.0
-STUN_PUBLIC_HOST=192.168.1.32      # ⭐ 客户端能访问到的地址（裸 IP/域名，不带 http:// 和端口）
+ASSET_PUBLIC_URL=http://192.168.1.32:9000   # 可选：素材下载的对外前缀
 ```
 
 完整模板见 [`backend/.env.example`](./backend/.env.example)。
 
-- `STUN_PUBLIC_HOST` 必须是客户端可访问的地址，设置后会自动注入 `/iceservers` 返回值。
-- 局域网部署请填写宿主机局域网 IP（例如 192.168.1.32）。
-- 公网部署需开放 UDP 3478（或你自定义端口）。
+- 后端是**纯服务器中心**的：实时消息与素材都经由它转发 / 存储，
+  不再需要 STUN / TURN，也不需要放行任何 UDP 端口。
+- `ASSET_PUBLIC_URL` 是素材上传后返回给浏览器的下载前缀。
+  留空时按请求头里的 `Host` 自动推导，一般只在跨网络部署时才需要显式指定。
+- 素材落盘目录与过期时间由 `ASSET_CACHE_DIR` / `ASSET_CACHE_TTL_MS` /
+  `ASSET_CACHE_POST_GAME_TTL_MS` 控制。
 - 后端会按 `backend/.env` → `backend/.env.local` 的顺序读取，后者覆盖前者。
   Docker 部署时也可以直接由编排平台注入环境变量（优先级低于 `.env.local`）。
 
@@ -191,33 +191,24 @@ function Example() {
 地图 map、指示物 token、战争迷雾 fog of war、骰子 dice、网格 grid、
 测量 measure、绘图 drawing、主持人 GM、队伍 party、图层 layer、素材 asset。
 
-## P2P / 资产传输说明
+## 服务器中心架构与资产传输
 
-- 资产传输**优先走 P2P（WebRTC DataChannel）**。
-- P2P 失败时，客户端会发送失败信号，主机再上传到后端，异常端从后端拉取。
-- ICE 配置通过 `/iceservers` 提供：`backend/ice.json` 提供基础列表，
-  `STUN_PUBLIC_HOST` 会被自动前置注入。
+本项目是**以服务器为中心**的：客户端之间**不再建立 WebRTC 直连（打洞）**，
+也不需要 STUN / TURN。
 
-### ICE 服务器怎么配
+- **实时状态**（地图、指示物、指针、扩展消息）：客户端只连后端的 Socket.IO，
+  由服务器转发并保存对局状态；中途加入的玩家可以直接拿到当前状态。
+- **素材传输**：
+  1. 请求方通过 Socket.IO 请素材所有者把素材发布到服务器；
+  2. 所有者 `POST /assets/upload` 上传到后端，把下载 URL 回传；
+  3. 请求方用普通 HTTP 从后端下载并写入本地缓存。
+  4. 服务器没有可用资源服务（`VITE_BROKER_URL` 缺失）或上传失败时，
+     会退回 **Socket.IO 中继原始字节**，保证对局仍能继续。
+- **已经移除的东西**：`backend/ice.json`、`/iceservers` 接口、内置 STUN 服务、
+  `STUN_*` 环境变量，以及 `webrtc_offer` / `webrtc_answer` / `webrtc_ice` 信令转发。
 
-默认的 `backend/ice.json` 是 `{"iceServers": []}`——仓库里不再内置任何机器相关的 IP。
-
-- **同机/局域网使用**：不用配。WebRTC 靠 host candidate 就能直连。
-  跨设备传图请设置 `STUN_PUBLIC_HOST=<宿主机局域网IP>`。
-- **公网部署**：设置 `STUN_PUBLIC_HOST=<公网域名或IP>` 并放行 UDP `STUN_PORT`。
-- **想额外挂公共 STUN**：直接编辑 `backend/ice.json`：
-
-  ```
-  {
-    "iceServers": [
-      { "urls": "stun:stun.example.com:3478" },
-      { "urls": "turn:turn.example.com:3478", "username": "u", "credential": "p" }
-    ]
-  }
-  ```
-
-> ⚠️ 历史提交里这个文件曾写着 `stun:192.168.5.14:3478`，那是**原仓库作者局域网**的地址，
-> 在别人的网络里根本不可达。如果你是从旧版本升级过来的，请按上面的方式重配。
+因此「别人能不能看到你的图」只取决于一件事：**所有客户端都能访问到同一个后端**。
+不需要放行 UDP 端口，也不要求浏览器支持 WebRTC（隐私扩展禁用 WebRTC 也不影响）。
 
 ## 常见问题
 
@@ -246,10 +237,14 @@ yarn check:broker
 
 ### 自定义图片在其他设备不可见
 
-- 请确认 `STUN_PUBLIC_HOST` 可访问，并开放 UDP 端口。
-- 确认 `backend/ice.json` 里的 STUN 地址不是别人网络里的历史遗留 IP。
-- 确认前端 `VITE_BROKER_URL` 指向正确后端。
-- 某些浏览器/扩展会禁用 WebRTC（尤其是隐私/广告拦截类）。
+现在所有素材都经服务器中转，按顺序检查：
+
+1. 前端 `VITE_BROKER_URL` 指向的后端地址，**其他设备也能访问**（不要写 `localhost`）。
+2. 后端 `ASSET_PUBLIC_URL`（或它自动推导出的地址）对其他设备可达。
+3. 后端进程对素材缓存目录可写（`ASSET_CACHE_DIR`，默认 `cache/assets`）。
+4. 素材所有者在传输期间保持在线——素材是他浏览器里的本地文件上传的。
+
+不再需要 STUN/TURN，也不再要求浏览器支持 WebRTC。
 
 ### 升级后前端读不到后端地址
 
