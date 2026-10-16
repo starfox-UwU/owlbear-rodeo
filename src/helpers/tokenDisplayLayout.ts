@@ -100,6 +100,11 @@ export type DisplayLayoutOptions = {
   selected: boolean;
   /** 状态栏朝向：指示物在地图右半边时自动朝左 */
   panelSide?: "left" | "right";
+  /**
+   * 真实文字宽度测量。渲染层传 Konva 的测量结果，测试 / 导出预览时退回估算。
+   * 估算对中文和粗体明显偏窄，会导致标签被省略号截断，所以能测就测。
+   */
+  measureText?: (text: string, fontSize: number, bold: boolean) => number;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -109,8 +114,15 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function estimateTextWidth(text: string, fontSize: number) {
-  return Math.max(1, text.length) * fontSize * 0.58;
+const FULL_WIDTH = /[\u1100-\u115F\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFF60\uFFE0-\uFFE6]/;
+
+/** 粗略估算：全角字符按 1 个字宽，其余按 0.56 */
+export function estimateTextWidth(text: string, fontSize: number) {
+  let units = 0;
+  for (const char of text) {
+    units += FULL_WIDTH.test(char) ? 1 : 0.56;
+  }
+  return Math.max(1, units) * fontSize;
 }
 
 export function computeDisplayLayout({
@@ -122,10 +134,15 @@ export function computeDisplayLayout({
   hovered,
   selected,
   panelSide = "right",
+  measureText,
 }: DisplayLayoutOptions): DisplayLayout {
   const base = Math.min(width, height);
   const gap = clamp(base * 0.03, 1, 8);
   const padding = clamp(base * 0.06, 3, 14);
+  const textWidth = (text: string, fontSize: number, bold: boolean) =>
+    measureText
+      ? measureText(text, fontSize, bold)
+      : estimateTextWidth(text, fontSize) * (bold ? 1.05 : 1);
 
   const plans = sources
     .map((source, index) => ({
@@ -325,11 +342,11 @@ export function computeDisplayLayout({
     const boxWidth =
       style.style === "chip"
         ? clamp(
-            estimateTextWidth(text, fontSize) + fontSize * 1.3,
+            textWidth(text, fontSize, true) + fontSize * 1.4,
             fontSize * 1.6,
             innerBox.width
           )
-        : estimateTextWidth(text, fontSize);
+        : textWidth(text, fontSize, true);
     const position = anchorPosition(
       anchor === "ring" ? "bottom" : anchor,
       counter,
@@ -364,6 +381,7 @@ export function computeDisplayLayout({
     height,
     base,
     panelSide,
+    textWidth,
   });
 
   clampItemsToRings(items, centerX, centerY);
@@ -439,43 +457,50 @@ function computePanelLayout(
     height: number;
     base: number;
     panelSide: "left" | "right";
+    textWidth: (text: string, fontSize: number, bold: boolean) => number;
   }
 ): DisplayPanelLayout | null {
   if (plans.length === 0) {
     return null;
   }
 
-  const { width, height, base, panelSide } = box;
-  const fontSize = clamp(base * 0.13, 8, 22);
-  const padding = fontSize * 0.7;
-  const rowHeight = fontSize * 1.75;
-  const rowGap = fontSize * 0.25;
-  const dotRadius = fontSize * 0.32;
-  const labelWidth = Math.max(
-    ...plans.map((plan) =>
-      estimateTextWidth(panelLabel(plan.source), fontSize)
-    )
+  const { width, height, base, panelSide, textWidth } = box;
+  const fontSize = clamp(base * 0.17, 10, 26);
+  const padding = fontSize * 0.8;
+  const rowHeight = fontSize * 1.9;
+  const rowGap = fontSize * 0.3;
+  const dotRadius = fontSize * 0.34;
+  const dotColumn = dotRadius * 2 + fontSize * 0.7;
+  const columnGap = fontSize * 0.8;
+
+  const labels = plans.map((plan) => panelLabel(plan.source));
+  const labelWidths = labels.map((label) => textWidth(label, fontSize, false));
+  const valueWidths = plans.map((plan) =>
+    textWidth(plan.source.text, fontSize, true)
   );
-  const valueWidth = Math.max(
-    ...plans.map((plan) => estimateTextWidth(plan.source.text, fontSize))
+  const maxLabelWidth = Math.max(...labelWidths, fontSize);
+  const maxValueWidth = Math.max(...valueWidths, fontSize * 0.8);
+
+  const contentWidth =
+    dotColumn + maxLabelWidth + columnGap + maxValueWidth;
+  // 面板按真实文字宽度撑开，不再把标签挤成省略号
+  const panelWidth = clamp(
+    contentWidth + padding * 2,
+    base * 1.15,
+    Math.max(base * 1.15, base * 3)
   );
-  const contentWidth = dotRadius * 2 + fontSize * 0.6 + labelWidth + fontSize * 0.8 + valueWidth;
-  const panelWidth = clamp(contentWidth + padding * 2, base * 0.9, base * 2.2);
   const panelHeight =
     padding * 2 + plans.length * rowHeight + Math.max(0, plans.length - 1) * rowGap;
 
-  const panelGap = clamp(base * 0.12, 6, 24);
-  const x =
-    panelSide === "left"
-      ? -panelGap - panelWidth
-      : width + panelGap;
+  // 面板贴着指示物放，中间不留死区（留了会「还没来得及点就消失」）
+  const panelGap = clamp(base * 0.04, 3, 10);
+  const x = panelSide === "left" ? -panelGap - panelWidth : width + panelGap;
   const y = height / 2 - panelHeight / 2;
 
   const rows: DisplayPanelRow[] = plans.map((plan, index) => {
     const rowY = y + padding + index * (rowHeight + rowGap);
-    const label = panelLabel(plan.source);
-    const valueWidth = estimateTextWidth(plan.source.text, fontSize);
-    const textX = x + padding + dotRadius * 2 + fontSize * 0.6;
+    const label = labels[index];
+    const textX = x + padding + dotColumn;
     const valueX = x + panelWidth - padding;
     return {
       key: plan.source.key,
@@ -495,8 +520,12 @@ function computePanelLayout(
       dotRadius,
       textX,
       valueX,
-      valueWidth,
-      labelWidth: Math.max(0, valueX - textX - valueWidth - fontSize * 0.5),
+      valueWidth: valueWidths[index] + 2,
+      // 多给 2px，避免浮点误差把最后半个字吃掉
+      labelWidth: Math.min(
+        labelWidths[index] + 2,
+        Math.max(0, valueX - textX - columnGap)
+      ),
     };
   });
 
@@ -505,7 +534,7 @@ function computePanelLayout(
     y,
     width: panelWidth,
     height: panelHeight,
-    cornerRadius: fontSize * 0.6,
+    cornerRadius: fontSize * 0.7,
     padding,
     fontSize,
     rows,

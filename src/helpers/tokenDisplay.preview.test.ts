@@ -26,7 +26,7 @@ const attributes: TokenAttributeState = {
   bars: [
     {
       id: "hp",
-      label: "HP",
+      label: "生命值",
       current: 4,
       min: 0,
       max: 10,
@@ -36,7 +36,7 @@ const attributes: TokenAttributeState = {
     },
     {
       id: "mp",
-      label: "MP",
+      label: "法术位",
       current: 3,
       min: 0,
       max: 5,
@@ -46,8 +46,8 @@ const attributes: TokenAttributeState = {
     },
   ],
   values: [
-    { id: "ac", label: "AC", value: 15, color: colors.yellow, visibility: "public" },
-    { id: "pp", label: "PP", value: 12, color: colors.teal, visibility: "public" },
+    { id: "ac", label: "护甲等级", value: 15, color: colors.yellow, visibility: "public" },
+    { id: "pp", label: "被动察觉", value: 12, color: colors.teal, visibility: "public" },
   ],
   version: 0,
   updatedAt: 0,

@@ -17,7 +17,7 @@ import {
   statusDisplayKey,
   valueDisplayKey,
 } from "./tokenDisplay";
-import { computeDisplayLayout } from "./tokenDisplayLayout";
+import { computeDisplayLayout, estimateTextWidth } from "./tokenDisplayLayout";
 import { TokenAttributeBar, TokenAttributeValue } from "../types/TokenState";
 
 const USER = "user-1";
@@ -485,5 +485,40 @@ describe("悬停状态栏", () => {
     ]);
     // 条形行带进度比例，方便画底衬
     expect(panel?.rows[0].ratio).toBeCloseTo(0.4);
+  });
+
+  it("中文长标签不会被挤成省略号", () => {
+    const longSources = collectDisplaySources(
+      {
+        statuses: [],
+        attributes: {
+          bars: [],
+          values: [
+            makeValue({ id: "a", label: "护甲等级", value: 15 }),
+            makeValue({ id: "b", label: "被动察觉", value: 12 }),
+            makeValue({ id: "c", label: "法术豁免DC", value: 13 }),
+          ],
+        },
+      },
+      { isMapOwner: true, isTokenOwner: true }
+    );
+    const { panel } = computeDisplayLayout({ ...baseOptions, sources: longSources });
+    const layout = panel!;
+    for (const row of layout.rows) {
+      // 标签列必须容得下自己的文字
+      expect(row.labelWidth).toBeGreaterThanOrEqual(
+        estimateTextWidth(row.label, layout.fontSize)
+      );
+      expect(row.valueWidth).toBeGreaterThanOrEqual(
+        estimateTextWidth(row.text, layout.fontSize)
+      );
+    }
+    // 面板要按最长的标签撑开
+    expect(layout.width).toBeGreaterThan(100);
+  });
+
+  it("面板贴着指示物，中间不留跨不过去的死区", () => {
+    const { panel } = computeDisplayLayout({ ...baseOptions, sources });
+    expect(panel!.x - 100).toBeLessThanOrEqual(10);
   });
 });

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Image as KonvaImage, Group } from "react-konva";
 import { useSpring, animated } from "@react-spring/konva";
 import Konva from "konva";
@@ -49,8 +49,13 @@ import Transformer from "./Transformer";
 import TokenAttachment from "./TokenAttachment";
 import { MapState } from "../../types/MapState";
 
-type MapTokenProps = {
-  tokenState: TokenState;
+/**
+ * 鼠标离开指示物到悬停状态栏真正隐藏之间的宽限期。
+ * 太短会「还没来得及看就消失」，太长会让鼠标划过时残留面板。
+ */
+const HOVER_HIDE_DELAY_MS = 600;
+
+type MapTokenProps = {  tokenState: TokenState;
   onTokenStateChange: TokenStateChangeEventHandler;
   onTokenMenuOpen: TokenMenuOpenChangeEventHandler;
   onTokenMenuClose: TokenMenuCloseChangeEventHandler;
@@ -291,6 +296,7 @@ function Token({
 
   const [tokenOpacity, setTokenOpacity] = useState(1);
   const [hovered, setHovered] = useState(false);
+  const hoverTimerRef = useRef<number | null>(null);
   // Store token pointer down time to check for a click when token is locked
   const tokenPointerDownTimeRef = useRef<number>(0);
   const noteLongPressTimerRef = useRef<number | null>(null);
@@ -303,6 +309,15 @@ function Token({
       noteLongPressTimerRef.current = null;
     }
   }
+
+  function clearHoverTimer() {
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  }
+
+  useEffect(() => clearHoverTimer, []);
   function handlePointerDown(event: Konva.KonvaEventObject<PointerEvent>) {
     if (!leftMouseButton(event)) {
       return;
@@ -353,6 +368,7 @@ function Token({
   }
 
   function handlePointerEnter() {
+    clearHoverTimer();
     setHovered(true);
     if (fadeOnHover) {
       setTokenOpacity(0.5);
@@ -361,7 +377,13 @@ function Token({
 
   function handlePointerLeave() {
     clearNoteLongPress();
-    setHovered(false);
+    // 悬停状态栏贴着指示物弹出，但鼠标从指示物挪到面板的途中会短暂离开命中区域，
+    // 这里给一段宽限期：期间移回面板（面板是同一个 Group 的子节点）就取消隐藏。
+    clearHoverTimer();
+    hoverTimerRef.current = window.setTimeout(() => {
+      hoverTimerRef.current = null;
+      setHovered(false);
+    }, HOVER_HIDE_DELAY_MS);
     if (tokenOpacity !== 1.0) {
       setTokenOpacity(1.0);
     }

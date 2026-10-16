@@ -39,6 +39,24 @@ const TEXT_SHADOW = {
   shadowOpacity: 0.8,
 };
 
+/**
+ * 用 Konva 自己的文字测量量宽度。
+ * 排版层不能依赖 Konva，所以由这里把测量函数递进去，
+ * 保证面板宽度和实际渲染出来的文字一样宽 —— 估算不准会把标签截断。
+ */
+let measureNode: Konva.Text | null = null;
+function measureText(text: string, fontSize: number, bold: boolean) {
+  if (!measureNode) {
+    measureNode = new Konva.Text({ text: "" });
+  }
+  measureNode.setAttrs({
+    text,
+    fontSize,
+    fontStyle: bold ? "bold" : "normal",
+  });
+  return measureNode.measureSize(text).width;
+}
+
 /** 把 `rgb(r, g, b)` 调亮/调暗，用来做渐变，避免平面色显得死板 */
 function shade(color: string, amount: number) {
   const match = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(color);
@@ -87,6 +105,7 @@ function TokenStatusDisplay({
       selected,
       // 指示物在地图右半边时状态栏朝左弹，避免顶到地图外
       panelSide: tokenState.x > 0.5 ? "left" : "right",
+      measureText,
     });
   }, [
     tokenState,
