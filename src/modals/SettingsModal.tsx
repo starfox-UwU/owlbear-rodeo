@@ -15,6 +15,9 @@ import Modal from "../components/Modal";
 import Select from "../components/Select";
 import Slider from "../components/Slider";
 import LoadingOverlay from "../components/LoadingOverlay";
+import TokenDisplayEditor from "../components/token/TokenDisplayEditor";
+
+import { normalizeDisplayDefaults } from "../helpers/tokenDisplay";
 
 import { useUserId } from "../contexts/UserIdContext";
 import { useDatabase } from "../contexts/DatabaseContext";
@@ -29,6 +32,7 @@ import ConfirmModal from "./ConfirmModal";
 import ImportExportModal from "./ImportExportModal";
 
 import { MapState } from "../types/MapState";
+import { TokenDisplaySettings } from "../types/Settings";
 import { RequestCloseEventHandler } from "../types/Events";
 
 type SettingsModalProps = {
@@ -68,6 +72,8 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
   >("tokenNote.defaultFont");
   const [tokenNoteDefaultPermission, setTokenNoteDefaultPermission] =
     useSetting<"none" | "read" | "write">("tokenNote.defaultPermission");
+  const [tokenDisplay, setTokenDisplay] =
+    useSetting<TokenDisplaySettings>("tokenDisplay");
   const [storageEstimate, setStorageEstimate] = useState<StorageEstimate>();
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -380,6 +386,26 @@ function SettingsModal({ isOpen, onRequestClose }: SettingsModalProps) {
               />
             </Box>
           </Label>
+          <Divider bg="text" />
+          <Label py={2}>{t("settings.tokenDisplay")}</Label>
+          <Text variant="caption" sx={{ display: "block", opacity: 0.7, mb: 1 }}>
+            {t("settings.tokenDisplayHint")}
+          </Text>
+          <TokenDisplayEditor
+            config={{
+              defaults: normalizeDisplayDefaults(tokenDisplay),
+              items: [],
+              version: 0,
+              updatedAt: 0,
+              updatedBy: "global",
+            }}
+            onChange={(next) =>
+              setTokenDisplay(normalizeDisplayDefaults(next.defaults))
+            }
+            canEdit
+            compact
+            showItems={false}
+          />
           <Divider bg="text" />
           <Flex py={2}>
             <Button

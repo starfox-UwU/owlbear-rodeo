@@ -4,12 +4,18 @@ import Konva from "konva";
 
 import MapMenu from "../map/MapMenu";
 import TokenAttributeEditor from "./TokenAttributeEditor";
+import TokenDisplayEditor from "./TokenDisplayEditor";
+import type { TokenDisplayEditorItem } from "./TokenDisplayEditor";
 
 import colors, { Color, colorOptions } from "../../helpers/colors";
 import {
   buildNextAttributes,
   createEmptyAttributes,
 } from "../../helpers/tokenAttributes";
+import {
+  collectDisplaySources,
+  pruneDisplayConfig,
+} from "../../helpers/tokenDisplay";
 
 import usePrevious from "../../hooks/usePrevious";
 
@@ -31,12 +37,13 @@ import { usePermissions } from "../../contexts/PermissionsContext";
 import PermissionEditor from "../permission/PermissionEditor";
 
 import { useI18n } from "../../i18n";
+import type { TranslationKey } from "../../i18n";
 
 import {
   RequestCloseEventHandler,
   TokenStateChangeEventHandler,
 } from "../../types/Events";
-import { TokenState } from "../../types/TokenState";
+import { TokenState, TokenDisplayConfig, TokenDisplayKindDefaults } from "../../types/TokenState";
 import { Map } from "../../types/Map";
 import { TokenCategory } from "../../types/Token";
 
@@ -54,6 +61,8 @@ type TokenMenuProps = {
    * 为 `false` 时菜单退化成只读（权限等级为「只能看 / 可移动」）。
    */
   canEdit?: boolean;
+  /** 全局默认的状态展示规则，用于编辑器的回退显示 */
+  displayDefaults?: TokenDisplayKindDefaults;
 };
 
 function TokenMenu({
@@ -66,6 +75,7 @@ function TokenMenu({
   map,
   fogEnabled = true,
   canEdit = true,
+  displayDefaults,
 }: TokenMenuProps) {
   const { t } = useI18n();
 
@@ -108,17 +118,20 @@ function TokenMenu({
   const [menuTop, setMenuTop] = useState(0);
   const [visionLightOpen, setVisionLightOpen] = useState(false);
   const [attributesOpen, setAttributesOpen] = useState(false);
+  const [displayOpen, setDisplayOpen] = useState(false);
   const [permissionOpen, setPermissionOpen] = useState(false);
   const sidePanelRef = useRef<HTMLDivElement | null>(null);
   const [sidePanelStyle, setSidePanelStyle] = useState<{
     left?: number;
     top?: number;
   }>({});
-  const sidePanelOpen = visionLightOpen || attributesOpen || permissionOpen;
+  const sidePanelOpen =
+    visionLightOpen || attributesOpen || displayOpen || permissionOpen;
   useEffect(() => {
     if (isOpen && !wasOpen && tokenState) {
       setVisionLightOpen(false);
       setAttributesOpen(false);
+      setDisplayOpen(false);
       setPermissionOpen(false);
       // Update menu position
       if (tokenImage) {
@@ -207,8 +220,27 @@ function TokenMenu({
     } else {
       statuses.add(status);
     }
+    const nextStatuses = [...statuses];
+    // 取消标记后，清掉它的展示覆盖
+    const validKeys = collectDisplaySources(
+      {
+        statuses: nextStatuses,
+        attributes: tokenState.attributes,
+      },
+      { isMapOwner: true, isTokenOwner: true }
+    ).map((source) => source.key);
+    const nextDisplay = pruneDisplayConfig(
+      tokenState.display,
+      validKeys,
+      userId || "unknown"
+    );
     emitChange({
-      [tokenState.id]: { statuses: [...statuses] },
+      [tokenState.id]: {
+        statuses: nextStatuses,
+        ...(nextDisplay !== tokenState.display
+          ? { display: nextDisplay }
+          : {}),
+      },
     });
   }
 
@@ -322,10 +354,57 @@ function TokenMenu({
       nextValues,
       userId || "unknown"
     );
+    // 属性条 / 数值被删掉后，顺手清掉对应的展示覆盖，避免留下幽灵规则
+    const validKeys = collectDisplaySources(
+      {
+        statuses: tokenState.statuses,
+        attributes: { bars: nextBars, values: nextValues },
+      },
+      { isMapOwner: true, isTokenOwner: true }
+    ).map((source) => source.key);
+    const nextDisplay = pruneDisplayConfig(
+      tokenState.display,
+      validKeys,
+      userId || "unknown"
+    );
     emitChange({
-      [tokenState.id]: { attributes: nextAttributes },
+      [tokenState.id]: {
+        attributes: nextAttributes,
+        ...(nextDisplay !== tokenState.display
+          ? { display: nextDisplay }
+          : {}),
+      },
     });
   }
+
+  function updateDisplay(nextDisplay: TokenDisplayConfig) {
+    if (!tokenState || !canEditAttributes) {
+      return;
+    }
+    emitChange({
+      [tokenState.id]: { display: nextDisplay },
+    });
+  }
+
+  /** 当前指示物上可以被单独配置的条目 */
+  const displayItems: TokenDisplayEditorItem[] = tokenState
+    ? collectDisplaySources(tokenState, {
+        isMapOwner: true,
+        isTokenOwner: true,
+      }).map((source) => ({
+        key: source.key,
+        kind: source.kind,
+        label:
+          source.kind === "status"
+            ? t("tokens.display.statusLabel", {
+                color: t(
+                  `tokens.display.color.${source.label}` as TranslationKey
+                ),
+              })
+            : source.label || t("tokens.display.unnamed"),
+        color: source.color,
+      }))
+    : [];
 
   function handleModalContent(node: HTMLElement) {
     if (node) {
@@ -456,12 +535,40 @@ function TokenMenu({
                     if (next) {
                       setVisionLightOpen(false);
                       setPermissionOpen(false);
+                      setDisplayOpen(false);
                     }
                     return next;
                   })
                 }
                 sx={{ transform: attributesOpen ? "rotate(180deg)" : "none" }}
                 disabled={hasAttributes && attributesOpen}
+              >
+                <ExpandMoreIcon />
+              </IconButton>
+            </Flex>
+          </Box>
+        )}
+        {tokenState && (
+          <Box mt={2} sx={{ position: "relative" }}>
+            <Flex sx={{ alignItems: "center", justifyContent: "space-between" }}>
+              <Text as="label" variant="body2">
+                {t("tokens.display.title")}
+              </Text>
+              <IconButton
+                aria-label={t("tokens.display.title")}
+                title={t("tokens.display.title")}
+                onClick={() =>
+                  setDisplayOpen((prev) => {
+                    const next = !prev;
+                    if (next) {
+                      setVisionLightOpen(false);
+                      setAttributesOpen(false);
+                      setPermissionOpen(false);
+                    }
+                    return next;
+                  })
+                }
+                sx={{ transform: displayOpen ? "rotate(180deg)" : "none" }}
               >
                 <ExpandMoreIcon />
               </IconButton>
@@ -484,6 +591,7 @@ function TokenMenu({
                     if (next) {
                       setVisionLightOpen(false);
                       setAttributesOpen(false);
+                      setDisplayOpen(false);
                     }
                     return next;
                   })
@@ -558,6 +666,7 @@ function TokenMenu({
                         if (next) {
                           setAttributesOpen(false);
                           setPermissionOpen(false);
+                          setDisplayOpen(false);
                         }
                         return next;
                       })
@@ -680,6 +789,32 @@ function TokenMenu({
               onChange={updateAttributes}
               canEdit={canEditAttributes}
               title={t("tokens.attributes")}
+              compact
+            />
+          </Box>
+        )}
+        {tokenState && displayOpen && (
+          <Box
+            ref={sidePanelRef}
+            sx={{
+              position: "fixed",
+              top: sidePanelStyle.top ?? menuTop,
+              left: sidePanelStyle.left ?? menuLeft + menuWidth + 8,
+              width: `${sidePanelWidth}px`,
+              maxHeight: "70vh",
+              overflowY: "auto",
+              backgroundColor: "overlay",
+              borderRadius: "4px",
+              zIndex: 1,
+            }}
+            p={2}
+          >
+            <TokenDisplayEditor
+              config={tokenState.display}
+              items={displayItems}
+              globalDefaults={displayDefaults}
+              onChange={updateDisplay}
+              canEdit={canEditAttributes}
               compact
             />
           </Box>

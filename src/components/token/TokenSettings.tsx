@@ -5,10 +5,12 @@ import { isEmpty } from "../../helpers/shared";
 
 import Select from "../Select";
 import TokenAttributeEditor from "./TokenAttributeEditor";
+import TokenDisplayEditor from "./TokenDisplayEditor";
 
 import { Token, TokenCategory } from "../../types/Token";
 import { TokenSettingsChangeEventHandler } from "../../types/Events";
 import { buildNextAttributes, createEmptyAttributes } from "../../helpers/tokenAttributes";
+import { createDisplayConfig } from "../../helpers/tokenDisplay";
 import ExpandMoreIcon from "../../icons/ExpandMoreIcon";
 import { useUserId } from "../../contexts/UserIdContext";
 import { useI18n } from "../../i18n";
@@ -33,6 +35,7 @@ function TokenSettings({ token, onSettingsChange }: TokenSettingsProps) {
   const tokenEmpty = !token || isEmpty(token);
   const userId = useUserId();
   const [showDefaultAttributes, setShowDefaultAttributes] = useState(false);
+  const [showDefaultDisplay, setShowDefaultDisplay] = useState(false);
 
   const defaultAttributes = token?.defaultAttributes
     ? token.defaultAttributes
@@ -128,6 +131,39 @@ function TokenSettings({ token, onSettingsChange }: TokenSettingsProps) {
               canEdit={!tokenEmpty}
               compact
               showHeader
+            />
+          </Box>
+        )}
+      </Box>
+      <Box mt={2} mb={2}>
+        <Flex
+          sx={{ alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
+          onClick={() => setShowDefaultDisplay((prev) => !prev)}
+        >
+          <Text as="label" variant="body2">
+            {t("tokens.display.defaultDisplay")}
+          </Text>
+          <IconButton
+            title={showDefaultDisplay ? t("tokens.showLess") : t("tokens.showMore")}
+            aria-label={showDefaultDisplay ? t("tokens.showLess") : t("tokens.showMore")}
+            sx={{ transform: showDefaultDisplay ? "rotate(180deg)" : "none" }}
+          >
+            <ExpandMoreIcon />
+          </IconButton>
+        </Flex>
+        {showDefaultDisplay && (
+          <Box mt={2}>
+            <TokenDisplayEditor
+              config={
+                token?.defaultDisplay ??
+                createDisplayConfig(userId || "unknown")
+              }
+              onChange={(nextDisplay) =>
+                !tokenEmpty && onSettingsChange({ defaultDisplay: nextDisplay })
+              }
+              canEdit={!tokenEmpty}
+              compact
+              showItems={false}
             />
           </Box>
         )}

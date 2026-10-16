@@ -218,6 +218,29 @@ function Example() {
 地图 map、指示物 token、战争迷雾 fog of war、骰子 dice、网格 grid、
 测量 measure、绘图 drawing、主持人 GM、队伍 party、图层 layer、素材 asset。
 
+## 指示物状态展示
+
+指示物身上的「状态」分三类：**颜色标记**（`statuses`）、**属性条**（`attributes.bars`）、
+**属性值**（`attributes.values`）。三类的显示方式都可以自由配置，不再写死。
+
+- **样式**：圆环（属性条为进度环）、进度条、圆形徽章、标签牌、纯文字、隐藏。
+- **位置**：环绕指示物、顶部/底部/左侧/右侧内侧、正中间。
+- **其它**：大小、不透明度、顺序（同层叠放次序）、显示时机（始终 / 悬停 / 选中）。
+- **单项覆盖**：每个颜色标记、每条属性、每个数值都能单独设一套规则。
+
+配置按 **单项覆盖 → 本指示物按类型默认 → 全局默认 → 内置默认** 的顺序就近生效：
+
+| 生效范围 | 入口 |
+| --- | --- |
+| 全局默认 | 设置 → 「指示物状态展示」 |
+| 指示物模板默认 | 编辑指示物 → 「默认状态展示」 |
+| 单个指示物 | 地图上点开指示物 → 「状态展示」 |
+
+纯逻辑与排版计算分别在 `src/helpers/tokenDisplay.ts`、`src/helpers/tokenDisplayLayout.ts`，
+渲染层是 `src/components/konva/TokenStatusDisplay.tsx`。
+设置 `TOKEN_DISPLAY_PREVIEW=1` 跑 `src/helpers/tokenDisplay.preview.test.ts`
+可以导出排版数据，配合 `tmp/draw_preview.py` 生成预览图人工核对。
+
 ## 服务器中心架构与资产传输
 
 本项目是**以服务器为中心**的：客户端之间**不再建立 WebRTC 直连（打洞）**，
