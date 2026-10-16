@@ -55,6 +55,7 @@ import useMapNotes from "../../hooks/useMapNotes";
 import { MapActions } from "../../hooks/useMapActions";
 import useMapSelection from "../../hooks/useMapSelection";
 import useTokenNotes from "../../hooks/useTokenNotes";
+import { normalizeDisplayDefaults } from "../../helpers/tokenDisplay";
 
 type MapProps = {
   map: MapType | null;
@@ -304,6 +305,7 @@ function Map({
     onMapTokensStateCreate,
     selectedToolId,
     settings.tokenNote,
+    normalizeDisplayDefaults(settings.tokenDisplay),
     openTokenNote,
     {
       enableTokenDragPreview: tokenDragPreviewEnabled,

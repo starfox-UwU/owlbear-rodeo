@@ -1,6 +1,6 @@
 import Konva from "konva";
 import { Outline } from "./Outline";
-import { TokenAttributeState } from "./TokenState";
+import { TokenAttributeState, TokenDisplayConfig } from "./TokenState";
 
 export type TokenCategory = "character" | "vehicle" | "prop" | "attachment";
 
@@ -11,6 +11,8 @@ export type BaseToken = {
   defaultCategory: TokenCategory;
   defaultLabel: string;
   defaultAttributes?: TokenAttributeState;
+  /** 由该模板创建指示物时套用的状态展示配置 */
+  defaultDisplay?: TokenDisplayConfig;
   hideInSidebar: boolean;
   width: number;
   height: number;

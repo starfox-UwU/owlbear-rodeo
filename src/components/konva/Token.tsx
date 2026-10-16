@@ -19,16 +19,22 @@ import {
 import { useGridCellPixelSize } from "../../contexts/GridContext";
 import { useDataURL } from "../../contexts/AssetsContext";
 
-import TokenStatus from "./TokenStatus";
+import TokenStatusDisplay from "./TokenStatusDisplay";
 import TokenLabel from "./TokenLabel";
 import TokenOutline from "./TokenOutline";
-import TokenAttributeBubble from "./TokenAttributeBubble";
 
 import { Intersection, getScaledOutline } from "../../helpers/token";
+import { parseDisplayKey } from "../../helpers/tokenDisplay";
+import { DisplayLayoutItem } from "../../helpers/tokenDisplayLayout";
 import Vector2 from "../../helpers/Vector2";
 
 import { tokenSources } from "../../tokens";
-import { TokenAttributeBar, TokenAttributeValue, TokenState } from "../../types/TokenState";
+import {
+  TokenAttributeBar,
+  TokenAttributeValue,
+  TokenDisplayKindDefaults,
+  TokenState,
+} from "../../types/TokenState";
 import { Map } from "../../types/Map";
 import { TokenNoteSettings } from "../../types/Settings";
 import {
@@ -70,6 +76,8 @@ type MapTokenProps = {
   noteModeEnabled: boolean;
   noteTrigger: TokenNoteSettings["trigger"];
   noteLongPressMs: number;
+  /** 全局默认的状态展示规则 */
+  displayDefaults?: TokenDisplayKindDefaults;
   onTokenNoteOpen?: (
     tokenStateId: string,
     options?: { mode?: "sheet" | "popover"; anchor?: Konva.Node | null }
@@ -98,6 +106,7 @@ function Token({
   noteModeEnabled,
   noteTrigger,
   noteLongPressMs,
+  displayDefaults,
   onTokenNoteOpen,
 }: MapTokenProps) {
   const userId = useUserId();
@@ -282,6 +291,7 @@ function Token({
   }
 
   const [tokenOpacity, setTokenOpacity] = useState(1);
+  const [hovered, setHovered] = useState(false);
   // Store token pointer down time to check for a click when token is locked
   const tokenPointerDownTimeRef = useRef<number>(0);
   const noteLongPressTimerRef = useRef<number | null>(null);
@@ -344,6 +354,7 @@ function Token({
   }
 
   function handlePointerEnter() {
+    setHovered(true);
     if (fadeOnHover) {
       setTokenOpacity(0.5);
     }
@@ -351,6 +362,7 @@ function Token({
 
   function handlePointerLeave() {
     clearNoteLongPress();
+    setHovered(false);
     if (tokenOpacity !== 1.0) {
       setTokenOpacity(1.0);
     }
@@ -545,6 +557,31 @@ function Token({
     });
   }
 
+  /** 点击展示元素（属性条 / 数值徽章等）时打开快捷改数值菜单 */
+  function handleDisplayItemClick(item: DisplayLayoutItem, node: Konva.Node) {
+    const parsed = parseDisplayKey(item.key);
+    if (!parsed) {
+      return;
+    }
+    if (parsed.kind === "bar") {
+      const bar = tokenState.attributes?.bars?.find(
+        (candidate) => candidate.id === parsed.id
+      );
+      if (bar) {
+        handleBarCountRequest(bar, node);
+      }
+      return;
+    }
+    if (parsed.kind === "value") {
+      const value = tokenState.attributes?.values?.find(
+        (candidate) => candidate.id === parsed.id
+      );
+      if (value) {
+        handleValueCountRequest(value, node);
+      }
+    }
+  }
+
   // When a token is hidden if you aren't the map owner hide it completely
   if (map && !tokenState.visible && map.owner !== userId) {
     return null;
@@ -614,13 +651,6 @@ function Token({
         </Group>
         {!transforming ? (
           <Group offsetX={tokenWidth / 2} offsetY={tokenHeight / 2}>
-            {tokenState.statuses?.length > 0 ? (
-              <TokenStatus
-                tokenState={tokenState}
-                width={tokenWidth}
-                height={tokenHeight}
-              />
-            ) : null}
             {tokenState.category === "attachment" ? (
               <Group offsetX={-tokenWidth / 2} offsetY={-tokenHeight / 2}>
                 <Group rotation={tokenState.rotation}>
@@ -640,14 +670,18 @@ function Token({
                 height={tokenHeight}
               />
             ) : null}
-            <TokenAttributeBubble
+            <TokenStatusDisplay
               tokenState={tokenState}
               width={tokenWidth}
               height={tokenHeight}
               isMapOwner={isMapOwner}
               isTokenOwner={isTokenOwner}
-              onBarClick={canEditAttributes ? handleBarCountRequest : undefined}
-              onValueClick={canEditAttributes ? handleValueCountRequest : undefined}
+              hovered={hovered}
+              selected={selected}
+              globalDefaults={displayDefaults}
+              onItemClick={
+                canEditAttributes ? handleDisplayItemClick : undefined
+              }
             />
           </Group>
         ) : null}

@@ -8,7 +8,7 @@ import {
   TokenDraggingOptions,
   TokenMenuOptions,
 } from "../types/Token";
-import { TokenState } from "../types/TokenState";
+import { TokenState, TokenDisplayKindDefaults } from "../types/TokenState";
 import { TokenNoteSettings } from "../types/Settings";
 import {
   TokenStateRemoveHandler,
@@ -59,6 +59,7 @@ function useMapTokens(
   onTokensStateCreate: TokensStateCreateHandler,
   selectedToolId: MapToolId,
   tokenNoteSettings: TokenNoteSettings,
+  displayDefaults: TokenDisplayKindDefaults,
   onTokenNoteOpen?: (
     tokenStateId: string,
     options?: { mode?: "sheet" | "popover"; anchor?: Konva.Node | null }
@@ -388,6 +389,7 @@ function useMapTokens(
           noteModeEnabled={tokenNoteSettings.enabled}
           noteTrigger={tokenNoteSettings.trigger}
           noteLongPressMs={tokenNoteSettings.longPressMs}
+          displayDefaults={displayDefaults}
           onTokenNoteOpen={onTokenNoteOpen}
           selected={
             !!tokenMenuOptions &&
@@ -435,6 +437,7 @@ function useMapTokens(
       tokenImage={tokenMenuOptions?.tokenImage}
       map={map}
       fogEnabled={mapState?.fogEnabled ?? true}
+      displayDefaults={displayDefaults}
       canEdit={
         !!tokenMenuOptions &&
         permissions.canEdit(

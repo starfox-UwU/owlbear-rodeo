@@ -37,6 +37,9 @@
 # runtime asset cache (see backend ASSET_CACHE_DIR)
 /cache
 
+# 本地临时产物（状态展示排版预览等），见 README「指示物状态展示」
+/tmp
+
 # misc
 .DS_Store
 .env.local

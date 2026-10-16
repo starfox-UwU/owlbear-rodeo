@@ -4,6 +4,7 @@ import { FogToolSettings } from "./Fog";
 import { PointerToolSettings } from "./Pointer";
 import { SelectToolSettings } from "./Select";
 import { SpellTemplateToolSettings } from "./SpellTemplate";
+import { TokenDisplayKindDefaults } from "./TokenState";
 
 export type DrawingSettings = DrawingToolSettings;
 export type FogSettings = FogToolSettings & {
@@ -30,6 +31,8 @@ export type AssetSettings = {
   compressionQuality: number;
 };
 export type LanguageSettings = "system" | "zh" | "en";
+/** 状态展示的全局默认规则，单只指示物可以就近覆盖 */
+export type TokenDisplaySettings = TokenDisplayKindDefaults;
 export type TokenNoteSettings = {
   enabled: boolean;
   trigger: "click" | "doubleClick" | "longPress";
@@ -52,5 +55,6 @@ export type Settings = {
   select: SelectSettings;
   asset: AssetSettings;
   tokenNote: TokenNoteSettings;
+  tokenDisplay: TokenDisplaySettings;
   language: LanguageSettings;
 };

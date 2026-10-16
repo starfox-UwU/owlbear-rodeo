@@ -1,4 +1,5 @@
 import Settings from "./helpers/Settings";
+import { BUILTIN_DISPLAY_DEFAULTS } from "./helpers/tokenDisplay";
 
 function loadVersions(settings: Settings) {
   settings.version(1, () => ({
@@ -177,6 +178,14 @@ function loadVersions(settings: Settings) {
     ...prev,
     language:
       typeof prev?.language === "string" ? prev.language : "system",
+  }));
+  // v1.18.0 - Add token status display defaults
+  settings.version(19, (prev: any) => ({
+    ...prev,
+    tokenDisplay: {
+      ...BUILTIN_DISPLAY_DEFAULTS,
+      ...(prev?.tokenDisplay ?? {}),
+    },
   }));
 }
 

@@ -77,6 +77,62 @@ export const TokenStateSchema = {
       },
       required: ["bars", "values", "version", "updatedAt", "updatedBy"],
     },
+    TokenDisplayStyle: {
+      enum: ["ring", "bar", "badge", "chip", "text"],
+      type: "string",
+    },
+    TokenDisplayAnchor: {
+      enum: ["auto", "ring", "top", "bottom", "left", "right", "inside"],
+      type: "string",
+    },
+    TokenDisplayTrigger: {
+      enum: ["always", "hover", "selected"],
+      type: "string",
+    },
+    TokenDisplayItemStyle: {
+      type: "object",
+      properties: {
+        visible: { type: "boolean" },
+        style: { $ref: "#/definitions/TokenDisplayStyle" },
+        anchor: { $ref: "#/definitions/TokenDisplayAnchor" },
+        order: { type: "number" },
+        scale: { type: "number" },
+        opacity: { type: "number" },
+        trigger: { $ref: "#/definitions/TokenDisplayTrigger" },
+      },
+    },
+    TokenDisplayKindDefaults: {
+      type: "object",
+      properties: {
+        status: { $ref: "#/definitions/TokenDisplayItemStyle" },
+        bar: { $ref: "#/definitions/TokenDisplayItemStyle" },
+        value: { $ref: "#/definitions/TokenDisplayItemStyle" },
+      },
+    },
+    TokenDisplayItem: {
+      allOf: [
+        { $ref: "#/definitions/TokenDisplayItemStyle" },
+        {
+          type: "object",
+          properties: { key: { type: "string" } },
+          required: ["key"],
+        },
+      ],
+    },
+    TokenDisplayConfig: {
+      type: "object",
+      properties: {
+        defaults: { $ref: "#/definitions/TokenDisplayKindDefaults" },
+        items: {
+          type: "array",
+          items: { $ref: "#/definitions/TokenDisplayItem" },
+        },
+        version: { type: "number" },
+        updatedAt: { type: "number" },
+        updatedBy: { type: "string" },
+      },
+      required: ["version", "updatedAt", "updatedBy"],
+    },
     BaseTokenState: {
       properties: {
         category: {
@@ -120,6 +176,9 @@ export const TokenStateSchema = {
         },
         attributes: {
           $ref: "#/definitions/TokenAttributeState",
+        },
+        display: {
+          $ref: "#/definitions/TokenDisplayConfig",
         },
         tokenId: {
           type: "string",
