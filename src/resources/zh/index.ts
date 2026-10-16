@@ -824,6 +824,8 @@ const zh = {
     loading: "加载中…",
     loadingList: "正在读取角色卡…",
     loadFailed: "无法读取角色卡：{{message}}",
+    frameBlocked:
+      "角色卡地址被静态服务器改写成了宿主页面，已停止加载以避免无限嵌套。请让 /card/ 下的文件直接返回原文件（用 serve 时见 README 的 serve.json 说明）。",
     emptyList: "还没有角色。先在角色卡里创建角色，再回来生成 Token。",
     openCard: "打开角色卡",
     reopen: "显示角色卡",

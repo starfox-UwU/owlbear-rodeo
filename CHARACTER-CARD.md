@@ -43,9 +43,13 @@ src/character/             宿主侧集成代码
 
 ```sh
 yarn card:build     # 强制重建（首次会自动 npm ci character-card）
-yarn dev            # predev 钩子：有变化才重建，失败只告警
-yarn build          # prebuild 钩子：构建失败会中断
+yarn dev            # 先跑 build-card --soft：有变化才重建，失败只告警
+yarn build          # 先跑 build-card：有变化才重建，失败会中断
 ```
+
+> Yarn 4（Berry）不执行 `predev` / `prebuild` 之类的 pre/post 钩子，所以这两步是
+> 在 `dev` / `build` 脚本里用 `&&` 显式串联的；`yarn preview` 不会重建，
+> 预览前先 `yarn build`。
 
 `public/card/` 与 `character-card/node_modules/` 都在 `.gitignore` 里，
 克隆后第一次 `yarn dev` 会自动把子应用构建出来。
@@ -160,3 +164,30 @@ yarn test src/character
   剪贴板权限，去掉反而干净。
 - `character-card/` 保留上游的 [非商用共享许可](./character-card/LICENSE)，
   与本项目其余部分的许可是分开的。
+
+---
+
+## 8. 静态托管：`/card/` 必须原样返回
+
+角色卡入口是 `public/card/index.html`，用 SW（`public/card/sw.js`）做离线外壳。
+**任何“找不到就回退到首页”的规则都可能把它吞掉**，因为：
+
+- `npx serve -s build`（README 推荐的轻量生产服务器）默认开启 `cleanUrls`，
+  会把 `/card/index.html` 301 到 `/card/index`，该路径不存在 → 回退到宿主的 `index.html`；
+- 其他把未知路径重写成 `/index.html` 的 SPA 回退 / CDN 重写规则同理。
+
+结果是 iframe 里跑的是宿主自己，宿主再嵌一层 iframe，**无限嵌套 + 控制台刷警告 +
+角色卡无法使用**；`yarn dev`（Vite 直接提供文件）和 `yarn preview` 都看不出这个问题。
+
+三层防护：
+
+| 位置 | 作用 |
+| --- | --- |
+| `public/serve.json`（随构建进 `build/`） | `{"cleanUrls": false}`，让 `serve -s` 正常提供 `/card/index.html` |
+| `src/character/CharacterCardContext.tsx` | iframe 加载后确认里面是角色卡（`data-card-startup`）；不是就卸掉 iframe 并报错，打断递归 |
+| `character-card/tools/offlineShell.ts` | 拒绝把“顶替文档”（资源位置返回 `text/html`、shell 不是角色卡）写进离线缓存 |
+
+排查顺序：先在浏览器里直接打开 `/card/index.html`。
+
+- 看到角色卡（`<html data-card-startup=...>`）→ 服务器没问题；
+- 看到宿主 VTT 页面 → 静态托管把 `/card/` 重写了，按上面的表格修服务器配置。

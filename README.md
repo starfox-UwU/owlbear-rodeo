@@ -82,6 +82,14 @@ node ./node_modules/serve/bin/serve.js -s build -l 3000
 > 说明：`serve` 需要手动安装（若缺失）。
 > 也可以直接用 `yarn preview`（Vite 内置的静态预览服务器，仅用于本地验证）。
 
+> ⚠️ **不要跳过 `public/serve.json`。** 它会被复制到 `build/serve.json`，
+> `serve` 会自动读取，作用是关掉 `cleanUrls`。默认情况下 `serve -s` 会把
+> `/card/index.html` 重定向成 `/card/index`，再回退到宿主的 `index.html`——
+> 于是角色卡 iframe 里跑的是宿主自己，宿主又嵌一层 iframe，无限嵌套、
+> 控制台刷警告，角色卡彻底用不了（`yarn dev` 由 Vite 直接提供文件，所以看不出来）。
+> 其他静态托管同理：**`/card/` 下的文件必须原样返回**，不能被 SPA 回退或
+> “美化 URL” 规则吞掉。
+
 ### （可选）前端开发模式
 
 仅用于本地调试：
@@ -102,8 +110,9 @@ yarn dev          # 等价于 yarn start
 | `yarn card:verify` | 用 Playwright 校验「宿主 ⇄ 角色卡」postMessage 桥接 |
 | `npx vite-bundle-visualizer` | 查看产物体积构成（替代原 `yarn analyze`） |
 
-`yarn dev` / `yarn build` 会通过 `predev` / `prebuild` 钩子自动构建角色卡：
-产物已是最新时直接跳过，构建失败时只在开发模式下告警（生产构建会中断）。
+`yarn dev` / `yarn build` 会先构建角色卡：产物已是最新时直接跳过，
+构建失败时只在开发模式下告警（生产构建会中断）。Yarn 4 不跑 `pre*` 钩子，
+所以这一步写在脚本里而不是 `predev` / `prebuild` 里。
 
 ## 角色卡（DND Card Web 集成）
 

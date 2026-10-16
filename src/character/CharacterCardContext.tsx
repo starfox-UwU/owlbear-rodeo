@@ -39,6 +39,43 @@ const CharacterCardContext = React.createContext<
   CharacterCardContextValue | undefined
 >(undefined);
 
+/** 加载完成后确认 iframe 里真的是角色卡，超时则拆掉它。 */
+const FRAME_CHECK_TIMEOUT = 8_000;
+const FRAME_CHECK_INTERVAL = 400;
+
+/**
+ * 判断 iframe 里装载的是不是角色卡本身。
+ *
+ * 静态服务器经常把所有找不到的路径（包括 `/card/index.html` 这种“带扩展名的
+ * 嵌套 HTML”，例如 `serve -s` 的 cleanUrls）重写成宿主自己的 `index.html`。
+ * 那样 iframe 里跑的就是宿主，宿主又会再套一层 iframe，形成无限嵌套。
+ *
+ * 角色卡的 `index.html` 会在解析阶段就写上 `data-card-startup`，宿主的不会，
+ * 所以可以据此区分。
+ *
+ * @returns true 是角色卡；false 不是；undefined 无法判断（跨域或还没提交文档）。
+ */
+function frameIsCharacterCard(
+  frame: HTMLIFrameElement | null
+): boolean | undefined {
+  let document_: Document | undefined;
+  let contentWindow: (Window & { __DND_CARD_BRIDGE__?: unknown }) | null =
+    null;
+  try {
+    contentWindow = frame?.contentWindow as
+      | (Window & { __DND_CARD_BRIDGE__?: unknown })
+      | null;
+    document_ = contentWindow?.document ?? undefined;
+  } catch {
+    // 跨域（例如把 CARD_APP_URL 指到 CDN）时无法检查，交给宿主自己报错。
+    return undefined;
+  }
+  if (!document_?.documentElement) return undefined;
+  if (document_.documentElement.dataset.cardStartup) return true;
+  if (contentWindow?.__DND_CARD_BRIDGE__) return true;
+  return false;
+}
+
 export function CharacterCardProvider({
   children,
 }: {
@@ -51,17 +88,56 @@ export function CharacterCardProvider({
 
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  /** 静态服务器把 /card/index.html 改写成了宿主页面时的提示。 */
+  const [frameError, setFrameError] = useState<string | null>(null);
+  const frameCheck = useRef<ReturnType<typeof setInterval> | undefined>(
+    undefined
+  );
+
+  const stopFrameCheck = useCallback(() => {
+    if (frameCheck.current !== undefined) {
+      clearInterval(frameCheck.current);
+      frameCheck.current = undefined;
+    }
+  }, []);
+
+  useEffect(() => stopFrameCheck, [stopFrameCheck]);
 
   const open = useCallback(() => {
+    setFrameError(null);
     setMounted(true);
     setIsOpen(true);
   }, []);
   const close = useCallback(() => setIsOpen(false), []);
   const ensureMounted = useCallback(() => setMounted(true), []);
   const toggle = useCallback(() => {
+    setFrameError(null);
     setMounted(true);
     setIsOpen((prev) => !prev);
   }, []);
+
+  /**
+   * iframe 的 load 事件：先放行桥接请求，再确认里面确实是角色卡。
+   * 如果被重写成了宿主页面，就卸掉 iframe 并报错，避免无限嵌套。
+   */
+  const onFrameLoad = useCallback(() => {
+    state.onFrameLoad();
+    stopFrameCheck();
+    const deadline = Date.now() + FRAME_CHECK_TIMEOUT;
+    frameCheck.current = setInterval(() => {
+      const looksLikeCard = frameIsCharacterCard(frameRef.current);
+      if (looksLikeCard !== false) {
+        // true：正常；undefined：跨域或还没有文档，交给宿主自己的错误处理。
+        stopFrameCheck();
+        return;
+      }
+      if (Date.now() < deadline) return;
+      stopFrameCheck();
+      setFrameError(t("character.frameBlocked"));
+      // 拆掉 iframe：里面那个“宿主”也会走同一段判断并把自己拆掉，递归到此为止。
+      setMounted(false);
+    }, FRAME_CHECK_INTERVAL);
+  }, [state, stopFrameCheck, t]);
 
   // 角色卡浮层打开时锁住宿主页面滚动；关闭时恢复原来的值，
   // 避免把 react-modal 之类正在用的 inline overflow 冲掉。
@@ -90,7 +166,7 @@ export function CharacterCardProvider({
       ref={frameRef}
       title={t("character.frameTitle")}
       src={CARD_APP_URL}
-      onLoad={state.onFrameLoad}
+      onLoad={onFrameLoad}
       style={{
         border: "none",
         width: "100%",
@@ -144,7 +220,23 @@ export function CharacterCardProvider({
           </Flex>
         </Flex>
         <Box sx={{ flexGrow: 1, minHeight: 0 }}>{mounted ? frame : null}</Box>
-        {state.error && (
+        {frameError ? (
+          <Flex
+            bg="muted"
+            sx={{ alignItems: "center", justifyContent: "space-between", px: 3, py: 2 }}
+          >
+            <Text variant="body2">{frameError}</Text>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setFrameError(null);
+                setMounted(true);
+              }}
+            >
+              {t("common.reset")}
+            </Button>
+          </Flex>
+        ) : state.error ? (
           <Flex
             bg="muted"
             sx={{ alignItems: "center", justifyContent: "space-between", px: 3, py: 2 }}
@@ -154,7 +246,7 @@ export function CharacterCardProvider({
               {t("common.reset")}
             </Button>
           </Flex>
-        )}
+        ) : null}
       </div>
     </CharacterCardContext.Provider>
   );

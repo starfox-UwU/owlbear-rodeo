@@ -27,13 +27,27 @@ const PREFIX = 'dnd-card-shell:' + new URL('./', self.location.href).pathname + 
 const CACHE = PREFIX + ${JSON.stringify(revision)};
 const FILES = ${JSON.stringify(files)};
 const ASSETS = new Set(${JSON.stringify([...assets,'favicon.svg','exe_icon.png','dnd-center-logo.png','dnd-center-icon.png',...startupAssets])}.map(file=>new URL(file,self.location.href).href));
+const INDEX_URL = new URL('index.html', self.location.href).href;
+// A host that rewrites unknown paths to its own index.html answers missing
+// files with an HTML document (HTTP 200). Caching that under an asset URL - or
+// as the shell document - poisons the offline shell permanently, so those
+// responses are never stored.
+async function isSurrogateDocument(url,response){
+ const type=(response.headers.get('content-type')||'').toLowerCase();
+ if(!type.includes('text/html'))return false;
+ if(url!==INDEX_URL)return true;
+ const text=await response.clone().text();
+ return !text.includes('data-card-startup')&&!text.includes('dnd-card-build');
+}
 // Two low-priority readers reuse the browser HTTP cache without competing
 // with every deferred editor and rules download after the first paint.
 async function installShell(){
  const cache=await caches.open(CACHE);let next=0;
  await Promise.all([0,1].map(async()=>{while(next<FILES.length){const file=FILES[next++],url=new URL(file,self.location.href).href;
   const response=await fetch(url,{cache:file==='index.html'?'no-cache':'force-cache',priority:'low'});
-  if(!response.ok)throw new Error('Offline shell asset unavailable');await cache.put(url,response);
+  if(!response.ok)throw new Error('Offline shell asset unavailable');
+  if(await isSurrogateDocument(url,response))throw new Error('Offline app shell was replaced by another document');
+  await cache.put(url,response);
  }}));
 }
 self.addEventListener('install', event => event.waitUntil(installShell()));
@@ -46,7 +60,7 @@ self.addEventListener('message', event => {
     // those used files only, and never cache documents or arbitrary URLs.
     for(const url of new Set(event.data.urls.filter(url=>ASSETS.has(url)))){
       if(await cache.match(url,{ignoreVary:true}))continue;
-      try{const response=await fetch(url,{cache:'force-cache',priority:'low'});if(response.ok)await cache.put(url,response);}catch{}
+      try{const response=await fetch(url,{cache:'force-cache',priority:'low'});if(response.ok&&!(await isSurrogateDocument(url,response)))await cache.put(url,response);}catch{}
     }
   }));
 });
@@ -69,7 +83,9 @@ self.addEventListener('fetch', event => {
     // not download every editor, dictionary and Wiki renderer in parallel.
     const response=caches.open(CACHE).then(async cache => {
       const saved=await cache.match(event.request,{ignoreVary:true});if(saved)return saved;
-      const fresh=await fetch(event.request);if(fresh.ok)await cache.put(event.request,fresh.clone());return fresh;
+      const fresh=await fetch(event.request);
+      if(fresh.ok&&!(await isSurrogateDocument(url.href,fresh)))await cache.put(event.request,fresh.clone());
+      return fresh;
     });
     event.respondWith(response);event.waitUntil(response.then(()=>{},()=>{}));
   }

@@ -73,12 +73,9 @@
     "uuid": "^8.3.2"
   },
   "scripts": {
-    "predev": "node scripts/build-card.mjs --soft",
-    "dev": "vite",
-    "prestart": "node scripts/build-card.mjs --soft",
-    "start": "vite",
-    "prebuild": "node scripts/build-card.mjs",
-    "build": "vite build",
+    "dev": "node scripts/build-card.mjs --soft && vite",
+    "start": "node scripts/build-card.mjs --soft && vite",
+    "build": "node scripts/build-card.mjs && vite build",
     "card:build": "node scripts/build-card.mjs --force",
     "card:verify": "node character-card/tools/verifyHostEmbed.mjs",
     "preview": "vite preview",

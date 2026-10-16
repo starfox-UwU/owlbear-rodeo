@@ -827,6 +827,8 @@ const en = {
     loading: "Loading…",
     loadingList: "Reading character cards…",
     loadFailed: "Could not read the character card: {{message}}",
+    frameBlocked:
+      "The static host rewrote the character card URL into the host app, so loading stopped to avoid endless nesting. Serve the files under /card/ as they are (see the serve.json note in the README when using serve).",
     emptyList:
       "There are no characters yet. Create one in the character card, then come back to generate tokens.",
     openCard: "Open character card",
